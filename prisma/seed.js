@@ -57,8 +57,6 @@ async function main() {
             });
 
             if (existingStation) {
-                // Determine if we need to update anything (optional)
-                // console.log(`Station ${name} already exists for ${mill.name}`);
                 continue;
             }
 
