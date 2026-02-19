@@ -60,6 +60,21 @@ const createWorkOrder = async (req, res) => {
             }
         });
 
+        // Handle Photo Upload
+        if (req.file) {
+            await prisma.attachment.create({
+                data: {
+                    wo_id: wo.id,
+                    kind: 'damage_report',
+                    file_path: req.file.filename,
+                    file_name: req.file.originalname,
+                    mime_type: req.file.mimetype,
+                    size: req.file.size,
+                    uploaded_by: reporter_id
+                }
+            });
+        }
+
         res.status(201).json(wo);
     } catch (error) {
         console.error(error);

@@ -73,9 +73,14 @@
         </div>
 
         <div class="form-group">
-            <label class="form-label">Deskripsi Kerusakan</label>
             <textarea name="description" class="form-control" rows="4" required
                 placeholder="Jelaskan detail kerusakan..."></textarea>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Upload Photo Bukti (Optional)</label>
+            <input type="file" name="photo" class="form-control" accept="image/*">
+            <small class="text-secondary">Lampirkan foto kerusakan jika ada.</small>
         </div>
 
         <div class="flex justify-between mt-4">
@@ -138,13 +143,11 @@
     document.getElementById('createWoForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
-        const data = Object.fromEntries(formData.entries());
-
         try {
             const res = await fetch('/api/work-orders', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
+                // headers: { 'Content-Type': 'application/json' }, // Let browser set multipart boundary
+                body: formData // Send FormData directly
             });
 
             if (res.ok) {

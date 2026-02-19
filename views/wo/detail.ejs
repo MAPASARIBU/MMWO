@@ -62,13 +62,23 @@
     <% if (wo.attachments && wo.attachments.length> 0) { %>
         <div class="mb-4">
             <label class="form-label">Attachments</label>
-            <ul>
-                <% wo.attachments.forEach(function(att) { %>
-                    <li><a href="/uploads/<%= att.file_path %>" target="_blank">
-                            <%= att.file_name %>
-                        </a></li>
-                    <% }); %>
-            </ul>
+            <% wo.attachments.forEach(function(att) { %>
+                <div class="mb-2 p-2 border rounded">
+                    <% if (att.mime_type && att.mime_type.startsWith('image/')) { %>
+                        <img src="/uploads/<%= att.file_path %>" alt="<%= att.file_name %>"
+                            class="img-fluid rounded mb-2" style="max-height: 400px; display: block;">
+                        <% } %>
+                            <div class="flex items-center gap-2">
+                                <span class="badge badge-secondary">
+                                    <%= att.kind %>
+                                </span>
+                                <a href="/uploads/<%= att.file_path %>" target="_blank"
+                                    class="text-blue-600 hover:underline">
+                                    <%= att.file_name %>
+                                </a>
+                            </div>
+                </div>
+                <% }); %>
         </div>
         <% } %>
 
