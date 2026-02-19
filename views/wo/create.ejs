@@ -1,0 +1,163 @@
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <h3 class="mb-4">Create New Work Order</h3>
+
+    <form action="/api/work-orders" method="POST" id="createWoForm">
+        <div class="form-group">
+            <label class="form-label">Mill</label>
+            <select name="mill_id" id="millSelect" class="form-control" required onchange="filterStations()">
+                <option value="">Select Mill</option>
+                <% mills.forEach(mill=> { %>
+                    <option value="<%= mill.id %>">
+                        <%= mill.name %>
+                    </option>
+                    <% }); %>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Station</label>
+            <select name="station_id" id="stationSelect" class="form-control" required disabled
+                onchange="filterEquipment()">
+                <option value="">Select Station</option>
+                <% stations.forEach(station=> { %>
+                    <option value="<%= station.id %>" data-mill="<%= station.mill_id %>">
+                        <%= station.name %>
+                    </option>
+                    <% }); %>
+            </select>
+        </div>
+
+        <!-- Equipment list is not passed, fetching dynamically or assuming basic list for now. 
+             Ideally we fetch equipment via API when station changes. 
+             For v1 static, we might need to load all equipment. 
+             Let's use a simple fetch in script. -->
+        <div class="form-group">
+            <label class="form-label">Equipment</label>
+            <select name="equipment_id" id="equipmentSelect" class="form-control" disabled>
+                <option value="">Select Equipment</option>
+                <!-- Filled via JS -->
+            </select>
+        </div>
+
+        <div class="flex gap-4">
+            <div class="form-group" style="flex: 1;">
+                <label class="form-label">Kategori</label>
+                <select name="category" class="form-control" required>
+                    <option value="Mechanical">Mechanical</option>
+                    <option value="Electrical">Electrical</option>
+                    <option value="Instrument">Instrument</option>
+                    <option value="Civil">Civil</option>
+                    <option value="Utility">Utility</option>
+                    <option value="Others">Others</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label class="form-label">Type Kerusakan</label>
+                <select name="type" class="form-control" required>
+                    <option value="Breakdown">Breakdown</option>
+                    <option value="Preventive">Preventive</option>
+                    <option value="Improvement">Improvement</option>
+                    <option value="Safety">Safety</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Priority</label>
+            <div class="flex gap-4">
+                <label><input type="radio" name="priority" value="P1" required> P1 (Critical - Immediate)</label>
+                <label><input type="radio" name="priority" value="P2"> P2 (High - 24h)</label>
+                <label><input type="radio" name="priority" value="P3"> P3 (Medium - 3d)</label>
+                <label><input type="radio" name="priority" value="P4" checked> P4 (Low - 7d)</label>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">Deskripsi Kerusakan</label>
+            <textarea name="description" class="form-control" rows="4" required
+                placeholder="Jelaskan detail kerusakan..."></textarea>
+        </div>
+
+        <div class="flex justify-between mt-4">
+            <a href="/work-orders" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Submit Report</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function filterStations() {
+        const millId = document.getElementById('millSelect').value;
+        const stationSelect = document.getElementById('stationSelect');
+        const options = stationSelect.querySelectorAll('option');
+
+        stationSelect.value = "";
+        stationSelect.disabled = !millId;
+        document.getElementById('equipmentSelect').disabled = true;
+        document.getElementById('equipmentSelect').innerHTML = '<option value="">Select Equipment</option>';
+
+        options.forEach(opt => {
+            if (!opt.value) return;
+            if (opt.getAttribute('data-mill') == millId) {
+                opt.style.display = 'block';
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+    }
+
+    async function filterEquipment() {
+        const stationId = document.getElementById('stationSelect').value;
+        const equipmentSelect = document.getElementById('equipmentSelect');
+
+        if (!stationId) {
+            equipmentSelect.disabled = true;
+            return;
+        }
+
+        equipmentSelect.disabled = true; // Disable while loading
+        equipmentSelect.innerHTML = '<option value="">Loading...</option>';
+
+        try {
+            const res = await fetch(`/api/equipment?station_id=${stationId}`);
+            const equipment = await res.json();
+
+            let html = '<option value="">Select Equipment</option>';
+            equipment.forEach(eq => {
+                html += `<option value="${eq.id}">${eq.name} (${eq.code})</option>`;
+            });
+            equipmentSelect.innerHTML = html;
+            equipmentSelect.disabled = false;
+        } catch (e) {
+            console.error(e);
+            equipmentSelect.innerHTML = '<option value="">Error loading equipment</option>';
+        }
+    }
+
+    // Handle form submission via fetch/AJAX to allow redirect
+    document.getElementById('createWoForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch('/api/work-orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                const wo = await res.json();
+                window.location.href = `/work-orders/${wo.id}`;
+            } else {
+                alert('Error creating WO');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error creating WO');
+        }
+    });
+
+    // Check if predefined mill/station passed in URL (future enhancement)
+</script>

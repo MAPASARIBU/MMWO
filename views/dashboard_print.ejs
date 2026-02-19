@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rekap Work Order - <%= today %>
+    </title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            max-width: 100%;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            color: #666;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-left: 5px solid #007bff;
+            padding-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e9ecef;
+            border-bottom: 2px solid #333;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        @media print {
+            tr:nth-child(even) {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                background-color: #f2f2f2 !important;
+            }
+
+            th {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                background-color: #e9ecef !important;
+            }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-box {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            background-color: #fafafa;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            a {
+                text-decoration: none;
+                color: #333;
+            }
+        }
+
+        .print-controls {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="print-controls no-print">
+        <button onclick="window.print()" class="btn">🖨️ Print Page</button>
+        <button onclick="window.close()" class="btn btn-secondary">Close</button>
+    </div>
+
+    <div class="header">
+        <h1>Maintenance Work Order Recap</h1>
+        <h2 style="margin: 5px 0 0; font-size: 18px; font-weight: normal; color: #333;">
+            <%= millName %>
+        </h2>
+        <p>Date: <%= today %>
+        </p>
+        <p>Printed by: <%= user.name %> (<%= user.role %>)</p>
+
+        <% if (typeof hasFilters !=='undefined' && hasFilters) { %>
+            <div
+                style="margin-top: 10px; padding: 10px; background: #eee; border: 1px solid #ddd; display: inline-block;">
+                <strong>Filter Applied:</strong><br>
+                <% if (filterInfo.startDate || filterInfo.endDate) { %>
+                    <span>Period: <%= filterInfo.startDate || '...' %> - <%= filterInfo.endDate || '...' %></span><br>
+                    <% } %>
+                        <% if (filterInfo.status !=='All' ) { %>
+                            <span>Status: <%= filterInfo.status %></span>
+                            <% } %>
+            </div>
+            <% } %>
+    </div>
+
+    <% if (!hasFilters) { %>
+        <div class="section">
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <span class="stat-label">Pending Tasks</span>
+                    <span class="stat-value">
+                        <%= stats.pending %>
+                    </span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">Completion Rate</span>
+                    <span class="stat-value">
+                        <%= stats.completionRate %>%
+                    </span>
+                </div>
+                <div class="stat-box">
+                    <span class="stat-label">High Priority (P1)</span>
+                    <span class="stat-value">
+                        <%= stats.highPriority %>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <% } %>
+
+            <% if ((typeof hasFilters==='undefined' || !hasFilters) && assignedWos && assignedWos.length> 0) { %>
+                <div class="section">
+                    <div class="section-title">My Assigned Tasks</div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>WO No</th>
+                                <th>Station</th>
+                                <th>Description</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% assignedWos.forEach(wo=> { %>
+                                <tr>
+                                    <td>
+                                        <%= wo.wo_no %>
+                                    </td>
+                                    <td>
+                                        <%= wo.station ? wo.station.name : '-' %>
+                                    </td>
+                                    <td>
+                                        <%= wo.description.length> 80 ? wo.description.substring(0, 80) + '...' :
+                                            wo.description
+                                            %>
+                                    </td>
+                                    <td>
+                                        <%= wo.priority %>
+                                    </td>
+                                    <td>
+                                        <%= wo.status %>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+                <% } %>
+
+                    <div class="section">
+                        <div class="section-title">
+                            <%= (typeof hasFilters !=='undefined' && hasFilters) ? 'Filtered Work Orders'
+                                : 'Recent Work Orders' %>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th style="width: 15%;">WO No</th>
+                                    <th style="width: 35%;">Description</th>
+                                    <th style="width: 15%;">Station</th>
+                                    <th style="width: 10%;">Priority</th>
+                                    <th style="width: 10%;">Status</th>
+                                    <th style="width: 15%;">Created At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% createdWos=typeof recentWos !=='undefined' ? recentWos : [] %>
+                                    <% if (createdWos.length> 0) { %>
+                                        <% createdWos.forEach(wo=> { %>
+                                            <tr>
+                                                <td>
+                                                    <%= wo.wo_no %>
+                                                </td>
+                                                <td>
+                                                    <%= wo.description.length> 80 ? wo.description.substring(0, 80) +
+                                                        '...' : wo.description %>
+                                                </td>
+                                                <td>
+                                                    <%= wo.station ? wo.station.name : '-' %>
+                                                </td>
+                                                <td>
+                                                    <%= wo.priority %>
+                                                </td>
+                                                <td>
+                                                    <%= wo.status %>
+                                                </td>
+                                                <td>
+                                                    <%= new Date(wo.created_at).toLocaleDateString('id-ID') %>
+                                                </td>
+                                            </tr>
+                                            <% }); %>
+                                                <% } else { %>
+                                                    <tr>
+                                                        <td colspan="6" style="text-align: center; padding: 20px;">No
+                                                            work orders found matching the criteria.</td>
+                                                    </tr>
+                                                    <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+                        <div style="text-align: center; width: 200px;">
+                            <p>Prepared By,</p>
+                            <br><br><br>
+                            <p>( <%= user.name %> )</p>
+                        </div>
+                        <div style="text-align: center; width: 200px;">
+                            <p>Approved By,</p>
+                            <br><br><br>
+                            <p>( __________________ )</p>
+                        </div>
+                    </div>
+
+                    <script>
+                        // Auto print when page loads? Optional.
+                        // window.onload = function() { window.print(); }
+                    </script>
+</body>
+
+</html>

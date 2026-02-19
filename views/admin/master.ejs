@@ -1,0 +1,160 @@
+<div class="card">
+    <div class="flex justify-between items-center mb-4">
+        <h3>Master Data Management</h3>
+    </div>
+
+    <div class="grid" style="grid-template-columns: 1fr 2fr; gap: 2rem;">
+        <!-- Left: Mill Selection & Quick Actions -->
+        <div>
+            <div class="card mb-4" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                <h4>Step 1: Select Mill</h4>
+                <div class="form-group">
+                    <select id="millSelector" class="form-control" onchange="showMillStations(this.value)">
+                        <option value="">-- Select a Mill --</option>
+                        <% mills.forEach(m=> { %>
+                            <option value="<%= m.id %>">
+                                <%= m.name %>
+                            </option>
+                            <% }); %>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card" style="background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1;">
+                <h5>💡 How to add Equipment</h5>
+                <ol style="margin-left: 1.5rem; margin-top: 0.5rem; font-size: 0.9em;">
+                    <li>Select a <strong>Mill</strong> above.</li>
+                    <li>Find the <strong>Station</strong> in the list.</li>
+                    <li>Click <strong>+ Add Equip</strong>.</li>
+                    <li>Paste equipment names (one per line).</li>
+                    <li>Click Save.</li>
+                </ol>
+            </div>
+        </div>
+
+        <!-- Right: Stations List (Dynamic) -->
+        <div>
+            <div class="flex justify-between items-center mb-2">
+                <h4>Stations</h4>
+                <!-- Optional: Add Station Button could go here -->
+            </div>
+
+            <div id="noSelection" class="text-center text-secondary p-4"
+                style="background: #f9fafb; border: 1px dashed #ccc; border-radius: 8px;">
+                Please select a Mill to view its stations.
+            </div>
+
+            <% mills.forEach(m=> { %>
+                <div id="stations-mill-<%= m.id %>" class="station-group" style="display: none;">
+                    <div class="card" style="background: #fff; border: 1px solid #eee; padding: 0;">
+                        <ul style="list-style: none; padding: 0; margin: 0;">
+                            <% if (m.stations.length===0) { %>
+                                <li style="padding: 1rem; text-align: center; color: #888;">No stations found for this
+                                    mill.</li>
+                                <% } %>
+                                    <% m.stations.forEach(s=> { %>
+                                        <li
+                                            style="padding: 0.75rem 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
+                                            <span style="font-weight: 500;">
+                                                <%= s.name %>
+                                            </span>
+                                            <button class="btn btn-sm btn-secondary"
+                                                onclick="openBulkModal(<%= s.id %>, '<%= s.name %>')">
+                                                + Add Equip
+                                            </button>
+                                        </li>
+                                        <% }); %>
+                        </ul>
+                    </div>
+                </div>
+                <% }); %>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showMillStations(millId) {
+        // Hide all
+        document.querySelectorAll('.station-group').forEach(el => el.style.display = 'none');
+        document.getElementById('noSelection').style.display = 'none';
+
+        if (!millId) {
+            document.getElementById('noSelection').style.display = 'block';
+            return;
+        }
+
+        // Show selected
+        const group = document.getElementById('stations-mill-' + millId);
+        if (group) {
+            group.style.display = 'block';
+        }
+    }
+</script>
+
+<!-- Bulk Add Modal -->
+<div id="bulkModal"
+    style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
+    <div class="card" style="margin: 50px auto; max-width: 500px;">
+        <h3>Add Equipment to <span id="modalStationName"></span></h3>
+        <form id="bulkForm">
+            <input type="hidden" name="station_id" id="modalStationId">
+
+            <div class="form-group">
+                <label class="form-label">Equipment List (One per line)</label>
+                <textarea name="names" class="form-control" rows="10"
+                    placeholder="Sterilizer No. 1&#10;Sterilizer No. 2&#10;Inlet Conveyor..."></textarea>
+                <small class="text-secondary">Copy and paste from Excel or Notepad.</small>
+            </div>
+
+            <div class="flex justify-between mt-4">
+                <button type="button" onclick="closeModal('bulkModal')" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Equipment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id) { document.getElementById(id).style.display = 'block'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function openBulkModal(stationId, stationName) {
+        document.getElementById('modalStationId').value = stationId;
+        document.getElementById('modalStationName').innerText = stationName;
+        openModal('bulkModal');
+    }
+
+    document.getElementById('bulkForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+        // Split by newline and filter empty
+        const names = data.names.split('\n').map(s => s.trim()).filter(s => s);
+
+        if (names.length === 0) return alert('Please enter at least one equipment name');
+
+        try {
+            const res = await fetch('/api/equipment/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    station_id: parseInt(data.station_id),
+                    names: names
+                })
+            });
+
+            if (res.ok) {
+                const result = await res.json();
+                alert(`Successfully added ${result.count} equipment items.`);
+                closeModal('bulkModal');
+                // Ideally refresh specific equipment list if visible, but here we just clear
+                e.target.reset();
+            } else {
+                alert('Error adding equipment');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error adding equipment');
+        }
+    });
+</script>

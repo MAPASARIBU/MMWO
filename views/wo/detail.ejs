@@ -1,0 +1,202 @@
+<div class="card">
+    <div class="flex justify-between items-center mb-4">
+        <h2>
+            <%= wo.wo_no %> <span class="badge status-<%= wo.status %>">
+                    <%= wo.status %>
+                </span>
+        </h2>
+        <div class="text-secondary">Created: <%= new Date(wo.created_at).toLocaleString() %>
+        </div>
+    </div>
+
+    <div class="grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+        <div>
+            <label class="form-label">Mill / Station</label>
+            <div>
+                <%= wo.mill ? wo.mill.name : '?' %> / <%= wo.station ? wo.station.name : '?' %>
+            </div>
+        </div>
+        <div>
+            <label class="form-label">Equipment</label>
+            <div>
+                <%= wo.equipment ? wo.equipment.name : 'General' %>
+            </div>
+            <% if (wo.equipment) { %> <small class="text-secondary">
+                    <%= wo.equipment.code %>
+                </small>
+                <% } %>
+        </div>
+        <div>
+            <label class="form-label">Category / Type</label>
+            <div>
+                <%= wo.category %> / <%= wo.type %>
+            </div>
+        </div>
+        <div>
+            <label class="form-label">Priority</label>
+            <div class="status-<%= wo.priority %>">
+                <%= wo.priority %>
+            </div>
+        </div>
+        <div>
+            <label class="form-label">Reporter</label>
+            <div>
+                <%= wo.reporter ? wo.reporter.name : 'Unknown' %>
+            </div>
+        </div>
+        <div>
+            <label class="form-label">Assignee</label>
+            <div>
+                <%= wo.assignee ? wo.assignee.name : 'Unassigned' %>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="form-label">Description</label>
+        <div style="background: #f9fafb; padding: 1rem; border-radius: 4px; white-space: pre-wrap;">
+            <%= wo.description %>
+        </div>
+    </div>
+
+    <% if (wo.attachments && wo.attachments.length> 0) { %>
+        <div class="mb-4">
+            <label class="form-label">Attachments</label>
+            <ul>
+                <% wo.attachments.forEach(function(att) { %>
+                    <li><a href="/uploads/<%= att.file_path %>" target="_blank">
+                            <%= att.file_name %>
+                        </a></li>
+                    <% }); %>
+            </ul>
+        </div>
+        <% } %>
+
+            <!-- Activity Log / Comments -->
+            <% if (wo.comments && wo.comments.length> 0) { %>
+                <div class="mb-4">
+                    <label class="form-label">Activity & Comments</label>
+                    <div
+                        style="border: 1px solid #eee; padding: 1rem; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                        <% wo.comments.forEach(function(c) { %>
+                            <div
+                                style="margin-bottom: 0.5rem; border-bottom: 1px solid #f9fafb; padding-bottom: 0.5rem;">
+                                <strong>
+                                    <%= c.user ? c.user.name : 'Unknown' %>
+                                </strong>
+                                <small class="text-secondary">
+                                    <%= new Date(c.created_at).toLocaleString() %>
+                                </small>
+                                <p style="margin: 0.2rem 0 0 0;">
+                                    <%= c.comment %>
+                                </p>
+                            </div>
+                            <% }); %>
+                    </div>
+                </div>
+                <% } %>
+
+                    <!-- Actions -->
+                    <div style="border-top: 1px solid #eee; padding-top: 1rem;">
+                        <h4>Actions</h4>
+
+                        <!-- Assign (Admin/Spv) -->
+                        <% if (wo.status==='OPEN' ) { %>
+                            <div class="card" style="background: #f9fafb; border: 1px solid #eee;">
+                                <h5>Assign Work Order</h5>
+                                <div class="flex gap-2">
+                                    <select id="assigneeSelect" class="form-control" style="max-width: 200px;">
+                                        <option value="">Select Maintainer</option>
+                                        <% if (typeof mtcUsers !=='undefined' ) { %>
+                                            <% mtcUsers.forEach(function(u) { %>
+                                                <option value="<%= u.id %>">
+                                                    <%= u.name %>
+                                                </option>
+                                                <% }); %>
+                                                    <% } %>
+                                    </select>
+                                    <button class="btn btn-primary" onclick="assignUser()">Assign</button>
+                                </div>
+                            </div>
+                            <% } %>
+
+                                <!-- Start Work (Assignee) -->
+                                <% if (wo.status==='ASSIGNED' ) { %>
+                                    <button class="btn btn-primary" onclick="updateStatus('IN_PROGRESS')">Start
+                                        Work</button>
+                                    <% } %>
+
+                                        <!-- Complete Work (Assignee) -->
+                                        <% if (wo.status==='IN_PROGRESS' ) { %>
+                                            <div class="card" style="background: #f9fafb; border: 1px solid #eee;">
+                                                <h5>Complete Work</h5>
+                                                <div class="form-group">
+                                                    <label class="form-label">Action Taken / Resolution</label>
+                                                    <textarea id="actionTaken" class="form-control" rows="3"
+                                                        placeholder="Describe what was done..."></textarea>
+                                                </div>
+                                                <div class="form-group">
+                                                    <label class="form-label">Upload Repair Photo (Optional)</label>
+                                                    <input type="file" id="completionImage" class="form-control">
+                                                </div>
+                                                <button class="btn btn-success"
+                                                    style="color:white; background-color: var(--success-color);"
+                                                    onclick="completeWo()">Complete Work</button>
+                                            </div>
+                                            <% } %>
+
+                                                <!-- Verification (Spv/Manager) -->
+                                                <% if (wo.status==='COMPLETED' ) { %>
+                                                    <button onclick="updateStatus('VERIFIED')"
+                                                        class="btn btn-primary">Verify</button>
+                                                    <button
+                                                        onclick="updateStatus('IN_PROGRESS', { comment: 'Rejected, please rework' })"
+                                                        class="btn btn-danger">Reject</button>
+                                                    <% } %>
+
+                                                        <% if (wo.status==='VERIFIED' ) { %>
+                                                            <button onclick="updateStatus('CLOSED')"
+                                                                class="btn btn-primary">Close WO</button>
+                                                            <% } %>
+
+                    </div>
+</div>
+
+<script>
+    const woId = <%= wo.id %>;
+
+    async function updateStatus(status, body = {}) {
+        if (!confirm('Update status to ' + status + '?')) return;
+        try {
+            const res = await fetch('/api/work-orders/' + woId + '/status', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: status, ...body })
+            });
+            if (res.ok) window.location.reload();
+            else alert('Error updating status');
+        } catch (e) { console.error(e); }
+    }
+
+    async function assignUser() {
+        const sel = document.getElementById('assigneeSelect');
+        const uid = sel.value;
+        if (!uid) return alert('Select user');
+        await updateStatus('ASSIGNED', { assignee_id: uid });
+    }
+
+    async function completeWo() {
+        const action = document.getElementById('actionTaken').value;
+        if (!action) return alert('Please describe action taken');
+
+        const fileInput = document.getElementById('completionImage');
+        if (fileInput.files.length > 0) {
+            const fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            fd.append('kind', 'completion');
+            await fetch('/api/work-orders/' + woId + '/attachments', { method: 'POST', body: fd });
+        }
+
+        await updateStatus('COMPLETED', { comment: 'ACTION TAKEN: ' + action });
+    }
+</script>

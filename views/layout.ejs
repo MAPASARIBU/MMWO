@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= typeof title !=='undefined' ? title + ' - MMWO' : 'MMWO System' %>
+    </title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                MMWO System
+            </div>
+            <ul class="nav-links">
+                <li class="nav-item">
+                    <a href="/dashboard" class="<%= path === '/dashboard' ? 'active' : '' %>">
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/work-orders" class="<%= path && path.startsWith('/work-orders') ? 'active' : '' %>">
+                        Work Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="/weekly-plan" class="<%= path === '/weekly-plan' ? 'active' : '' %>">
+                        Weekly Plan
+                    </a>
+                </li>
+                <% if (user && user.role==='ADMIN' ) { %>
+                    <li class="nav-item">
+                        <a href="/admin/users" class="<%= path === '/admin/users' ? 'active' : '' %>">
+                            User Management
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="/admin/master" class="<%= path === '/admin/master' ? 'active' : '' %>">
+                            Master Data
+                        </a>
+                    </li>
+                    <% } %>
+            </ul>
+            <div class="user-info">
+                <div>
+                    <%= user.name %>
+                </div>
+                <small>
+                    <%= user.role %> | <%= user.current_mill_name || (user.mill_id ? 'Mill ' + user.mill_id
+                            : 'All Mills' ) %>
+                </small>
+                <div style="margin-top: 0.5rem;">
+                    <a href="/auth/logout" style="color: #ef4444; padding: 0;">Logout</a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h2>
+                        <%= typeof title !=='undefined' ? title : '' %>
+                            <% if (typeof user !=='undefined' && (user.current_mill_name || user.mill_id)) { %>
+                                <span style="font-size: 0.8em; color: #666; margin-left: 10px;">
+                                    - <%= user.current_mill_name || ('Mill ' + user.mill_id) %>
+                            </span>
+                        <% } %>
+                    </h2>
+                </div>
+                <div class="actions">
+                    <!-- Global Actions can go here -->
+                </div>
+            </header>
+
+            <div class="page-content">
+                <%- body %>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Basic sidebar toggle for mobile (script to be enhanced)
+        /*
+        document.querySelector(' .menu-toggle')?.addEventListener('click', ()=> {
+                                        document.querySelector('.sidebar').classList.toggle('open');
+                                        });
+                                        */
+    </script>
+</body>
+
+</html>

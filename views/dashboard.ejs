@@ -1,0 +1,339 @@
+<div class="dashboard-grid"
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
+    <div class="card">
+        <h3>My Pending Tasks</h3>
+        <% if (user.role==='ADMIN' && typeof mills !=='undefined' && mills.length> 0) { %>
+            <div style="margin-bottom: 10px;">
+                <select onchange="window.location.href='/dashboard?millId='+this.value" class="form-control"
+                    style="width: 100%;">
+                    <option value="">-- All Mills --</option>
+                    <% mills.forEach(mill=> { %>
+                        <option value="<%= mill.id %>" <%=typeof selectedMillId !=='undefined' &&
+                            selectedMillId===mill.id ? 'selected' : '' %>>
+                            <%= mill.name %>
+                        </option>
+                        <% }); %>
+                </select>
+            </div>
+            <% } %>
+                <p class="text-3xl font-bold mt-2"
+                    style="font-size: 2rem; font-weight: 700; color: var(--primary-color);">
+                    <%= typeof stats !=='undefined' ? stats.pending : '-' %>
+                </p>
+    </div>
+    <div class="card">
+        <h3>This Week's Completion</h3>
+        <p class="text-3xl font-bold mt-2" style="font-size: 2rem; font-weight: 700; color: var(--success-color);">
+            <%= typeof stats !=='undefined' ? stats.completionRate + '%' : '-' %>
+        </p>
+    </div>
+    <div class="card">
+        <h3>High Priority (P1)</h3>
+        <p class="text-3xl font-bold mt-2" style="font-size: 2rem; font-weight: 700; color: var(--danger-color);">
+            <%= typeof stats !=='undefined' ? stats.highPriority : '-' %>
+        </p>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="dashboard-grid mt-4"
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+    <div class="card">
+        <h3 style="font-size: 1rem; margin-bottom: 10px;">Work Orders by Type Kerusakan</h3>
+        <div style="height: 200px; position: relative;">
+            <canvas id="typeChart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <h3 style="font-size: 1rem; margin-bottom: 10px;">Work Orders by Category</h3>
+        <div style="height: 200px; position: relative;">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Prepare Data from Server-Side
+        const typeData = JSON.parse('<%- JSON.stringify(typeof typeStats !== "undefined" ? typeStats : []) %>');
+        const categoryData = JSON.parse('<%- JSON.stringify(typeof categoryStats !== "undefined" ? categoryStats : []) %>');
+
+        // Type Chart
+        const typeLabels = typeData.map(d => d.type || 'Unknown');
+        const typeCounts = typeData.map(d => d._count.type);
+
+        new Chart(document.getElementById('typeChart'), {
+            type: 'bar', // Using Bar chart for clarity
+            data: {
+                labels: typeLabels,
+                datasets: [{
+                    label: 'Count',
+                    data: typeCounts,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                }
+            }
+        });
+
+        // Category Chart
+        const catLabels = categoryData.map(d => d.category || 'Unknown');
+        const catCounts = categoryData.map(d => d._count.category);
+
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut', // Using Doughnut for category distribution
+            data: {
+                labels: catLabels,
+                datasets: [{
+                    data: catCounts,
+                    backgroundColor: [
+                        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'right' }
+                }
+            }
+        });
+    });
+</script>
+
+<% if (typeof assignedWos !=='undefined' && assignedWos.length> 0) { %>
+    <div class="card mt-4" style="border-left: 4px solid var(--primary-color);">
+        <div class="flex justify-between items-center mb-4">
+            <h3>My Assigned Work Orders (Action Required)</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>WO No</th>
+                        <th>Station</th>
+                        <th>Description</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% assignedWos.forEach(wo=> { %>
+                        <tr>
+                            <td><a href="/work-orders/<%= wo.id %>"
+                                    style="color: var(--primary-color); font-weight: 500;">
+                                    <%= wo.wo_no %>
+                                </a></td>
+                            <td>
+                                <%= wo.station.name %>
+                            </td>
+                            <td>
+                                <%= wo.description.length> 50 ? wo.description.substring(0,50)+'...' : wo.description %>
+                            </td>
+                            <td><span class="status-<%= wo.priority %>">
+                                    <%= wo.priority %>
+                                </span></td>
+                            <td><span class="badge status-<%= wo.status %>">
+                                    <%= wo.status %>
+                                </span></td>
+                            <td>
+                                <a href="/work-orders/<%= wo.id %>" class="btn btn-sm btn-primary">Process</a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <% } %>
+
+        <div class="card mt-4">
+
+            <div class="flex justify-between items-center mb-4">
+                <h3>Work Orders <%= typeof hasFilters !=='undefined' && hasFilters ? '(Filtered)' : '(Recent)' %>
+                </h3>
+                <div>
+                    <button onclick="openPrintModal()" class="btn btn-primary btn-sm" style="margin-right: 5px;">
+                        <i class="fas fa-print"></i> Print Rekap
+                    </button>
+                    <a href="/work-orders" class="btn btn-secondary btn-sm">View All</a>
+                </div>
+            </div>
+
+            <!-- Dashboard Filters -->
+            <div class="card mb-4" style="background-color: #f8f9fa; border: 1px solid #e9ecef;">
+                <form action="/dashboard" method="GET" id="dashboardFilterForm">
+                    <% if (typeof selectedMillId !=='undefined' && selectedMillId) { %>
+                        <input type="hidden" name="millId" value="<%= selectedMillId %>">
+                        <% } %>
+
+                            <div
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: end;">
+
+                                <!-- Date Range Column -->
+                                <div style="min-width: 250px;">
+                                    <label
+                                        style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: #495057;">Date
+                                        Range</label>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="date" name="startDate" class="form-control"
+                                            style="font-size: 0.9em;"
+                                            value="<%= typeof filterInfo !== 'undefined' && filterInfo.startDate ? new Date(filterInfo.startDate).toISOString().split('T')[0] : '' %>">
+                                        <span style="color: #6c757d;">-</span>
+                                        <input type="date" name="endDate" class="form-control" style="font-size: 0.9em;"
+                                            value="<%= typeof filterInfo !== 'undefined' && filterInfo.endDate ? new Date(filterInfo.endDate).toISOString().split('T')[0] : '' %>">
+                                    </div>
+                                </div>
+
+                                <!-- Status Column -->
+                                <div style="flex-grow: 2;">
+                                    <label
+                                        style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: #495057;">Status</label>
+                                    <div
+                                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px;">
+                                        <% ['OPEN', 'ASSIGNED' , 'IN_PROGRESS' , 'ON_HOLD' , 'COMPLETED' , 'CLOSED'
+                                            ].forEach(status=> { %>
+                                            <label
+                                                style="font-size: 0.85em; display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;">
+                                                <input type="checkbox" name="status" value="<%= status %>" <%=typeof
+                                                    filterInfo !=='undefined' && filterInfo.status &&
+                                                    (Array.isArray(filterInfo.status) ?
+                                                    filterInfo.status.includes(status) : filterInfo.status===status)
+                                                    ? 'checked' : '' %>>
+                                                <%= status %>
+                                            </label>
+                                            <% }); %>
+                                    </div>
+                                </div>
+
+                                <!-- Actions Column -->
+                                <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                    <button type="submit" class="btn btn-primary btn-sm"
+                                        style="display: flex; align-items: center; gap: 5px;">
+                                        <i class="fas fa-filter"></i> Apply
+                                    </button>
+                                    <% if (typeof hasFilters !=='undefined' && hasFilters) { %>
+                                        <a href="/dashboard<%= typeof selectedMillId !== 'undefined' ? '?millId=' + selectedMillId : '' %>"
+                                            class="btn btn-secondary btn-sm"
+                                            style="display: flex; align-items: center; gap: 5px;">
+                                            <i class="fas fa-times"></i> Clear
+                                        </a>
+                                        <% } %>
+                                </div>
+                            </div>
+                </form>
+            </div>
+
+
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>WO No</th>
+                            <th>Description</th>
+                            <th>Station</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (typeof recentWos !=='undefined' && recentWos.length> 0) { %>
+                            <% recentWos.forEach(wo=> { %>
+                                <tr>
+                                    <td><a href="/work-orders/<%= wo.id %>"
+                                            style="color: var(--primary-color); font-weight: 500;">
+                                            <%= wo.wo_no %>
+                                        </a></td>
+                                    <td>
+                                        <%= wo.description %>
+                                    </td>
+                                    <td>
+                                        <%= wo.station.name %>
+                                    </td>
+                                    <td><span class="status-<%= wo.priority %>">
+                                            <%= wo.priority %>
+                                        </span></td>
+                                    <td><span class="badge status-<%= wo.status %>">
+                                            <%= wo.status %>
+                                        </span></td>
+                                </tr>
+                                <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="5">No recent work orders found.</td>
+                                        </tr>
+                                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Print Filter Modal -->
+        <div id="printModal" class="modal-overlay"
+            style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+            <div class="modal-content"
+                style="background: white; padding: 20px; border-radius: 8px; width: 400px; max-width: 90%;">
+                <h3 style="margin-top: 0;">Print Filters</h3>
+                <form action="/dashboard/print" method="GET" target="_blank">
+                    <!-- Persist Mill ID if exists -->
+                    <% if (typeof selectedMillId !=='undefined' && selectedMillId) { %>
+                        <input type="hidden" name="millId" value="<%= selectedMillId %>">
+                        <% } %>
+
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Date Range</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="date" name="startDate" class="form-control" style="flex: 1;"
+                                        value="<%= typeof filterInfo !== 'undefined' && filterInfo.startDate ? new Date(filterInfo.startDate).toISOString().split('T')[0] : '' %>">
+                                    <input type="date" name="endDate" class="form-control" style="flex: 1;"
+                                        value="<%= typeof filterInfo !== 'undefined' && filterInfo.endDate ? new Date(filterInfo.endDate).toISOString().split('T')[0] : '' %>">
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Status</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                                    <% ['OPEN', 'ASSIGNED' , 'IN_PROGRESS' , 'ON_HOLD' , 'COMPLETED' , 'CLOSED'
+                                        ].forEach(status=> { %>
+                                        <label><input type="checkbox" name="status" value="<%= status %>" <%=typeof
+                                                filterInfo !=='undefined' && filterInfo.status &&
+                                                (Array.isArray(filterInfo.status) ? filterInfo.status.includes(status) :
+                                                filterInfo.status===status) ? 'checked' : '' %>> <%= status %></label>
+                                        <% }); %>
+                                </div>
+                            </div>
+
+                            <div style="text-align: right; margin-top: 20px;">
+                                <button type="button" onclick="closePrintModal()" class="btn btn-secondary"
+                                    style="margin-right: 5px;">Cancel</button>
+                                <button type="submit" class="btn btn-primary" onclick="closePrintModal()">Print</button>
+                            </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+            function openPrintModal() {
+                document.getElementById('printModal').style.display = 'flex';
+            }
+            function closePrintModal() {
+                document.getElementById('printModal').style.display = 'none';
+            }
+
+            // Close modal when clicking outside
+            document.getElementById('printModal').addEventListener('click', function (e) {
+                if (e.target === this) {
+                    closePrintModal();
+                }
+            });
+        </script>

@@ -1,0 +1,222 @@
+<div class="card">
+    <div class="flex justify-between items-center mb-4">
+        <h3>Weekly Plan</h3>
+        <!-- Future: Add button to open planner modal -->
+    </div>
+
+    <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
+        <h4>Find Unplanned Work</h4>
+        <form action="/weekly-plan" method="GET" class="flex gap-4 items-end mb-4">
+            <!-- Persist current week filter if any -->
+            <input type="hidden" name="week" value="<%= query.week || '' %>">
+
+            <div class="form-group mb-0">
+                <label class="text-sm text-gray-600">From</label>
+                <input type="date" name="candidateStart" class="form-control" value="<%= query.candidateStart || '' %>"
+                    required>
+            </div>
+            <div class="form-group mb-0">
+                <label class="text-sm text-gray-600">To</label>
+                <input type="date" name="candidateEnd" class="form-control" value="<%= query.candidateEnd || '' %>"
+                    required>
+            </div>
+            <button type="submit" class="btn btn-info text-white">Find Candidates</button>
+            <% if (query.candidateStart) { %>
+                <a href="/weekly-plan?week=<%= query.week || '' %>" class="btn btn-secondary">Clear</a>
+                <% } %>
+        </form>
+
+        <% if (typeof candidateWos !=='undefined' && candidateWos.length> 0) { %>
+            <hr class="my-3">
+            <h5 class="mb-3">Select WOs to Plan</h5>
+            <form action="/api/weekly-plan/bulk" method="POST">
+                <div class="flex gap-4 mb-3 p-3 bg-gray-50 rounded">
+                    <div class="form-group mb-0 flex-grow">
+                        <label class="text-sm font-bold">Target Week * (This Week)</label>
+                        <input type="text" name="planned_week" class="form-control"
+                            style="background-color: #e9ecef; cursor: not-allowed;" readonly
+                            value="<%= typeof currentWeek !== 'undefined' ? currentWeek : (query.week || '') %>">
+                    </div>
+                    <div class="form-group mb-0 flex-grow">
+                        <label class="text-sm font-bold">Target Day</label>
+                        <select name="planned_day" class="form-control">
+                            <option value="">-- Select Day --</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="btn btn-success">Add to Plan</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th width="40"><input type="checkbox" onclick="toggleAll(this)"></th>
+                                <th>WO No</th>
+                                <th>Date</th>
+                                <th>Priority</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% candidateWos.forEach(wo=> { %>
+                                <tr>
+                                    <td>
+                                        <input type="checkbox" name="wo_ids[]" value="<%= wo.id %>">
+                                    </td>
+                                    <td>
+                                        <%= wo.wo_no %>
+                                    </td>
+                                    <td>
+                                        <%= new Date(wo.created_at).toLocaleDateString() %>
+                                    </td>
+                                    <td><span class="badge badge-<%= wo.priority === 'P1' ? 'danger' : 'secondary' %>">
+                                            <%= wo.priority %>
+                                        </span></td>
+                                    <td>
+                                        <%= wo.description.substring(0, 50) %>...
+                                    </td>
+                                </tr>
+                                <% }) %>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
+            <script>
+                function toggleAll(source) {
+                    checkboxes = document.getElementsByName('wo_ids[]');
+                    for (var i = 0, n = checkboxes.length; i < n; i++) {
+                        checkboxes[i].checked = source.checked;
+                    }
+                }
+            </script>
+            <% } else if (query.candidateStart) { %>
+                <p class="text-muted italic">No unplanned open work orders found in this range.</p>
+                <% } %>
+    </div>
+
+    <div class="print-header hidden-print-block">
+        <h2 class="text-center mb-4">Weekly Maintenance Plan</h2>
+        <div class="flex justify-between mb-4">
+            <div><strong>Week:</strong>
+                <%= query.week || 'All' %>
+            </div>
+            <div><strong>Day:</strong>
+                <%= query.day || 'All' %>
+            </div>
+        </div>
+    </div>
+
+    <form action="/weekly-plan" method="GET" class="filter-bar mb-4 no-print">
+        <div class="flex gap-2">
+            <div class="form-group mb-0">
+                <input type="text" name="week" class="form-control" placeholder="Week (e.g. 2026-W06)"
+                    value="<%= query.week || '' %>">
+            </div>
+            <div class="form-group mb-0">
+                <select name="day" class="form-control">
+                    <option value="">All Days</option>
+                    <% ['Monday', 'Tuesday' , 'Wednesday' , 'Thursday' , 'Friday' , 'Saturday' , 'Sunday' ].forEach(d=>
+                        { %>
+                        <option value="<%= d %>" <%=query.day===d ? 'selected' : '' %>><%= d %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            <button type="button" class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print Plan
+            </button>
+        </div>
+    </form>
+
+    <style>
+        .hidden-print-block {
+            display: none;
+        }
+
+        @media print {
+
+            .no-print,
+            .card h4,
+            .card hr,
+            .card>form.flex,
+            .card>.filter-bar,
+            nav,
+            footer,
+            .btn {
+                display: none !important;
+            }
+
+            .card {
+                border: none !important;
+                box-shadow: none !important;
+            }
+
+            .hidden-print-block {
+                display: block !important;
+            }
+
+            .table-responsive {
+                overflow: visible !important;
+            }
+
+            body {
+                background: white;
+            }
+        }
+    </style>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Week</th>
+                    <th>Day</th>
+                    <th>WO No</th>
+                    <th>Station</th>
+                    <th>Description</th>
+                    <th>Planner</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (plans.length> 0) { %>
+                    <% plans.forEach(plan=> { %>
+                        <tr>
+                            <td>
+                                <%= plan.planned_week %>
+                            </td>
+                            <td>
+                                <%= plan.planned_day || '-' %>
+                            </td>
+                            <td><a href="/work-orders/<%= plan.wo.id %>">
+                                    <%= plan.wo.wo_no %>
+                                </a></td>
+                            <td>
+                                <%= plan.wo.station.name %>
+                            </td>
+                            <td>
+                                <%= plan.wo.description %>
+                            </td>
+                            <td>
+                                <%= plan.planner.name %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">No planned work found.</td>
+                                </tr>
+                                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>

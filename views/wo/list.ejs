@@ -1,0 +1,78 @@
+<div class="card">
+    <div class="flex justify-between items-center mb-4">
+        <h3>Work Orders</h3>
+        <a href="/work-orders/create" class="btn btn-primary">
+            + Create New WO
+        </a>
+    </div>
+
+    <!-- Filters -->
+    <form action="/work-orders" method="GET" class="filter-bar mb-4"
+        style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: end;">
+        <div class="form-group mb-0">
+            <label class="form-label" style="font-size: 0.75rem;">Date</label>
+            <input type="date" name="date" class="form-control" style="width: 150px;" value="<%= query.date || '' %>">
+        </div>
+
+
+        <div class="form-group mb-0">
+            <button type="submit" class="btn btn-secondary">Filter</button>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>WO No</th>
+                    <th>Type Kerusakan</th>
+                    <th>Station</th>
+                    <th>Equipment</th>
+                    <th>Description</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Assignee</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (wos.length> 0) { %>
+                    <% wos.forEach(wo=> { %>
+                        <tr onclick="window.location='/work-orders/<%= wo.id %>'" style="cursor: pointer;"
+                            class="hover:bg-gray-50">
+                            <td><span style="color: var(--primary-color); font-weight: 500;">
+                                    <%= wo.wo_no %>
+                                </span></td>
+                            <td>
+                                <%= wo.type || '-' %>
+                            </td>
+                            <td>
+                                <%= wo.station.name %>
+                            </td>
+                            <td>
+                                <%= wo.equipment ? wo.equipment.name : '-' %>
+                            </td>
+                            <td>
+                                <%= wo.description.length> 50 ? wo.description.substring(0, 50) + '...' : wo.description
+                                    %>
+                            </td>
+                            <td><span class="status-<%= wo.priority %>">
+                                    <%= wo.priority %>
+                                </span></td>
+                            <td><span class="badge status-<%= wo.status %>">
+                                    <%= wo.status %>
+                                </span></td>
+                            <td>
+                                <%= wo.assignee ? wo.assignee.name : '-' %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">No work orders found matching your
+                                        criteria.</td>
+                                </tr>
+                                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
