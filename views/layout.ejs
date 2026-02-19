@@ -63,6 +63,14 @@
         <!-- Main Content -->
         <main class="main-content">
             <header class="top-bar">
+                <button class="menu-toggle" aria-label="Toggle Navigation">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
                 <div class="page-title">
                     <h2>
                         <%= typeof title !=='undefined' ? title : '' %>
@@ -85,13 +93,20 @@
     </div>
 
     <script>
-        // Basic sidebar toggle for mobile (script to be enhanced)
-        /*
-        document.querySelector(' .menu-toggle')?.addEventListener('click', ()=> {
-                                        document.querySelector('.sidebar').classList.toggle('open');
-                                        });
-                                        */
-    </script>
+        // Sidebar toggle for mobile
+        const menuToggle = document.querySelector(' .menu-toggle'); const sidebar = document.querySelector('.sidebar');
+        const overlay = document.createElement('div'); overlay.className = 'sidebar-overlay'
+            ; document.body.appendChild(overlay); function toggleSidebar() {
+                sidebar.classList.toggle('open'); overlay.classList.toggle('show');
+            } if
+            (menuToggle) { menuToggle.addEventListener('click', toggleSidebar); } // Close
+                                        sidebar when clicking overlay overlay.addEventListener('click', toggleSidebar);
+        // Close sidebar when clicking a link (optional, for better UX) const
+        navLinks = document.querySelectorAll('.nav-item a'); navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 768) { toggleSidebar(); }
+            });
+        }); </script>
 </body>
 
 </html>
