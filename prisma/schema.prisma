@@ -8,161 +8,148 @@ datasource db {
 }
 
 model User {
-  id             Int           @id @default(autoincrement())
-  username       String        @unique
-  password_hash  String
-  name           String
-  role           String        // ADMIN, PROC, MTC, SPV, MANAGER
-  mill_id        Int?
-  is_active      Boolean       @default(true)
-  created_at     DateTime      @default(now())
-  
-  mill           Mill?         @relation(fields: [mill_id], references: [id])
-  reported_wos   WorkOrder[]   @relation("Reporter")
-  assigned_wos   WorkOrder[]   @relation("Assignee")
-  comments       Comment[]
-  audit_logs     AuditLog[]
-  planned_weeks  WeeklyPlan[]
+  id            Int          @id @default(autoincrement())
+  username      String       @unique
+  password_hash String
+  name          String
+  role          String
+  mill_id       Int?
+  is_active     Boolean      @default(true)
+  created_at    DateTime     @default(now())
+  mill          Mill?        @relation(fields: [mill_id], references: [id])
+  planned_weeks WeeklyPlan[]
+  audit_logs    AuditLog[]
+  comments      Comment[]
+  assigned_wos  WorkOrder[]  @relation("Assignee")
+  reported_wos  WorkOrder[]  @relation("Reporter")
 
   @@map("users")
 }
 
 model Mill {
-  id        Int       @id @default(autoincrement())
-  name      String
-  location  String?
-  created_at DateTime @default(now())
-
-  users     User[]
-  stations  Station[]
-  wos       WorkOrder[]
+  id         Int         @id @default(autoincrement())
+  name       String
+  location   String?
+  created_at DateTime    @default(now())
+  stations   Station[]
+  users      User[]
+  wos        WorkOrder[]
 
   @@map("mills")
 }
 
 model Station {
-  id        Int       @id @default(autoincrement())
-  mill_id   Int
-  name      String
-  order_index Int @default(0)
-  created_at DateTime @default(now())
-
-  mill      Mill      @relation(fields: [mill_id], references: [id])
-  equipment Equipment[]
-  wos       WorkOrder[]
+  id          Int         @id @default(autoincrement())
+  mill_id     Int
+  name        String
+  order_index Int         @default(0)
+  created_at  DateTime    @default(now())
+  equipment   Equipment[]
+  mill        Mill        @relation(fields: [mill_id], references: [id])
+  wos         WorkOrder[]
 
   @@map("stations")
 }
 
 model Equipment {
-  id          Int       @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   station_id  Int
   code        String
   name        String
-  criticality String    // LOW, MED, HIGH
-  is_active   Boolean   @default(true)
-  created_at  DateTime  @default(now())
-
-  station     Station   @relation(fields: [station_id], references: [id])
+  criticality String
+  is_active   Boolean     @default(true)
+  created_at  DateTime    @default(now())
+  station     Station     @relation(fields: [station_id], references: [id])
   wos         WorkOrder[]
 
   @@map("equipment")
 }
 
 model WorkOrder {
-  id              Int       @id @default(autoincrement())
-  wo_no           String    @unique // Auto-generated e.g. WO-YYYYMMDD-XXXX
-  mill_id         Int
-  station_id      Int
-  equipment_id    Int?
-  category        String
-  type            String
-  priority        String    // P1, P2, P3, P4
-  description     String
-  status          String    // OPEN, ASSIGNED, IN_PROGRESS, COMPLETED, VERIFIED, CLOSED, CANCELLED
-  reporter_id     Int
-  assignee_id     Int?
-  
-  target_start    DateTime?
-  target_finish   DateTime?
-  
-  started_at      DateTime?
-  completed_at    DateTime?
-  verified_at     DateTime?
-  closed_at       DateTime?
-  
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
-
-  mill            Mill      @relation(fields: [mill_id], references: [id])
-  station         Station   @relation(fields: [station_id], references: [id])
-  equipment       Equipment? @relation(fields: [equipment_id], references: [id])
-  reporter        User      @relation("Reporter", fields: [reporter_id], references: [id])
-  assignee        User?     @relation("Assignee", fields: [assignee_id], references: [id])
-  
-  attachments     Attachment[]
-  comments        Comment[]
-  audit_logs      AuditLog[]
-  weekly_plan     WeeklyPlan?
+  id            Int          @id @default(autoincrement())
+  wo_no         String       @unique
+  mill_id       Int
+  station_id    Int
+  equipment_id  Int?
+  category      String
+  type          String
+  priority      String
+  description   String
+  status        String
+  reporter_id   Int
+  assignee_id   Int?
+  target_start  DateTime?
+  target_finish DateTime?
+  started_at    DateTime?
+  completed_at  DateTime?
+  verified_at   DateTime?
+  closed_at     DateTime?
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  weekly_plan   WeeklyPlan?
+  attachments   Attachment[]
+  audit_logs    AuditLog[]
+  comments      Comment[]
+  assignee      User?        @relation("Assignee", fields: [assignee_id], references: [id])
+  equipment     Equipment?   @relation(fields: [equipment_id], references: [id])
+  mill          Mill         @relation(fields: [mill_id], references: [id])
+  reporter      User         @relation("Reporter", fields: [reporter_id], references: [id])
+  station       Station      @relation(fields: [station_id], references: [id])
 
   @@map("work_orders")
 }
 
 model Attachment {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   wo_id       Int
-  kind        String   // damage, completion
+  kind        String
   file_path   String
   file_name   String
   mime_type   String
   size        Int
-  uploaded_by Int?     // Could link to user if needed, sticking to spec minimal
-  uploaded_at DateTime @default(now())
-
+  uploaded_by Int?
+  uploaded_at DateTime  @default(now())
   wo          WorkOrder @relation(fields: [wo_id], references: [id])
 
   @@map("wo_attachments")
 }
 
 model Comment {
-  id          Int      @id @default(autoincrement())
-  wo_id       Int
-  user_id     Int
-  comment     String
-  created_at  DateTime @default(now())
-
-  wo          WorkOrder @relation(fields: [wo_id], references: [id])
-  user        User      @relation(fields: [user_id], references: [id])
+  id         Int       @id @default(autoincrement())
+  wo_id      Int
+  user_id    Int
+  comment    String
+  created_at DateTime  @default(now())
+  user       User      @relation(fields: [user_id], references: [id])
+  wo         WorkOrder @relation(fields: [wo_id], references: [id])
 
   @@map("wo_comments")
 }
 
 model AuditLog {
-  id          Int      @id @default(autoincrement())
-  wo_id       Int
-  user_id     Int
-  action      String
-  field       String?
-  old_value   String?
-  new_value   String?
-  created_at  DateTime @default(now())
-
-  wo          WorkOrder @relation(fields: [wo_id], references: [id])
-  user        User      @relation(fields: [user_id], references: [id])
+  id         Int       @id @default(autoincrement())
+  wo_id      Int
+  user_id    Int
+  action     String
+  field      String?
+  old_value  String?
+  new_value  String?
+  created_at DateTime  @default(now())
+  user       User      @relation(fields: [user_id], references: [id])
+  wo         WorkOrder @relation(fields: [wo_id], references: [id])
 
   @@map("wo_audit_logs")
 }
 
 model WeeklyPlan {
-  id           Int      @id @default(autoincrement())
-  wo_id        Int      @unique
-  planned_week String   // e.g. "2023-W45"
-  planned_day  String?  // e.g. "Monday" or Date string
+  id           Int       @id @default(autoincrement())
+  wo_id        Int       @unique
+  planned_week String
+  planned_day  String?
   planned_by   Int
-  created_at   DateTime @default(now())
-
-  wo           WorkOrder @relation(fields: [wo_id], references: [id])
+  created_at   DateTime  @default(now())
   planner      User      @relation(fields: [planned_by], references: [id])
+  wo           WorkOrder @relation(fields: [wo_id], references: [id])
 
   @@map("weekly_plan")
 }

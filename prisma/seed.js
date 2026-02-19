@@ -69,7 +69,7 @@ async function main() {
     const passwordHash = await bcrypt.hash('admin123', 10);
     const admin = await prisma.user.upsert({
         where: { username: 'admin' },
-        update: {},
+        update: { role: 'ADMIN' },
         create: {
             username: 'admin',
             password_hash: passwordHash,
@@ -84,7 +84,7 @@ async function main() {
     // 5. Create Other Users
     const procUser = await prisma.user.upsert({
         where: { username: 'proc' },
-        update: {},
+        update: { role: 'PROC' },
         create: {
             username: 'proc',
             password_hash: await bcrypt.hash('proc123', 10),
@@ -96,7 +96,7 @@ async function main() {
 
     const mtcUser = await prisma.user.upsert({
         where: { username: 'mtc' },
-        update: {},
+        update: { role: 'MTC' },
         create: {
             username: 'mtc',
             password_hash: await bcrypt.hash('mtc123', 10),
@@ -108,7 +108,7 @@ async function main() {
 
     const spvUser = await prisma.user.upsert({
         where: { username: 'spv' },
-        update: {},
+        update: { role: 'SPV' },
         create: {
             username: 'spv',
             password_hash: await bcrypt.hash('spv123', 10),
@@ -120,7 +120,7 @@ async function main() {
 
     const managerUser = await prisma.user.upsert({
         where: { username: 'manager' },
-        update: {},
+        update: { role: 'MANAGER' },
         create: {
             username: 'manager',
             password_hash: await bcrypt.hash('manager123', 10),
