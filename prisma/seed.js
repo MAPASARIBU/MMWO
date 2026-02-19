@@ -49,16 +49,38 @@ async function main() {
         if (mill.id === 1) firstMill = mill;
         console.log(`Processed Mill: ${mill.name}`);
 
+        // For Mill 1, proactively clean up duplicates
+        // This ensures the production DB gets cleaned up during deployment
+        if (mill.id === 1) {
+            for (const name of stationNames) {
+                const duplicates = await prisma.station.findMany({
+                    where: { mill_id: mill.id, name: name },
+                    orderBy: { id: 'asc' }
+                });
+
+                if (duplicates.length > 1) {
+                    console.log(`Cleaning duplicates for ${name} at Mill 1`);
+                    // Keep the one with ID <= 16 if possible, else the first one
+                    let toKeep = duplicates[0];
+                    const original = duplicates.find(d => d.id <= 16);
+                    if (original) toKeep = original;
+
+                    const toDelete = duplicates.filter(d => d.id !== toKeep.id);
+                    for (const d of toDelete) {
+                        await prisma.station.delete({ where: { id: d.id } });
+                    }
+                }
+            }
+        }
+
         // Create Stations for this Mill
         for (const name of stationNames) {
             // Check if station exists by name for this mill
             const existingStation = await prisma.station.findFirst({
-                where: { mill_id: mill.id, name: name } // Only check name within this mill
+                where: { mill_id: mill.id, name: name }
             });
 
-            if (existingStation) {
-                continue;
-            }
+            if (existingStation) continue;
 
             let stationId;
             if (mill.id === 1) {
