@@ -123,7 +123,7 @@ const detailWorkOrderPage = async (req, res) => {
 
         res.render('layout', {
             title: wo.wo_no,
-            body: await renderView('wo/detail', { wo, mtcUsers: users }),
+            body: await renderView('wo/detail', { wo, mtcUsers: users, user }),
             user: req.session.user,
             path: '/work-orders'
         });

@@ -152,7 +152,7 @@
 
             if (res.ok) {
                 const wo = await res.json();
-                window.location.href = `/work-orders/${wo.id}`;
+                window.location.href = '/work-orders';
             } else {
                 alert('Error creating WO');
             }
