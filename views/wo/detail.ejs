@@ -130,8 +130,8 @@
                             </div>
                             <% } %>
 
-                                <!-- Start Work (Assignee) -->
-                                <% if (wo.status==='ASSIGNED' ) { %>
+                                <!-- Start Work (Assignee - MTC/Admin Only) -->
+                                <% if (wo.status==='ASSIGNED' && (user.role==='MTC' || user.role==='ADMIN' )) { %>
                                     <button class="btn btn-primary" onclick="updateStatus('IN_PROGRESS')">Start
                                         Work</button>
                                     <% } %>

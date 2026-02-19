@@ -176,6 +176,10 @@ const updateStatus = async (req, res) => {
             action = 'ASSIGNED';
         }
         else if (status === 'IN_PROGRESS') {
+            // AUTHORIZATION: Only MTC or ADMIN can start work
+            if (user.role !== 'MTC' && user.role !== 'ADMIN') {
+                return res.status(403).json({ error: 'Only Maintenance Team can start work.' });
+            }
             updateData.started_at = new Date();
         }
         else if (status === 'COMPLETED') {
