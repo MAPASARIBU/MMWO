@@ -70,12 +70,11 @@ Aplikasi butuh table-table agar bisa jalan. Railway bisa menjalankan perintah bu
 2.  Cari bagian **Build Command**. Defaultnya mungkin kosong atau `npm run build`.
 3.  Ubah **Build Command** menjadi:
     ```bash
-    npm install && npx prisma generate && npx prisma migrate deploy && node prisma/seed.js
+    npm install && npx prisma generate
     ```
-    *Penjelasan: Ini akan menginstall dependency, generate client prisma, melakukan migrasi database (membuat table), dan mengisi data awal (seed).*
-4.  Dan pastikan **Start Command** adalah:
+4.  Dan ubah **Start Command** menjadi:
     ```bash
-    node src/app.js
+    npx prisma db push && node src/app.js
     ```
 5.  Railway akan mendeteksi perubahan dan melakukan redeploy.
 
