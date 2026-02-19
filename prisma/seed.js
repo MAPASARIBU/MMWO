@@ -51,9 +51,31 @@ async function main() {
 
         // Create Stations for this Mill
         for (const name of stationNames) {
-            // Unique ID strategy: (MillID * 100) + Index
-            // This allows up to 100 stations per mill, safe for seed
-            const stationId = (mill.id * 100) + (stationNames.indexOf(name) + 1);
+            // Check if station exists by name for this mill
+            const existingStation = await prisma.station.findFirst({
+                where: { mill_id: mill.id, name: name } // Only check name within this mill
+            });
+
+            if (existingStation) {
+                // Determine if we need to update anything (optional)
+                // console.log(`Station ${name} already exists for ${mill.name}`);
+                continue;
+            }
+
+            let stationId;
+            if (mill.id === 1) {
+                // For Mill 1, try to use the original index if available (1-16)
+                stationId = stationNames.indexOf(name) + 1;
+                // Check if this ID is already taken
+                const idCheck = await prisma.station.findUnique({ where: { id: stationId } });
+                if (idCheck) {
+                    // Fallback if ID 1-16 is taken
+                    stationId = (mill.id * 100) + (stationNames.indexOf(name) + 1);
+                }
+            } else {
+                // Format: (MillID * 100) + Index
+                stationId = (mill.id * 100) + (stationNames.indexOf(name) + 1);
+            }
 
             await prisma.station.upsert({
                 where: { id: stationId },
@@ -78,7 +100,7 @@ async function main() {
             code: 'EQ-001',
             name: 'Sterilizer Door Valve',
             criticality: 'HIGH',
-            station_id: station.id,
+            station_id: station ? station.id : 1, // Fallback safe
         },
     });
 
@@ -94,7 +116,7 @@ async function main() {
             password_hash: passwordHash,
             name: 'Administrator',
             role: 'ADMIN',
-            mill_id: firstMill.id,
+            mill_id: firstMill ? firstMill.id : 1,
         },
     });
 
@@ -109,7 +131,7 @@ async function main() {
             password_hash: await bcrypt.hash('proc123', 10),
             name: 'Processing User',
             role: 'PROC',
-            mill_id: firstMill.id,
+            mill_id: firstMill ? firstMill.id : 1,
         },
     });
 
@@ -121,7 +143,7 @@ async function main() {
             password_hash: await bcrypt.hash('mtc123', 10),
             name: 'Maintenance User',
             role: 'MTC',
-            mill_id: firstMill.id,
+            mill_id: firstMill ? firstMill.id : 1,
         },
     });
 
@@ -133,7 +155,7 @@ async function main() {
             password_hash: await bcrypt.hash('spv123', 10),
             name: 'Supervisor',
             role: 'SPV',
-            mill_id: firstMill.id,
+            mill_id: firstMill ? firstMill.id : 1,
         },
     });
 
@@ -145,7 +167,7 @@ async function main() {
             password_hash: await bcrypt.hash('manager123', 10),
             name: 'Manager',
             role: 'MANAGER',
-            mill_id: firstMill.id,
+            mill_id: firstMill ? firstMill.id : 1,
         },
     });
 }
