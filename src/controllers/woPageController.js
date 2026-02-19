@@ -129,7 +129,7 @@ const detailWorkOrderPage = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).send('Error loading details');
+        res.status(500).send('Error loading details: ' + error.message + '<br><pre>' + error.stack + '</pre>');
     }
 };
 
