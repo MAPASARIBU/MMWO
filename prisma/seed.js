@@ -66,7 +66,23 @@ async function main() {
                     if (original) toKeep = original;
 
                     const toDelete = duplicates.filter(d => d.id !== toKeep.id);
+
                     for (const d of toDelete) {
+                        // Migrate related records to the 'toKeep' station ID
+
+                        // 1. Update Equipment
+                        await prisma.equipment.updateMany({
+                            where: { station_id: d.id },
+                            data: { station_id: toKeep.id }
+                        });
+
+                        // 2. Update Work Orders
+                        await prisma.workOrder.updateMany({
+                            where: { station_id: d.id },
+                            data: { station_id: toKeep.id }
+                        });
+
+                        // Now safe to delete
                         await prisma.station.delete({ where: { id: d.id } });
                     }
                 }
