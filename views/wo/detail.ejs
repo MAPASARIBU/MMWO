@@ -110,9 +110,9 @@
                     <div style="border-top: 1px solid #eee; padding-top: 1rem;">
                         <h4>Actions</h4>
 
-                        <!-- Assign (Admin/Spv/Manager) -->
+                        <!-- Assign (Admin/Spv/Manager/MTC) -->
                         <% if (wo.status==='OPEN' && (user.role==='ADMIN' || user.role==='SPV' || user.role==='MANAGER'
-                            )) { %>
+                            || user.role==='MTC' )) { %>
                             <div class="card" style="background: #f9fafb; border: 1px solid #eee;">
                                 <h5>Assign Work Order</h5>
                                 <div class="flex gap-2">
