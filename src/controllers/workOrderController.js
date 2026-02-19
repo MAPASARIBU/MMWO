@@ -171,6 +171,11 @@ const updateStatus = async (req, res) => {
 
         // Logic for transitions
         if (status === 'ASSIGNED') {
+            // AUTHORIZATION: Only ADMIN, SPV, MANAGER can assign
+            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER') {
+                return res.status(403).json({ error: 'Access Denied: You cannot assign Work Orders.' });
+            }
+
             if (!assignee_id) return res.status(400).json({ error: 'Assignee required' });
             updateData.assignee_id = parseInt(assignee_id);
             action = 'ASSIGNED';
