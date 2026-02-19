@@ -5,19 +5,18 @@ const prisma = new PrismaClient();
 const bcrypt = require('bcryptjs');
 
 async function main() {
-    // 1. Create Mills
-    const mill = await prisma.mill.upsert({
-        where: { id: 1 },
-        update: {},
-        create: {
-            name: 'BUNGA TANJUNG MILL',
-            location: 'Sumatra',
-        },
-    });
+    // 1. Define Mills
+    const millsData = [
+        { id: 1, name: 'BUNGA TANJUNG MILL', location: 'Sumatra' },
+        { id: 2, name: 'MUKO MUKO MILL', location: 'Bengkulu' },
+        { id: 3, name: 'BUKIT MARAJA MILL', location: 'Sumatra' },
+        { id: 4, name: 'PARLABIAN MILL', location: 'Sumatra' },
+        { id: 5, name: 'UMBUL MAS MILL', location: 'Sumatra' },
+        { id: 6, name: 'DENDY MARKER MILL', location: 'Sumatra' },
+        { id: 7, name: 'AGRO MUARA RUPIT MILL', location: 'Sumatra' }
+    ];
 
-    console.log({ mill });
-
-    // 2. Create Stations
+    // 2. Define Station Names (Standard for all mills)
     const stationNames = [
         'FFB Reception',
         'Sterilizer',
@@ -37,15 +36,35 @@ async function main() {
         'CPO Storage'
     ];
 
-    for (const name of stationNames) {
-        await prisma.station.upsert({
-            where: { id: stationNames.indexOf(name) + 1 }, // Simple ID strategy for seed
-            update: { name },
-            create: {
-                name,
-                mill_id: mill.id,
-            },
+    let firstMill = null;
+
+    for (const millData of millsData) {
+        // Create Mill
+        const mill = await prisma.mill.upsert({
+            where: { id: millData.id },
+            update: { name: millData.name, location: millData.location },
+            create: millData,
         });
+
+        if (mill.id === 1) firstMill = mill;
+        console.log(`Processed Mill: ${mill.name}`);
+
+        // Create Stations for this Mill
+        for (const name of stationNames) {
+            // Unique ID strategy: (MillID * 100) + Index
+            // This allows up to 100 stations per mill, safe for seed
+            const stationId = (mill.id * 100) + (stationNames.indexOf(name) + 1);
+
+            await prisma.station.upsert({
+                where: { id: stationId },
+                update: { name, mill_id: mill.id },
+                create: {
+                    id: stationId,
+                    name,
+                    mill_id: mill.id,
+                },
+            });
+        }
     }
 
     // Get a reference station for equipment (e.g., Sterilizer)
@@ -75,7 +94,7 @@ async function main() {
             password_hash: passwordHash,
             name: 'Administrator',
             role: 'ADMIN',
-            mill_id: mill.id,
+            mill_id: firstMill.id,
         },
     });
 
@@ -90,7 +109,7 @@ async function main() {
             password_hash: await bcrypt.hash('proc123', 10),
             name: 'Processing User',
             role: 'PROC',
-            mill_id: mill.id,
+            mill_id: firstMill.id,
         },
     });
 
@@ -102,7 +121,7 @@ async function main() {
             password_hash: await bcrypt.hash('mtc123', 10),
             name: 'Maintenance User',
             role: 'MTC',
-            mill_id: mill.id,
+            mill_id: firstMill.id,
         },
     });
 
@@ -114,7 +133,7 @@ async function main() {
             password_hash: await bcrypt.hash('spv123', 10),
             name: 'Supervisor',
             role: 'SPV',
-            mill_id: mill.id,
+            mill_id: firstMill.id,
         },
     });
 
@@ -126,7 +145,7 @@ async function main() {
             password_hash: await bcrypt.hash('manager123', 10),
             name: 'Manager',
             role: 'MANAGER',
-            mill_id: mill.id,
+            mill_id: firstMill.id,
         },
     });
 }
