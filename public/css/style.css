@@ -48,9 +48,15 @@ a {
     display: flex;
     flex-direction: column;
     position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
     height: 100vh;
     transition: transform 0.3s ease;
-    z-index: 50;
+    z-index: 1000;
+    /* Increased z-index to be sure */
+    overflow-y: auto;
+    /* Allow scrolling if menu is tall */
 }
 
 .sidebar-header {
@@ -345,7 +351,7 @@ a {
     right: 0;
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 45;
+    z-index: 999;
     opacity: 0;
     transition: opacity 0.3s ease;
 }
@@ -354,9 +360,12 @@ a {
     opacity: 1;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
     .menu-toggle {
-        display: block;
+        display: block !important;
+        z-index: 1001;
+        /* Ensure button is clickable */
     }
 
     .top-bar {
@@ -365,26 +374,36 @@ a {
     }
 
     .page-title {
-        font-size: 0.9rem; /* Adjust font size for mobile */
+        font-size: 0.9rem;
     }
-    
+
     .sidebar {
         transform: translateX(-100%);
-        width: 80%; /* Don't cover full screen */
-        max-width: 300px;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+        width: 80% !important;
+        max-width: 300px !important;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+        display: flex !important;
+        /* Ensure it's not hidden */
+        z-index: 2000 !important;
+        /* Extremely high z-index */
     }
 
     .sidebar.open {
-        transform: translateX(0);
+        transform: translateX(0) !important;
     }
-    
+
+    .sidebar-overlay {
+        z-index: 1999 !important;
+        /* Just below sidebar */
+    }
+
     .sidebar-overlay.show {
-        display: block;
+        display: block !important;
+        opacity: 1 !important;
     }
 
     .main-content {
-        margin-left: 0;
-        width: 100%;
+        margin-left: 0 !important;
+        width: 100% !important;
     }
 }
