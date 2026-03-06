@@ -28,6 +28,11 @@ const getMasterDataPage = async (req, res) => {
         const mills = await prisma.mill.findMany({
             include: {
                 stations: {
+                    include: {
+                        equipment: {
+                            orderBy: { name: 'asc' }
+                        }
+                    },
                     orderBy: { name: 'asc' }
                 }
             },
