@@ -66,6 +66,7 @@ app.get('/work-orders', ensureAuthenticated, woPageController.listWorkOrders);
 app.get('/work-orders/create', ensureAuthenticated, woPageController.createWorkOrderPage);
 app.get('/work-orders/:id', ensureAuthenticated, woPageController.detailWorkOrderPage);
 app.get('/equipment/:id', ensureAuthenticated, equipmentPageController.getEquipmentDetail);
+app.get('/input-hm', ensureAuthenticated, equipmentPageController.getInputHmPage);
 app.get('/work-orders/:id', ensureAuthenticated, woPageController.detailWorkOrderPage);
 
 const weeklyPlanPageController = require('./controllers/weeklyPlanPageController');

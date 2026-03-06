@@ -1,0 +1,144 @@
+<div class="card mb-4">
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="mb-0">Input Daily HM</h2>
+            <p class="text-secondary mb-0">Record Operation Hours for equipment with active parts</p>
+        </div>
+    </div>
+</div>
+
+<% if (user.role === 'ADMIN' && mills.length > 0) { %>
+    <div class="card mb-4">
+        <div style="max-width: 300px;">
+            <label class="form-label">Filter by Mill</label>
+            <select class="form-control" onchange="window.location.href='/input-hm?millId='+this.value">
+                <option value="">-- All Mills --</option>
+                <% mills.forEach(m => { %>
+                    <option value="<%= m.id %>" <%= typeof selectedMillId !== 'undefined' && selectedMillId === m.id ? 'selected' : '' %>><%= m.name %></option>
+                <% }); %>
+            </select>
+        </div>
+    </div>
+<% } %>
+
+<div class="card">
+    <% if (equipments.length === 0) { %>
+        <div class="text-center p-4" style="background: #f9fafb; border: 1px dashed #ccc; border-radius: 8px;">
+            <p class="text-secondary mb-0">No equipment found with active parts setup.</p>
+            <small>Setup parts first in Master Data > Equipment Detail.</small>
+        </div>
+    <% } else { %>
+        <div class="table-responsive">
+            <table class="table" style="background: white;">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Station</th>
+                        <th>Active Parts</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% equipments.forEach(eq => { %>
+                        <tr>
+                            <td>
+                                <strong><%= eq.name %></strong>
+                                <br>
+                                <small class="text-secondary"><%= eq.code %></small>
+                            </td>
+                            <td><%= eq.station.name %> <br><small class="text-secondary"><%= eq.station.mill.name %></small></td>
+                            <td><span class="badge" style="background: #e0e7ff; color: #3730a3;"><%= eq.parts.length %> Parts</span></td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="openRecordModal(<%= eq.id %>, '<%= eq.name %>')">
+                                    <i class="fas fa-clock"></i> Record HM
+                                </button>
+                                <a href="/equipment/<%= eq.id %>" class="btn btn-sm btn-outline-secondary" style="margin-left: 5px;">View Parts</a>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>
+
+<!-- Record HM Modal -->
+<div id="recordHmModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100;">
+    <div class="card" style="margin: 50px auto; max-width: 400px;">
+        <h3>Record Daily HM</h3>
+        <p class="text-secondary mb-2">Equipment: <strong id="modalEquipName"></strong></p>
+        <p class="text-secondary mb-4" style="font-size: 0.85em;">Nilai HM ini akan ditambahkan ke semua part aktif di mesin ini.</p>
+        
+        <form id="recordHmForm">
+            <input type="hidden" id="modalEquipId" name="equipment_id">
+            <div class="form-group">
+                <label>Date</label>
+                <input type="date" name="record_date" class="form-control" required id="hmDateInput">
+            </div>
+            <div class="form-group">
+                <label>Operation Hours (HM)</label>
+                <input type="number" step="0.1" name="hm_value" class="form-control" required placeholder="e.g 10.5">
+            </div>
+            <div class="flex justify-end mt-4 gap-2">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('recordHmModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="btnSaveHm">Save HM</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Default date today
+    document.getElementById('hmDateInput').valueAsDate = new Date();
+
+    function openModal(id) { document.getElementById(id).style.display = 'block'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function openRecordModal(equipId, equipName) {
+        document.getElementById('modalEquipId').value = equipId;
+        document.getElementById('modalEquipName').innerText = equipName;
+        openModal('recordHmModal');
+    }
+
+    document.getElementById('recordHmForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const form = e.target;
+        const submitBtn = document.getElementById('btnSaveHm');
+        
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Saving...';
+        
+        const equipId = document.getElementById('modalEquipId').value;
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch(`/api/equipment/${equipId}/hm`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                alert('HM Recorded Successfully!');
+                closeModal('recordHmModal');
+                form.reset();
+                document.getElementById('hmDateInput').valueAsDate = new Date(); // Reset date
+            } else {
+                const err = await res.json();
+                alert('Failed to record HM: ' + (err.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error recording HM');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Save HM';
+        }
+    });
+
+    // Close modal on outside click
+    document.getElementById('recordHmModal').addEventListener('click', function(e) {
+        if (e.target === this) closeModal('recordHmModal');
+    });
+</script>
