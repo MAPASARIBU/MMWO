@@ -97,6 +97,8 @@ model WorkOrder {
   mill          Mill         @relation(fields: [mill_id], references: [id])
   reporter      User         @relation("Reporter", fields: [reporter_id], references: [id])
   station       Station      @relation(fields: [station_id], references: [id])
+  part_id       Int?
+  part          Part?        @relation(fields: [part_id], references: [id])
 
   @@map("work_orders")
 }
@@ -166,6 +168,7 @@ model Part {
   installed_at DateTime  @default(now())
   replaced_at  DateTime?
   equipment    Equipment @relation(fields: [equipment_id], references: [id])
+  wos          WorkOrder[]
 
   @@map("parts")
 }

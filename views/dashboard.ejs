@@ -74,7 +74,12 @@
                             </span>
                         </td>
                         <td>
-                            <a href="/equipment/<%= p.equipment_id %>" class="btn btn-sm btn-outline-primary">View</a>
+                            <div class="flex gap-2">
+                                <a href="/equipment/<%= p.equipment_id %>" class="btn btn-sm btn-outline-primary">View</a>
+                                <% if (isCritical || percent >= 90) { %>
+                                    <a href="/work-orders/create?part_id=<%= p.id %>" class="btn btn-sm" style="background-color: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 0.2rem;" title="Create Replacement Work Order">Create WO</a>
+                                <% } %>
+                            </div>
                         </td>
                     </tr>
                     <% }); %>

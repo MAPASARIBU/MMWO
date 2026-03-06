@@ -11,7 +11,7 @@ const generateWONumber = async () => {
 
 const createWorkOrder = async (req, res) => {
     try {
-        const { mill_id, station_id, equipment_id, category, type, priority, description } = req.body;
+        const { mill_id, station_id, equipment_id, part_id, category, type, priority, description } = req.body;
         const user = req.session.user || req.user; // User from session or API token
 
         let finalMillId = mill_id ? parseInt(mill_id) : null;
@@ -41,6 +41,7 @@ const createWorkOrder = async (req, res) => {
                 mill_id: finalMillId,
                 station_id: parseInt(station_id),
                 equipment_id: equipment_id ? parseInt(equipment_id) : null,
+                part_id: part_id ? parseInt(part_id) : null,
                 category,
                 type,
                 priority,
@@ -197,6 +198,31 @@ const updateStatus = async (req, res) => {
         else if (status === 'CLOSED') {
             updateData.closed_at = new Date();
             action = 'CLOSED';
+
+            // Phase 2: Handle automatic part replacement
+            if (wo.part_id) {
+                const oldPart = await prisma.part.findUnique({ where: { id: wo.part_id } });
+                if (oldPart && oldPart.is_active) {
+                    // 1. Deactivate old part
+                    await prisma.part.update({
+                        where: { id: oldPart.id },
+                        data: {
+                            is_active: false,
+                            replaced_at: new Date()
+                        }
+                    });
+                    // 2. Create new part with 0 HM
+                    await prisma.part.create({
+                        data: {
+                            equipment_id: oldPart.equipment_id,
+                            name: oldPart.name,
+                            lifetime_hm: oldPart.lifetime_hm,
+                            current_hm: 0,
+                            is_active: true
+                        }
+                    });
+                }
+            }
         }
 
         const updatedWo = await prisma.workOrder.update({

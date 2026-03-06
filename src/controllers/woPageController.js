@@ -80,9 +80,21 @@ const createWorkOrderPage = async (req, res) => {
 
         const stations = await prisma.station.findMany(); // Optimization: could filter by mill too
 
+        let prefillPart = null;
+        if (req.query.part_id) {
+            prefillPart = await prisma.part.findUnique({
+                where: { id: parseInt(req.query.part_id) },
+                include: {
+                    equipment: {
+                        include: { station: true }
+                    }
+                }
+            });
+        }
+
         res.render('layout', {
             title: 'Create Work Order',
-            body: await renderView('wo/create', { mills, stations }),
+            body: await renderView('wo/create', { mills, stations, prefillPart }),
             user: req.session.user,
             path: '/work-orders/create'
         });
