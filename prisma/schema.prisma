@@ -61,6 +61,8 @@ model Equipment {
   created_at  DateTime    @default(now())
   station     Station     @relation(fields: [station_id], references: [id])
   wos         WorkOrder[]
+  parts       Part[]
+  hm_records  HMRecord[]
 
   @@map("equipment")
 }
@@ -152,4 +154,32 @@ model WeeklyPlan {
   wo           WorkOrder @relation(fields: [wo_id], references: [id])
 
   @@map("weekly_plan")
+}
+
+model Part {
+  id           Int       @id @default(autoincrement())
+  equipment_id Int
+  name         String
+  lifetime_hm  Float
+  current_hm   Float     @default(0)
+  is_active    Boolean   @default(true)
+  installed_at DateTime  @default(now())
+  replaced_at  DateTime?
+  equipment    Equipment @relation(fields: [equipment_id], references: [id])
+
+  @@map("parts")
+}
+
+model HMRecord {
+  id           Int       @id @default(autoincrement())
+  equipment_id Int
+  record_date  DateTime
+  hm_value     Float     // Jam operasi pada tanggal tersebut
+  recorded_by  Int?
+  created_at   DateTime  @default(now())
+  equipment    Equipment @relation(fields: [equipment_id], references: [id])
+  // Opsional relasi ke User jika ingin mencatat siapa yg record:
+  // recorder     User?     @relation(fields: [recorded_by], references: [id])
+
+  @@map("hm_records")
 }

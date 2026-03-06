@@ -11,6 +11,7 @@ const masterRoutes = require('./routes/master');
 const woRoutes = require('./routes/workOrders');
 const weeklyPlanRoutes = require('./routes/weeklyPlan');
 const userRoutes = require('./routes/users');
+const equipmentPartsRoutes = require('./routes/equipmentParts');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -60,8 +61,11 @@ app.get('/dashboard', ensureAuthenticated, indexController.getDashboard);
 app.get('/dashboard/print', ensureAuthenticated, indexController.getPrintRecap);
 
 const woPageController = require('./controllers/woPageController');
+const equipmentPageController = require('./controllers/equipmentPageController');
 app.get('/work-orders', ensureAuthenticated, woPageController.listWorkOrders);
 app.get('/work-orders/create', ensureAuthenticated, woPageController.createWorkOrderPage);
+app.get('/work-orders/:id', ensureAuthenticated, woPageController.detailWorkOrderPage);
+app.get('/equipment/:id', ensureAuthenticated, equipmentPageController.getEquipmentDetail);
 app.get('/work-orders/:id', ensureAuthenticated, woPageController.detailWorkOrderPage);
 
 const weeklyPlanPageController = require('./controllers/weeklyPlanPageController');
@@ -73,6 +77,7 @@ app.get('/admin/master', ensureRole(['ADMIN']), adminController.getMasterDataPag
 
 app.use('/auth', authRoutes);
 app.use('/api', masterRoutes);
+app.use('/api/equipment', equipmentPartsRoutes); // Equipment parts & HM
 app.use('/api/work-orders', woRoutes);
 app.use('/api/weekly-plan', weeklyPlanRoutes);
 app.use('/api/users', userRoutes);

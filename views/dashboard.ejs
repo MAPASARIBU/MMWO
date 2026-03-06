@@ -35,6 +35,55 @@
     </div>
 </div>
 
+<!-- Equipment Parts Warning Widget -->
+<% if (typeof attentionParts !== 'undefined' && attentionParts.length > 0) { %>
+    <div class="card mt-4" style="border-left: 4px solid var(--danger-color); background: #fef2f2;">
+        <div class="flex justify-between items-center mb-4">
+            <h3 style="color: #991b1b; margin-bottom: 0;"><i class="fas fa-exclamation-triangle"></i> Equipment Parts Need Attention</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="table" style="background: white;">
+                <thead>
+                    <tr>
+                        <th>Equipment</th>
+                        <th>Station</th>
+                        <th>Part Name</th>
+                        <th>HM Progress</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% attentionParts.forEach(p => { 
+                        const percent = (p.current_hm / p.lifetime_hm) * 100;
+                        const isCritical = percent >= 100;
+                    %>
+                    <tr>
+                        <td><strong><%= p.equipment.name %></strong> <br><small class="text-secondary"><%= p.equipment.code %></small></td>
+                        <td><%= p.equipment.station.name %></td>
+                        <td><%= p.name %></td>
+                        <td>
+                            <div style="font-size: 0.85em; margin-bottom: 2px;"><%= p.current_hm %> / <%= p.lifetime_hm %></div>
+                            <div style="height: 6px; background: #eee; border-radius: 3px; width: 100%;">
+                                <div style="height: 100%; width: <%= Math.min(100, percent) %>%; background-color: <%= isCritical ? '#ef4444' : '#f59e0b' %>;"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: <%= isCritical ? '#ef4444' : '#f59e0b' %>; color: white;">
+                                <%= isCritical ? 'CRITICAL' : 'WARNING' %>
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/equipment/<%= p.equipment_id %>" class="btn btn-sm btn-outline-primary">View</a>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+<% } %>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="dashboard-grid mt-4"

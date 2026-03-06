@@ -49,21 +49,31 @@
                     <div class="card" style="background: #fff; border: 1px solid #eee; padding: 0;">
                         <ul style="list-style: none; padding: 0; margin: 0;">
                             <% if (m.stations.length===0) { %>
-                                <li style="padding: 1rem; text-align: center; color: #888;">No stations found for this
-                                    mill.</li>
-                                <% } %>
-                                    <% m.stations.forEach(s=> { %>
-                                        <li
-                                            style="padding: 0.75rem 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center;">
-                                            <span style="font-weight: 500;">
-                                                <%= s.name %>
-                                            </span>
-                                            <button class="btn btn-sm btn-secondary"
-                                                onclick="openBulkModal(<%= s.id %>, '<%= s.name %>')">
-                                                + Add Equip
-                                            </button>
-                                        </li>
-                                        <% }); %>
+                                <li style="padding: 1rem; text-align: center; color: #888;">No stations found for this mill.</li>
+                            <% } %>
+                            <% m.stations.forEach(s=> { %>
+                                <li style="padding: 0.75rem 1rem; border-bottom: 1px solid #eee;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <span style="font-weight: 500;">
+                                            <%= s.name %>
+                                        </span>
+                                        <button class="btn btn-sm btn-secondary"
+                                            onclick="openBulkModal(<%= s.id %>, '<%= s.name %>')">
+                                            + Add Equip
+                                        </button>
+                                    </div>
+                                    <!-- List equipment for this station if available -->
+                                    <% if(s.equipment && s.equipment.length > 0) { %>
+                                        <div class="mt-2 pl-4 border-l-2 border-primary ml-2">
+                                            <% s.equipment.forEach(e => { %>
+                                                <a href="/equipment/<%= e.id %>" style="display: block; padding: 0.25rem 0; color: #0369a1; text-decoration: none; font-size: 0.9em; margin-bottom: 2px;">
+                                                    <span style="font-family: monospace; background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 0.85em; margin-right: 5px;"><%= e.code || 'EQ-' + e.id %></span> <%= e.name %>
+                                                </a>
+                                            <% }); %>
+                                        </div>
+                                    <% } %>
+                                </li>
+                            <% }); %>
                         </ul>
                     </div>
                 </div>
