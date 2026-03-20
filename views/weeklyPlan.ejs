@@ -179,7 +179,12 @@
                                 <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
                                     <%= plan.wo.pics.map(p => p.name).join(', ') %>
                                 <% } else { %>
-                                    -
+                                    <span class="text-muted italic text-sm">Belum ada</span>
+                                <% } %>
+                                <% if (user && user.role !== 'PROC') { %>
+                                    <div class="mt-2 no-print">
+                                        <button type="button" class="btn btn-sm" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.75rem; font-weight: 600;" onclick="openGlobalPicModal(<%= plan.wo.id %>, <%= JSON.stringify((plan.wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
+                                    </div>
                                 <% } %>
                             </td>
                         </tr>
@@ -192,4 +197,94 @@
             </tbody>
         </table>
     </div>
+
+<!-- Assign PIC Modal -->
+<div id="assignGlobalPicModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 10000;">
+    <div class="card" style="margin: 50px auto; max-width: 500px; position: relative;">
+        <h3>Assign Mechanics (Max 4)</h3>
+        <p class="text-secondary mb-3">Please select up to 4 mechanics to work on this order.</p>
+        <form id="assignGlobalPicForm">
+            <input type="hidden" id="activeWoId" name="wo_id" value="">
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
+                <% if(typeof workshopEmployees !== 'undefined' && workshopEmployees.length > 0) { %>
+                    <% workshopEmployees.forEach(emp => { %>
+                        <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                            <input type="checkbox" name="pic_ids" value="<%= emp.id %>" class="global-pic-checkbox" onchange="checkGlobalMaxPics()">
+                            <%= emp.name %> <small class="text-secondary">(<%= emp.position || 'Mechanic' %>)</small>
+                        </label>
+                    <% }); %>
+                <% } else { %>
+                    <div class="text-secondary text-center">No active workshop employees found.</div>
+                <% } %>
+            </div>
+            <div class="flex justify-between mt-4">
+                <button type="button" onclick="closeGlobalPicModal()" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="saveGlobalPicBtn">Save PICs</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openGlobalPicModal(woId, currentPicIds) {
+        document.getElementById('activeWoId').value = woId;
+        
+        // Reset and check current
+        const checkboxes = document.querySelectorAll('.global-pic-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = currentPicIds.includes(parseInt(cb.value));
+            cb.disabled = false;
+        });
+
+        document.getElementById('assignGlobalPicModal').style.display = 'block';
+        checkGlobalMaxPics();
+    }
+    
+    function closeGlobalPicModal() {
+        document.getElementById('assignGlobalPicModal').style.display = 'none';
+        document.getElementById('activeWoId').value = "";
+    }
+
+    function checkGlobalMaxPics() {
+        const checkboxes = document.querySelectorAll('.global-pic-checkbox:checked');
+        const allCheckboxes = document.querySelectorAll('.global-pic-checkbox');
+        
+        if (checkboxes.length >= 4) {
+            allCheckboxes.forEach(cb => {
+                if (!cb.checked) cb.disabled = true;
+            });
+        } else {
+            allCheckboxes.forEach(cb => cb.disabled = false);
+        }
+    }
+
+    document.getElementById('assignGlobalPicForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const picIds = formData.getAll('pic_ids');
+        const woId = document.getElementById('activeWoId').value;
+
+        if (picIds.length > 4) {
+            alert('Maksimal hanya 4 mekanik yang dapat dipilih.');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/work-orders/${woId}/pics`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pic_ids: picIds })
+            });
+
+            if (res.ok) window.location.reload();
+            else {
+                const err = await res.json();
+                alert(err.error || 'Terjadi kesalahan saat menyimpan PIC');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error connecting to server.');
+        }
+    });
+</script>
 </div>

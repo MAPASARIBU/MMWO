@@ -63,13 +63,29 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const currentWeek = getISOWeekString(new Date());
 
+        const user = req.session.user;
+        let empWhere = { is_active: true };
+        if (user.role !== 'ADMIN') {
+            empWhere.OR = [
+                { mill_id: user.mill_id },
+                { mill_id: null }
+            ];
+        }
+        
+        const workshopEmployees = await prisma.workshopEmployee.findMany({
+            where: empWhere,
+            orderBy: { name: 'asc' }
+        });
+
         res.render('layout', {
             title: 'Weekly Plan',
             body: await renderView('weeklyPlan', {
                 plans,
                 candidateWos,
                 query: req.query,
-                currentWeek
+                currentWeek,
+                workshopEmployees,
+                user
             }),
             user: req.session.user,
             path: '/weekly-plan'
