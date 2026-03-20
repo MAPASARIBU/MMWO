@@ -98,7 +98,8 @@ model WorkOrder {
   reporter      User         @relation("Reporter", fields: [reporter_id], references: [id])
   station       Station      @relation(fields: [station_id], references: [id])
   part_id       Int?
-  part          Part?        @relation(fields: [part_id], references: [id])
+  part          Part?        @relation("LegacyWorkOrderPart", fields: [part_id], references: [id])
+  parts         Part[]       @relation("WorkOrderParts")
 
   @@map("work_orders")
 }
@@ -168,7 +169,8 @@ model Part {
   installed_at DateTime  @default(now())
   replaced_at  DateTime?
   equipment    Equipment @relation(fields: [equipment_id], references: [id])
-  wos          WorkOrder[]
+  legacy_wos   WorkOrder[] @relation("LegacyWorkOrderPart")
+  wos          WorkOrder[] @relation("WorkOrderParts")
 
   @@map("parts")
 }

@@ -41,7 +41,7 @@ const createWorkOrder = async (req, res) => {
                 mill_id: finalMillId,
                 station_id: parseInt(station_id),
                 equipment_id: equipment_id ? parseInt(equipment_id) : null,
-                part_id: part_id ? parseInt(part_id) : null,
+                parts: part_id ? { connect: [{ id: parseInt(part_id) }] } : undefined,
                 category,
                 type,
                 priority,
@@ -108,6 +108,7 @@ const getWorkOrders = async (req, res) => {
                 mill: true,
                 station: true,
                 equipment: true,
+                parts: true,
                 assignee: { select: { name: true } },
                 reporter: { select: { name: true } }
             },
@@ -131,6 +132,7 @@ const getWorkOrderById = async (req, res) => {
                 mill: true,
                 station: true,
                 equipment: true,
+                parts: true,
                 assignee: { select: { name: true } },
                 reporter: { select: { name: true } },
                 attachments: true,
@@ -159,7 +161,7 @@ const updateStatus = async (req, res) => {
         const userId = req.session.user.id;
         const user = req.session.user;
 
-        const wo = await prisma.workOrder.findUnique({ where: { id: parseInt(id) } });
+        const wo = await prisma.workOrder.findUnique({ where: { id: parseInt(id) }, include: { parts: true } });
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
         // Access Check
@@ -200,27 +202,28 @@ const updateStatus = async (req, res) => {
             action = 'CLOSED';
 
             // Phase 2: Handle automatic part replacement
-            if (wo.part_id) {
-                const oldPart = await prisma.part.findUnique({ where: { id: wo.part_id } });
-                if (oldPart && oldPart.is_active) {
-                    // 1. Deactivate old part
-                    await prisma.part.update({
-                        where: { id: oldPart.id },
-                        data: {
-                            is_active: false,
-                            replaced_at: new Date()
-                        }
-                    });
-                    // 2. Create new part with 0 HM
-                    await prisma.part.create({
-                        data: {
-                            equipment_id: oldPart.equipment_id,
-                            name: oldPart.name,
-                            lifetime_hm: oldPart.lifetime_hm,
-                            current_hm: 0,
-                            is_active: true
-                        }
-                    });
+            if (wo.parts && wo.parts.length > 0) {
+                for (const oldPart of wo.parts) {
+                    if (oldPart && oldPart.is_active) {
+                        // 1. Deactivate old part
+                        await prisma.part.update({
+                            where: { id: oldPart.id },
+                            data: {
+                                is_active: false,
+                                replaced_at: new Date()
+                            }
+                        });
+                        // 2. Create new part with 0 HM
+                        await prisma.part.create({
+                            data: {
+                                equipment_id: oldPart.equipment_id,
+                                name: oldPart.name,
+                                lifetime_hm: oldPart.lifetime_hm,
+                                current_hm: 0,
+                                is_active: true
+                            }
+                        });
+                    }
                 }
             }
         }
@@ -342,28 +345,48 @@ const bulkCreateFromParts = async (req, res) => {
             return res.status(400).json({ error: 'No parts selected' });
         }
 
+        const parts = await prisma.part.findMany({
+            where: { id: { in: part_ids.map(id => parseInt(id)) } },
+            include: { equipment: { include: { station: true } } }
+        });
+
+        // Group by equipment_id
+        const groupedParts = {};
+        for (const part of parts) {
+            if (!groupedParts[part.equipment_id]) {
+                groupedParts[part.equipment_id] = [];
+            }
+            groupedParts[part.equipment_id].push(part);
+        }
+
         const createdWos = [];
-        for (const partId of part_ids) {
-            const part = await prisma.part.findUnique({
-                where: { id: parseInt(partId) },
-                include: { equipment: { include: { station: true } } }
-            });
-
-            if (!part) continue;
-
+        for (const eqParts of Object.values(groupedParts)) {
+            if (eqParts.length === 0) continue;
+            
+            const firstPart = eqParts[0];
             const wo_no = await generateWONumber();
+
+            let description = eqParts.length > 1 
+                ? `WO Penggantian Part Massal (${eqParts.length} item):\n` 
+                : `WO Penggantian Part:\n`;
+            
+            eqParts.forEach(p => {
+                description += `- ${p.name} (HM: ${p.current_hm}/${p.lifetime_hm})\n`;
+            });
 
             const wo = await prisma.workOrder.create({
                 data: {
                     wo_no,
-                    mill_id: part.equipment.station.mill_id,
-                    station_id: part.equipment.station_id,
-                    equipment_id: part.equipment_id,
-                    part_id: part.id,
+                    mill_id: firstPart.equipment.station.mill_id,
+                    station_id: firstPart.equipment.station_id,
+                    equipment_id: firstPart.equipment_id,
+                    parts: {
+                        connect: eqParts.map(p => ({ id: p.id }))
+                    },
                     category: 'Mechanical',
                     type: 'Preventive',
                     priority: 'P1',
-                    description: `WO Penggantian Part: ${part.name} (HM: ${part.current_hm}/${part.lifetime_hm})`,
+                    description: description.trim(),
                     status: 'OPEN',
                     reporter_id: user.id,
                 }

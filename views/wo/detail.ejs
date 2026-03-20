@@ -59,6 +59,19 @@
         </div>
     </div>
 
+    <% if (wo.parts && wo.parts.length > 0) { %>
+    <div class="mb-4">
+        <label class="form-label">Associated Parts for Replacement</label>
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 4px; padding: 0.5rem;">
+            <ul style="margin: 0; padding-left: 1.5rem;">
+                <% wo.parts.forEach(p => { %>
+                    <li><strong><%= p.name %></strong> <span class="text-secondary">(HM: <%= p.current_hm %> / <%= p.lifetime_hm %>)</span></li>
+                <% }); %>
+            </ul>
+        </div>
+    </div>
+    <% } %>
+
     <% if (wo.attachments && wo.attachments.length> 0) { %>
         <div class="mb-4">
             <label class="form-label">Attachments</label>
