@@ -333,11 +333,66 @@ const addComment = async (req, res) => {
     }
 };
 
+const bulkCreateFromParts = async (req, res) => {
+    try {
+        const { part_ids } = req.body;
+        const user = req.session.user || req.user;
+
+        if (!part_ids || !Array.isArray(part_ids) || part_ids.length === 0) {
+            return res.status(400).json({ error: 'No parts selected' });
+        }
+
+        const createdWos = [];
+        for (const partId of part_ids) {
+            const part = await prisma.part.findUnique({
+                where: { id: parseInt(partId) },
+                include: { equipment: { include: { station: true } } }
+            });
+
+            if (!part) continue;
+
+            const wo_no = await generateWONumber();
+
+            const wo = await prisma.workOrder.create({
+                data: {
+                    wo_no,
+                    mill_id: part.equipment.station.mill_id,
+                    station_id: part.equipment.station_id,
+                    equipment_id: part.equipment_id,
+                    part_id: part.id,
+                    category: 'Mechanical',
+                    type: 'Preventive',
+                    priority: 'P1',
+                    description: `WO Penggantian Part: ${part.name} (HM: ${part.current_hm}/${part.lifetime_hm})`,
+                    status: 'OPEN',
+                    reporter_id: user.id,
+                }
+            });
+
+            await prisma.auditLog.create({
+                data: {
+                    wo_id: wo.id,
+                    user_id: user.id,
+                    action: 'CREATED',
+                    new_value: 'OPEN'
+                }
+            });
+            createdWos.push(wo);
+        }
+
+        res.status(201).json({ success: true, count: createdWos.length });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     createWorkOrder,
     getWorkOrders,
     getWorkOrderById,
     updateStatus,
     addAttachment,
-    addComment
+    addComment,
+    bulkCreateFromParts
 };

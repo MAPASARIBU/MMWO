@@ -12,4 +12,7 @@ router.patch('/:id/status', ensureAuthenticated, workOrderController.updateStatu
 router.post('/:id/attachments', ensureAuthenticated, upload.single('file'), workOrderController.addAttachment);
 router.post('/:id/comments', ensureAuthenticated, workOrderController.addComment);
 
+// Bulk Create from Parts
+router.post('/bulk/parts', ensureAuthenticated, workOrderController.bulkCreateFromParts);
+
 module.exports = router;
