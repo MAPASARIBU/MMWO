@@ -5,7 +5,9 @@
             <p class="text-secondary mb-0">Code: <%= equipment.code %> | Station: <%= equipment.station.name %> | Mill: <%= equipment.station.mill.name %></p>
         </div>
         <div>
-            <button class="btn btn-primary" onclick="openModal('addPartModal')">+ Add New Part</button>
+            <% if (user && user.role !== 'PROC' && user.role !== 'proc') { %>
+                <button class="btn btn-primary" onclick="openModal('addPartModal')">+ Add New Part</button>
+            <% } %>
             <button class="btn btn-secondary" onclick="openModal('recordHmModal')">Record HM</button>
         </div>
     </div>
