@@ -148,7 +148,12 @@ const getDashboard = async (req, res) => {
         const criticalParts = await prisma.part.findMany({
             where: {
                 is_active: true,
-                equipment: millId ? { station: { mill_id: millId } } : undefined
+                equipment: millId ? { station: { mill_id: millId } } : undefined,
+                wos: {
+                    none: {
+                        status: { not: 'CLOSED' }
+                    }
+                }
             },
             include: {
                 equipment: {
