@@ -18,4 +18,7 @@ router.post('/bulk/parts', ensureAuthenticated, workOrderController.bulkCreateFr
 // Delete Work Order
 router.delete('/:id', ensureAuthenticated, workOrderController.deleteWorkOrder);
 
+// Assign PICs
+router.post('/:id/pics', ensureAuthenticated, workOrderController.assignPics);
+
 module.exports = router;

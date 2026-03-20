@@ -185,6 +185,7 @@
                     <th>Station</th>
                     <th>Description</th>
                     <th>Planner</th>
+                    <th>PIC</th>
                 </tr>
             </thead>
             <tbody>
@@ -209,11 +210,18 @@
                             <td>
                                 <%= plan.planner.name %>
                             </td>
+                            <td>
+                                <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
+                                    <%= plan.wo.pics.map(p => p.name).join(', ') %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
                         </tr>
                         <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="6" class="text-center py-4">No planned work found.</td>
+                                    <td colspan="7" class="text-center py-4">No planned work found.</td>
                                 </tr>
                                 <% } %>
             </tbody>

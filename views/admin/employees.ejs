@@ -1,0 +1,137 @@
+<div class="card">
+    <div class="flex justify-between items-center mb-4">
+        <h3>Workshop Employees</h3>
+        <button onclick="openModal('createEmployeeModal')" class="btn btn-primary">+ Add New Employee</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Position / Skill</th>
+                    <th>Mill</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% employees.forEach(emp => { %>
+                    <tr>
+                        <td>
+                            <strong><%= emp.name %></strong>
+                        </td>
+                        <td>
+                            <%= emp.position || '-' %>
+                        </td>
+                        <td>
+                            <%= emp.mill ? emp.mill.name : 'Global' %>
+                        </td>
+                        <td>
+                            <span class="badge <%= emp.is_active ? 'badge-green' : 'badge-red' %>">
+                                <%= emp.is_active ? 'Active' : 'Inactive' %>
+                            </span>
+                        </td>
+                        <td>
+                            <button onclick="toggleActive(<%= emp.id %>, <%= !emp.is_active %>)"
+                                class="btn btn-sm btn-secondary">
+                                <%= emp.is_active ? 'Deactivate' : 'Activate' %>
+                            </button>
+                            <button onclick="deleteEmployee(<%= emp.id %>)" class="btn btn-sm btn-outline-danger" style="margin-left: 5px;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Create Employee Modal -->
+<div id="createEmployeeModal"
+    style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
+    <div class="card" style="margin: 50px auto; max-width: 500px;">
+        <h3>Add New Employee</h3>
+        <form id="createEmployeeForm">
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="name" class="form-control" required placeholder="Ex: Budi Santoso">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Position / Skill</label>
+                <input type="text" name="position" class="form-control" placeholder="Ex: Senior Mechanic, Welder, etc.">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Assigned Mill</label>
+                <select name="mill_id" class="form-control">
+                    <option value="">-- Global / All Mills --</option>
+                    <% mills.forEach(m => { %>
+                        <option value="<%= m.id %>"><%= m.name %></option>
+                    <% }); %>
+                </select>
+                <small class="text-secondary mt-1 block">Usually you assign an employee to a specific mill.</small>
+            </div>
+
+            <div class="flex justify-between mt-4">
+                <button type="button" onclick="closeModal('createEmployeeModal')" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Employee</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openModal(id) { document.getElementById(id).style.display = 'block'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    async function toggleActive(id, isActive) {
+        if (!confirm(`Are you sure you want to ${isActive ? 'activate' : 'deactivate'} this employee?`)) return;
+
+        try {
+            const res = await fetch(`/api/employees/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_active: isActive })
+            });
+            if (res.ok) window.location.reload();
+            else alert('Error updating employee');
+        } catch (e) { console.error(e); }
+    }
+
+    async function deleteEmployee(id) {
+        if (!confirm('Are you absolutely sure you want to delete this employee? Data might be lost if linked to WOs.')) return;
+
+        try {
+            const res = await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+            if (res.ok) window.location.reload();
+            else {
+                const data = await res.json();
+                alert(data.error || 'Error deleting employee');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    document.getElementById('createEmployeeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch('/api/employees', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) window.location.reload();
+            else {
+                const err = await res.json();
+                alert('Error processing: ' + err.error);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error creating employee');
+        }
+    });
+</script>

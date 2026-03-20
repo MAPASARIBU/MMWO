@@ -437,29 +437,60 @@ const deleteWorkOrder = async (req, res) => {
             return res.status(403).json({ error: 'Access Denied: Only ADMIN can delete Work Orders.' });
         }
 
-        const wo = await prisma.workOrder.findUnique({ where: { id: parseInt(id) } });
+        const wo = await prisma.workOrder.findUnique({
+            where: { id: parseInt(id) }
+        });
+
         if (!wo) {
-            return res.status(404).json({ error: 'Work Order not found' });
+            return res.status(404).json({ error: 'Work Order not found.' });
         }
 
-        // Only allow deletion if not completed/closed
         if (wo.status === 'COMPLETED' || wo.status === 'CLOSED') {
             return res.status(400).json({ error: 'Tidak bisa menghapus Work Order yang sudah COMPLETED atau CLOSED.' });
         }
 
-        // Execute queries inside transaction
         await prisma.$transaction([
-            prisma.auditLog.deleteMany({ where: { wo_id: wo.id } }),
-            prisma.comment.deleteMany({ where: { wo_id: wo.id } }),
-            prisma.attachment.deleteMany({ where: { wo_id: wo.id } }),
-            prisma.weeklyPlan.deleteMany({ where: { wo_id: wo.id } }),
-            prisma.workOrder.delete({ where: { id: wo.id } })
+            prisma.auditLog.deleteMany({ where: { wo_id: parseInt(id) } }),
+            prisma.comment.deleteMany({ where: { wo_id: parseInt(id) } }),
+            prisma.attachment.deleteMany({ where: { wo_id: parseInt(id) } }),
+            prisma.weeklyPlan.deleteMany({ where: { wo_id: parseInt(id) } }),
+            prisma.workOrder.delete({ where: { id: parseInt(id) } })
         ]);
 
-        res.json({ message: 'Work Order berhasil dihapus' });
+        res.json({ success: true, message: 'Work Order deleted successfully.' });
+
+    } catch (error) {
+        console.error("Delete Work Order Error:", error);
+        res.status(500).json({ error: 'Terjadi kesalahan sistem saat menghapus Work Order.' });
+    }
+};
+
+const assignPics = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { pic_ids } = req.body;
+        
+        if (!Array.isArray(pic_ids)) {
+            return res.status(400).json({ error: 'Invalid data format' });
+        }
+        
+        if (pic_ids.length > 4) {
+             return res.status(400).json({ error: 'Maksimal 4 mekanik/PIC yang dapat dipilih.' });
+        }
+
+        const wo = await prisma.workOrder.update({
+            where: { id: parseInt(id) },
+            data: {
+                pics: {
+                    set: pic_ids.map(pid => ({ id: parseInt(pid) }))
+                }
+            }
+        });
+        
+        res.json({ success: true, wo });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: 'Terjadi kesalahan sistem saat menyimpan PIC.' });
     }
 };
 
@@ -471,5 +502,6 @@ module.exports = {
     addAttachment,
     addComment,
     bulkCreateFromParts,
-    deleteWorkOrder
+    deleteWorkOrder,
+    assignPics
 };

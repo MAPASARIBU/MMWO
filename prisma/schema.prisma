@@ -34,6 +34,7 @@ model Mill {
   stations   Station[]
   users      User[]
   wos        WorkOrder[]
+  employees  WorkshopEmployee[]
 
   @@map("mills")
 }
@@ -100,6 +101,7 @@ model WorkOrder {
   part_id       Int?
   part          Part?        @relation("LegacyWorkOrderPart", fields: [part_id], references: [id])
   parts         Part[]       @relation("WorkOrderParts")
+  pics          WorkshopEmployee[]  @relation("WoPics")
 
   @@map("work_orders")
 }
@@ -187,4 +189,18 @@ model HMRecord {
   // recorder     User?     @relation(fields: [recorded_by], references: [id])
 
   @@map("hm_records")
+}
+
+model WorkshopEmployee {
+  id         Int         @id @default(autoincrement())
+  mill_id    Int?        // Null = global, Int = scoped to a mill
+  name       String
+  position   String?
+  is_active  Boolean     @default(true)
+  created_at DateTime    @default(now())
+  
+  mill       Mill?       @relation(fields: [mill_id], references: [id])
+  wos        WorkOrder[] @relation("WoPics")
+
+  @@map("workshop_employees")
 }

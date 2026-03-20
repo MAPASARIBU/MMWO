@@ -18,7 +18,8 @@ const getWeeklyPlanPage = async (req, res) => {
                     include: {
                         mill: true,
                         station: true,
-                        equipment: true
+                        equipment: true,
+                        pics: true
                     }
                 },
                 planner: { select: { name: true } }

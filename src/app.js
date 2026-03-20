@@ -76,12 +76,17 @@ const adminController = require('./controllers/adminController');
 app.get('/admin/users', ensureRole(['ADMIN']), adminController.getUsersPage);
 app.get('/admin/master', ensureRole(['ADMIN']), adminController.getMasterDataPage);
 
+const employeeRoutes = require('./routes/employees');
 app.use('/auth', authRoutes);
 app.use('/api', masterRoutes);
 app.use('/api/equipment', equipmentPartsRoutes); // Equipment parts & HM
 app.use('/api/work-orders', woRoutes);
 app.use('/api/weekly-plan', weeklyPlanRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/employees', employeeRoutes);
+
+// Admin Pages
+app.get('/admin/employees', ensureRole(['ADMIN']), adminController.getEmployeesPage);
 
 // 404 Handler
 app.use((req, res) => {

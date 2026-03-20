@@ -51,7 +51,28 @@ const getMasterDataPage = async (req, res) => {
     }
 };
 
+const getEmployeesPage = async (req, res) => {
+    try {
+        const employees = await prisma.workshopEmployee.findMany({
+            include: { mill: true },
+            orderBy: [{ mill_id: 'asc' }, { name: 'asc' }]
+        });
+        const mills = await prisma.mill.findMany();
+
+        res.render('layout', {
+            title: 'Workshop Employees',
+            body: await renderView('admin/employees', { employees, mills }),
+            user: req.session.user,
+            path: '/admin/employees'
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error loading employees page');
+    }
+};
+
 module.exports = {
     getUsersPage,
-    getMasterDataPage
+    getMasterDataPage,
+    getEmployeesPage
 };

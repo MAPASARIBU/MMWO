@@ -117,6 +117,7 @@ const detailWorkOrderPage = async (req, res) => {
                 station: true,
                 equipment: true,
                 parts: true,
+                pics: true,
                 assignee: true,
                 reporter: true,
                 attachments: true,
@@ -134,10 +135,14 @@ const detailWorkOrderPage = async (req, res) => {
         }
 
         const users = await prisma.user.findMany({ where: { role: 'MTC', is_active: true } });
+        const workshopEmployees = await prisma.workshopEmployee.findMany({
+            where: { is_active: true, OR: [{ mill_id: wo.mill_id }, { mill_id: null }] },
+            orderBy: { name: 'asc' }
+        });
 
         res.render('layout', {
             title: wo.wo_no,
-            body: await renderView('wo/detail', { wo, mtcUsers: users, user }),
+            body: await renderView('wo/detail', { wo, mtcUsers: users, workshopEmployees, user }),
             user: req.session.user,
             path: '/work-orders'
         });
