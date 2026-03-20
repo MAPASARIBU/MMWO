@@ -169,6 +169,10 @@ const updateStatus = async (req, res) => {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
+        if (user.role === 'PROC') {
+            return res.status(403).json({ error: 'Access Denied: Procurement role is only allowed to submit Work Orders, not process them.' });
+        }
+
         const updateData = { status };
         let action = 'STATUS_CHANGE';
 

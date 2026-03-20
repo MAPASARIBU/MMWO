@@ -120,6 +120,7 @@
                 <% } %>
 
                     <!-- Actions -->
+                    <% if (user.role !== 'PROC') { %>
                     <div style="border-top: 1px solid #eee; padding-top: 1rem;">
                         <h4>Actions</h4>
 
@@ -200,6 +201,7 @@
                                                             <% } %>
 
                     </div>
+                    <% } %>
 </div>
 
 <script>
