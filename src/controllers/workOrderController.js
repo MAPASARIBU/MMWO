@@ -172,6 +172,13 @@ const updateStatus = async (req, res) => {
         const updateData = { status };
         let action = 'STATUS_CHANGE';
 
+        // Disconnect unticked parts if replaced_part_ids is provided
+        if (req.body.replaced_part_ids !== undefined && Array.isArray(req.body.replaced_part_ids)) {
+            updateData.parts = {
+                set: req.body.replaced_part_ids.map(id => ({ id: parseInt(id) }))
+            };
+        }
+
         // Logic for transitions
         if (status === 'ASSIGNED') {
             // AUTHORIZATION: ADMIN, SPV, MANAGER, MTC can assign

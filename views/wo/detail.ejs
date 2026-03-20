@@ -163,7 +163,23 @@
                                                     <label class="form-label">Upload Repair Photo (Optional)</label>
                                                     <input type="file" id="completionImage" class="form-control">
                                                 </div>
-                                                <button class="btn btn-success"
+                                                <div class="form-group mt-3">
+                                                    <label class="form-label" style="font-weight: 600;">Check Parts Replaced:</label>
+                                                    <% if (wo.parts && wo.parts.length > 0) { %>
+                                                        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 4px; padding: 0.5rem; max-height: 150px; overflow-y: auto;">
+                                                            <% wo.parts.forEach(p => { %>
+                                                                <label style="display: block; margin-bottom: 0.25rem;">
+                                                                    <input type="checkbox" class="replaced-part-cb" value="<%= p.id %>" checked>
+                                                                    <%= p.name %>
+                                                                </label>
+                                                            <% }); %>
+                                                        </div>
+                                                        <small class="text-secondary">Uncheck any parts that were NOT replaced. They will be returned to the "Need Attention" list on Dashboard.</small>
+                                                    <% } else { %>
+                                                        <p class="text-secondary" style="margin:0;">No linked parts.</p>
+                                                    <% } %>
+                                                </div>
+                                                <button class="btn btn-success mt-3"
                                                     style="color:white; background-color: var(--success-color);"
                                                     onclick="completeWo()">Complete Work</button>
                                             </div>
@@ -221,6 +237,26 @@
             await fetch('/api/work-orders/' + woId + '/attachments', { method: 'POST', body: fd });
         }
 
-        await updateStatus('COMPLETED', { comment: 'ACTION TAKEN: ' + action });
+        const checkboxes = document.querySelectorAll('.replaced-part-cb');
+        let replacedPartIds = [];
+        let replacedNames = [];
+        if (checkboxes.length > 0) {
+            checkboxes.forEach(cb => {
+                if (cb.checked) {
+                    replacedPartIds.push(cb.value);
+                    replacedNames.push(cb.nextSibling.textContent.trim());
+                }
+            });
+        }
+
+        let commentText = 'ACTION TAKEN: ' + action;
+        if (checkboxes.length > 0) {
+            commentText = `PARTS REPLACED: ${replacedNames.length > 0 ? replacedNames.join(', ') : 'None'}\n\n` + commentText;
+        }
+
+        await updateStatus('COMPLETED', { 
+            comment: commentText,
+            replaced_part_ids: checkboxes.length > 0 ? replacedPartIds : undefined
+        });
     }
 </script>
