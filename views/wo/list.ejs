@@ -32,6 +32,9 @@
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Assignee</th>
+                    <% if (user.role === 'ADMIN') { %>
+                    <th>Actions</th>
+                    <% } %>
                 </tr>
             </thead>
             <tbody>
@@ -64,6 +67,17 @@
                             <td>
                                 <%= wo.assignee ? wo.assignee.name : '-' %>
                             </td>
+                            <% if (user.role === 'ADMIN') { %>
+                                <td>
+                                    <% if (wo.status !== 'COMPLETED' && wo.status !== 'CLOSED') { %>
+                                        <button class="btn btn-sm" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="deleteWo(event, '<%= wo.id %>', '<%= wo.wo_no %>')">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </button>
+                                    <% } else { %>
+                                        <span class="text-secondary" style="font-size: 0.8em;">-</span>
+                                    <% } %>
+                                </td>
+                            <% } %>
                         </tr>
                         <% }); %>
                             <% } else { %>
@@ -76,3 +90,30 @@
         </table>
     </div>
 </div>
+
+<script>
+    async function deleteWo(e, id, woNo) {
+        e.stopPropagation(); // prevent row click from opening details
+        if (!confirm(`Yakin ingin MENGHAPUS Work Order ${woNo} secara permanen?\nWork Order yang belum selesai ini akan lenyap dari sistem.`)) return;
+        
+        try {
+            const btn = e.target.closest('button');
+            btn.disabled = true;
+            btn.innerHTML = 'Hapus...';
+
+            const res = await fetch('/api/work-orders/' + id, { method: 'DELETE' });
+            if (res.ok) {
+                alert('Work Order berhasil dihapus!');
+                window.location.reload();
+            } else {
+                const data = await res.json();
+                alert('Gagal menghapus: ' + (data.error || 'Unknown error'));
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-trash"></i> Hapus';
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Terjadi kesalahan koneksi/server.');
+        }
+    }
+</script>

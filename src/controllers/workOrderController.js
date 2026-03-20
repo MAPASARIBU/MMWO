@@ -421,6 +421,40 @@ const bulkCreateFromParts = async (req, res) => {
     }
 };
 
+const deleteWorkOrder = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = req.session.user;
+
+        if (user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Access Denied: Only ADMIN can delete Work Orders.' });
+        }
+
+        const wo = await prisma.workOrder.findUnique({ where: { id: parseInt(id) } });
+        if (!wo) {
+            return res.status(404).json({ error: 'Work Order not found' });
+        }
+
+        // Only allow deletion if not completed/closed
+        if (wo.status === 'COMPLETED' || wo.status === 'CLOSED') {
+            return res.status(400).json({ error: 'Tidak bisa menghapus Work Order yang sudah COMPLETED atau CLOSED.' });
+        }
+
+        // Execute queries inside transaction
+        await prisma.$transaction([
+            prisma.auditLog.deleteMany({ where: { wo_id: wo.id } }),
+            prisma.comment.deleteMany({ where: { wo_id: wo.id } }),
+            prisma.attachment.deleteMany({ where: { wo_id: wo.id } }),
+            prisma.workOrder.delete({ where: { id: wo.id } })
+        ]);
+
+        res.json({ message: 'Work Order berhasil dihapus' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     createWorkOrder,
     getWorkOrders,
@@ -428,5 +462,6 @@ module.exports = {
     updateStatus,
     addAttachment,
     addComment,
-    bulkCreateFromParts
+    bulkCreateFromParts,
+    deleteWorkOrder
 };
