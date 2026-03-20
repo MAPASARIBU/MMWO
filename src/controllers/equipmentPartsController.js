@@ -127,10 +127,52 @@ const recordHM = async (req, res) => {
     }
 };
 
+const editPart = async (req, res) => {
+    try {
+        const partId = parseInt(req.params.partId);
+        const { name, lifetime_hm, current_hm } = req.body;
+        
+        const updatedPart = await prisma.part.update({
+            where: { id: partId },
+            data: {
+                name,
+                lifetime_hm: parseFloat(lifetime_hm),
+                current_hm: parseFloat(current_hm)
+            }
+        });
+        res.json(updatedPart);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const deletePart = async (req, res) => {
+    try {
+        const partId = parseInt(req.params.partId);
+
+        // Check if part is used in work orders (if any relationships exist depending on schema rules)
+        // Note: Prisma might throw an error automatically if foreign keys restrict deletion
+        await prisma.part.delete({
+            where: { id: partId }
+        });
+        
+        res.json({ success: true, message: 'Part deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        if (error.code === 'P2003') {
+            return res.status(400).json({ error: 'Cannot delete part because it is referenced in other records (like Work Orders). Please just replace it to make it inactive.' });
+        }
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getParts,
     createPart,
     replacePart,
     getHMRecords,
-    recordHM
+    recordHM,
+    editPart,
+    deletePart
 };

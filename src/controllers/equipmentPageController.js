@@ -27,7 +27,7 @@ const getEquipmentDetail = async (req, res) => {
 
         res.render('layout', {
             title: `Equipment: ${equipment.name}`,
-            body: await renderView('equipment/detail', { equipment }),
+            body: await renderView('equipment/detail', { equipment, user: req.session.user }),
             user: req.session.user,
             path: '/equipment'
         });

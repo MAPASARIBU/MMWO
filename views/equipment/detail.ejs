@@ -36,7 +36,11 @@
                             <% if(part.is_active) { %>
                                 <button class="btn btn-sm btn-outline-primary" onclick="openReplaceModal(<%= part.id %>, '<%= part.name %>', <%= part.lifetime_hm %>)">Replace</button>
                             <% } else { %>
-                                <span class="text-sm text-secondary">Replaced: <%= part.replaced_at.toLocaleDateString() %></span>
+                                <span class="text-sm text-secondary" style="margin-right: 10px;">Replaced: <%= part.replaced_at.toLocaleDateString() %></span>
+                            <% } %>
+                            <% if(user && user.role === 'ADMIN') { %>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="openEditPartModal(<%= part.id %>, '<%= part.name %>', <%= part.lifetime_hm %>, <%= part.current_hm %>)" style="margin-left: 5px;" title="Edit Part"><i class="fas fa-edit"></i></button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deletePart(<%= part.id %>)" style="margin-left: 5px;" title="Delete Part"><i class="fas fa-trash"></i></button>
                             <% } %>
                         </div>
                     </div>
@@ -128,6 +132,34 @@
     </div>
 </div>
 
+<!-- Edit Part Modal -->
+<% if(user && user.role === 'ADMIN') { %>
+<div id="editPartModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
+    <div class="card" style="margin: 50px auto; max-width: 400px;">
+        <h3>Edit Part</h3>
+        <form id="editPartForm">
+            <input type="hidden" id="editPartId" name="part_id">
+            <div class="form-group">
+                <label>Part Name</label>
+                <input type="text" id="editPartName" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Lifetime (HM)</label>
+                <input type="number" step="0.1" id="editPartLifetime" name="lifetime_hm" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Current HM</label>
+                <input type="number" step="0.1" id="editPartCurrent" name="current_hm" class="form-control" required>
+            </div>
+            <div class="flex justify-end mt-4 gap-2">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editPartModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+<% } %>
+
 <!-- Record HM Modal -->
 <div id="recordHmModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
     <div class="card" style="margin: 50px auto; max-width: 400px;">
@@ -164,6 +196,29 @@
         openModal('replacePartModal');
     }
 
+    function openEditPartModal(partId, name, lifetime, currentHm) {
+        document.getElementById('editPartId').value = partId;
+        document.getElementById('editPartName').value = name;
+        document.getElementById('editPartLifetime').value = lifetime;
+        document.getElementById('editPartCurrent').value = currentHm;
+        openModal('editPartModal');
+    }
+
+    async function deletePart(partId) {
+        if (!confirm('Are you sure you want to delete this part? This action cannot be undone.')) return;
+        try {
+            const res = await fetch(`/api/equipment/<%= equipment.id %>/parts/${partId}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if(res.ok) window.location.reload();
+            else alert(data.error || 'Failed to delete part');
+        } catch(err) {
+            console.error(err);
+            alert('Error deleting part');
+        }
+    }
+
     const EQUIPMENT_ID = <%= equipment.id %>;
 
     // Add Part Submit
@@ -184,6 +239,34 @@
             alert('Error adding part');
         }
     });
+
+    // Edit Part Submit
+    const editPartForm = document.getElementById('editPartForm');
+    if (editPartForm) {
+        editPartForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const partId = formData.get('part_id');
+            
+            try {
+                const res = await fetch(`/api/equipment/${EQUIPMENT_ID}/parts/${partId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: formData.get('name'),
+                        lifetime_hm: formData.get('lifetime_hm'),
+                        current_hm: formData.get('current_hm')
+                    })
+                });
+                const data = await res.json();
+                if(res.ok) window.location.reload();
+                else alert(data.error || 'Failed to edit part');
+            } catch(err) {
+                console.error(err);
+                alert('Error editing part');
+            }
+        });
+    }
 
     // Replace Part Submit
     document.getElementById('replacePartForm').addEventListener('submit', async (e) => {
