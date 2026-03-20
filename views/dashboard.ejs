@@ -35,18 +35,6 @@
     </div>
 </div>
 
-<!-- Work Orders by Station Chart -->
-<div class="dashboard-grid mt-4" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
-    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <h3 style="width: 100%; text-align: left; margin-bottom: 1rem;"><i class="fas fa-chart-pie text-primary"></i> % Work Orders per Station</h3>
-        <% if (typeof stationChartData !== 'undefined' && stationChartData.data && stationChartData.data.length > 0) { %>
-            <div style="width: 100%; max-width: 450px; height: 300px; position: relative;">
-                <canvas id="stationWoChart"></canvas>
-            </div>
-        <% } else { %>
-            <p class="text-secondary mt-3">No data available for the selected filters.</p>
-        <% } %>
-    </div>
 </div>
 
 <!-- Equipment Parts Warning Widget -->
@@ -168,16 +156,27 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <div class="dashboard-grid mt-4"
-    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
-    <div class="card">
-        <h3 style="font-size: 1rem; margin-bottom: 10px;">Work Orders by Type Kerusakan</h3>
-        <div style="height: 200px; position: relative;">
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+    <!-- Work Orders by Station Chart -->
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h3 style="width: 100%; text-align: left; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-chart-pie text-primary"></i> % WO per Station</h3>
+        <% if (typeof stationChartData !== 'undefined' && stationChartData.data && stationChartData.data.length > 0) { %>
+            <div style="width: 100%; height: 200px; position: relative;">
+                <canvas id="stationWoChart"></canvas>
+            </div>
+        <% } else { %>
+            <p class="text-secondary mt-3" style="text-align: center;">No data available for the selected filters.</p>
+        <% } %>
+    </div>
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h3 style="width: 100%; text-align: left; font-size: 1rem; margin-bottom: 10px;">WO by Type Kerusakan</h3>
+        <div style="width: 100%; height: 200px; position: relative;">
             <canvas id="typeChart"></canvas>
         </div>
     </div>
-    <div class="card">
-        <h3 style="font-size: 1rem; margin-bottom: 10px;">Work Orders by Category</h3>
-        <div style="height: 200px; position: relative;">
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h3 style="width: 100%; text-align: left; font-size: 1rem; margin-bottom: 10px;">WO by Category</h3>
+        <div style="width: 100%; height: 200px; position: relative;">
             <canvas id="categoryChart"></canvas>
         </div>
     </div>
