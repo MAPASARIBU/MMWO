@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "equipment_id": 1,
+    "name": "Warning Part Demo",
+    "lifetime_hm": 1000,
+    "current_hm": 950,
+    "is_active": true,
+    "installed_at": "2026-03-06T08:30:09.345Z",
+    "replaced_at": null,
+    "wos": [],
+    "legacy_wos": []
+  },
+  {
+    "id": 2,
+    "equipment_id": 1,
+    "name": "Critical Part Demo",
+    "lifetime_hm": 500,
+    "current_hm": 510,
+    "is_active": true,
+    "installed_at": "2026-03-06T08:30:10.304Z",
+    "replaced_at": null,
+    "wos": [],
+    "legacy_wos": []
+  }
+]

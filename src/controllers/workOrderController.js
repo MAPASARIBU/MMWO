@@ -1,11 +1,18 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
-// Helper: Generate WO Number (WO-YYYYMMDD-XXXX)
 const generateWONumber = async () => {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const count = await prisma.workOrder.count();
-    const sequence = String(count + 1).padStart(4, '0');
+    
+    // Get the highest ID in the database instead of counting,
+    // to prevent duplicate sequences if a Work Order was deleted.
+    const lastWo = await prisma.workOrder.findFirst({
+        orderBy: { id: 'desc' },
+        select: { id: true }
+    });
+    
+    const nextId = lastWo ? lastWo.id + 1 : 1;
+    const sequence = String(nextId).padStart(4, '0');
     return `WO-${date}-${sequence}`;
 };
 
