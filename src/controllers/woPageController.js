@@ -42,6 +42,7 @@ const listWorkOrders = async (req, res) => {
             include: {
                 station: true,
                 equipment: true,
+                parts: true,
                 assignee: true,
                 reporter: true
             },
@@ -115,6 +116,7 @@ const detailWorkOrderPage = async (req, res) => {
                 mill: true,
                 station: true,
                 equipment: true,
+                parts: true,
                 assignee: true,
                 reporter: true,
                 attachments: true,
