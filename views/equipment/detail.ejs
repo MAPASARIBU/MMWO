@@ -17,29 +17,26 @@
     <!-- Parts List -->
     <div class="card">
         <h3>Spareparts Monitoring</h3>
-        <% if(equipment.parts.length === 0) { %>
-            <p class="text-secondary">No parts recorded yet.</p>
+        <% const activeParts = equipment.parts.filter(p => p.is_active); %>
+        <% if(activeParts.length === 0) { %>
+            <p class="text-secondary">No active parts recorded yet.</p>
         <% } else { %>
             <div class="mt-4">
-                <% equipment.parts.forEach(part => { 
+                <% activeParts.forEach(part => { 
                     const percent = Math.min(100, (part.current_hm / part.lifetime_hm) * 100);
                     let color = 'bg-success'; // Green
                     let statusText = 'Normal';
                     if (percent >= 100) { color = 'bg-danger'; statusText = 'Critical - Ganti Segera'; }
                     else if (percent >= 90) { color = 'bg-warning'; statusText = 'Warning - Persiapan Ganti'; }
                 %>
-                <div class="mb-4 p-3 border rounded <%= part.is_active ? 'bg-white' : 'bg-gray-100' %>" style="<%= !part.is_active ? 'opacity: 0.6;' : '' %>">
+                <div class="mb-4 p-3 border rounded bg-white">
                     <div class="flex justify-between items-center mb-2">
-                        <strong class="text-lg"><%= part.name %> <% if(!part.is_active) { %><span class="badge badge-secondary">Inactive</span><% } %></strong>
+                        <strong class="text-lg"><%= part.name %></strong>
                         <div>
-                            <% if(part.is_active && (percent >= 90)) { %>
+                            <% if(percent >= 90) { %>
                                 <a href="/work-orders/create?part_id=<%= part.id %>" class="btn btn-sm" style="background-color: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 0.2rem; margin-right: 5px;">Create WO</a>
                             <% } %>
-                            <% if(part.is_active) { %>
-                                <button class="btn btn-sm btn-outline-primary" onclick="openReplaceModal(<%= part.id %>, '<%= part.name %>', <%= part.lifetime_hm %>)">Replace</button>
-                            <% } else { %>
-                                <span class="text-sm text-secondary" style="margin-right: 10px;">Replaced: <%= part.replaced_at.toLocaleDateString() %></span>
-                            <% } %>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openReplaceModal(<%= part.id %>, '<%= part.name %>', <%= part.lifetime_hm %>)">Replace</button>
                             <% if(user && user.role === 'ADMIN') { %>
                                 <button class="btn btn-sm btn-outline-secondary" onclick="openEditPartModal(<%= part.id %>, '<%= part.name %>', <%= part.lifetime_hm %>, <%= part.current_hm %>)" style="margin-left: 5px;" title="Edit Part"><i class="fas fa-edit"></i></button>
                                 <button class="btn btn-sm btn-outline-danger" onclick="deletePart(<%= part.id %>)" style="margin-left: 5px;" title="Delete Part"><i class="fas fa-trash"></i></button>
