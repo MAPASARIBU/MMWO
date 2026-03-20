@@ -33,9 +33,6 @@
                     <div class="flex justify-between items-center mb-2">
                         <strong class="text-lg"><%= part.name %></strong>
                         <div>
-                            <% if(percent >= 90) { %>
-                                <a href="/work-orders/create?part_id=<%= part.id %>" class="btn btn-sm" style="background-color: #ef4444; color: white; border: none; padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 0.2rem; margin-right: 5px;">Create WO</a>
-                            <% } %>
                             <button class="btn btn-sm btn-outline-primary" onclick="openReplaceModal(<%= part.id %>, '<%= part.name %>', <%= part.lifetime_hm %>)">Replace</button>
                             <% if(user && user.role === 'ADMIN') { %>
                                 <button class="btn btn-sm btn-outline-secondary" onclick="openEditPartModal(<%= part.id %>, '<%= part.name %>', <%= part.lifetime_hm %>, <%= part.current_hm %>)" style="margin-left: 5px;" title="Edit Part"><i class="fas fa-edit"></i></button>
