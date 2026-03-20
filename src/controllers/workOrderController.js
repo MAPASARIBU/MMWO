@@ -445,6 +445,7 @@ const deleteWorkOrder = async (req, res) => {
             prisma.auditLog.deleteMany({ where: { wo_id: wo.id } }),
             prisma.comment.deleteMany({ where: { wo_id: wo.id } }),
             prisma.attachment.deleteMany({ where: { wo_id: wo.id } }),
+            prisma.weeklyPlan.deleteMany({ where: { wo_id: wo.id } }),
             prisma.workOrder.delete({ where: { id: wo.id } })
         ]);
 
