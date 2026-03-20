@@ -143,6 +143,35 @@ const getDashboard = async (req, res) => {
             _count: { category: true }
         });
 
+        // Chart Data for WO by Station
+        const stationCounts = await prisma.workOrder.groupBy({
+            by: ['station_id'],
+            where: filterWhere,
+            _count: { id: true }
+        });
+
+        // Fetch station names for mapping
+        let statStations = await prisma.station.findMany({
+            where: millId ? { mill_id: millId } : {}
+        });
+        
+        const stationMap = {};
+        statStations.forEach(s => {
+            stationMap[s.id] = s.name;
+        });
+
+        const stationChartData = {
+            labels: [],
+            data: []
+        };
+        
+        stationCounts.forEach(sc => {
+            if (sc.station_id) {
+                stationChartData.labels.push(stationMap[sc.station_id] || 'Unknown');
+                stationChartData.data.push(sc._count.id);
+            }
+        });
+
         // Parts that need attention (Warning > 90% or Critical >= 100%)
         // We fetch all active parts and filter in JS because we can't easily query mathematical operations (current_hm >= 0.9 * lifetime_hm) natively in Prisma without raw queries, which is fine for UI but raw is better for scale. Since we don't have many active parts per mill usually, we can fetch them. Better yet, we can filter in DB if we know the exact values, but since it's a ratio:
         const criticalParts = await prisma.part.findMany({
@@ -175,6 +204,7 @@ const getDashboard = async (req, res) => {
                 stats,
                 typeStats,
                 categoryStats,
+                stationChartData,
                 attentionParts,
                 mills,
                 selectedMillId: millId,
