@@ -21,6 +21,9 @@ const PORT = process.env.PORT || 3000;
 app.set('views', path.join(__dirname, '../views'));
 app.set('view engine', 'ejs');
 
+// Cache bust version for static assets (refreshed on every server restart)
+app.locals.appVersion = Date.now();
+
 // Middleware
 app.set('trust proxy', 1); // Trust first proxy (Railway)
 app.use(morgan('dev'));
