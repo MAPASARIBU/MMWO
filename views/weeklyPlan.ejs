@@ -132,11 +132,47 @@
                 </select>
             </div>
             <button type="submit" class="btn btn-secondary">Filter</button>
-            <button type="button" class="btn btn-primary" onclick="window.print()">
+            <button type="button" class="btn btn-primary" onclick="forcePrintPlan()">
                 <i class="fas fa-print"></i> Print Plan
             </button>
         </div>
     </form>
+
+    <script>
+        function forcePrintPlan() {
+            // Force DOM manipulation before print dialogue to bypass any CSS cache/bugs
+            const sidebar = document.getElementById('sidebar');
+            const topBar = document.querySelector('.top-bar');
+            const mainContent = document.querySelector('.main-content');
+            
+            // Save original styles
+            const origSidebarDisplay = sidebar ? sidebar.style.display : '';
+            const origTopBarDisplay = topBar ? topBar.style.display : '';
+            const origMargin = mainContent ? mainContent.style.marginLeft : '';
+            const origWidth = mainContent ? mainContent.style.width : '';
+
+            // Apply hides
+            if(sidebar) sidebar.style.display = 'none';
+            if(topBar) topBar.style.display = 'none';
+            if(mainContent) {
+                mainContent.style.marginLeft = '0';
+                mainContent.style.width = '100%';
+            }
+
+            // Small timeout to allow DOM to paint before triggering print dialog
+            setTimeout(() => {
+                window.print();
+                
+                // Restore after print dialog closes
+                if(sidebar) sidebar.style.display = origSidebarDisplay;
+                if(topBar) topBar.style.display = origTopBarDisplay;
+                if(mainContent) {
+                    mainContent.style.marginLeft = origMargin;
+                    mainContent.style.width = origWidth;
+                }
+            }, 100);
+        }
+    </script>
 
     <style>
         .hidden-print-block {
