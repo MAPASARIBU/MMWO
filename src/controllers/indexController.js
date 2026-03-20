@@ -151,7 +151,7 @@ const getDashboard = async (req, res) => {
                 equipment: millId ? { station: { mill_id: millId } } : undefined,
                 wos: {
                     none: {
-                        status: { not: 'CLOSED' }
+                        status: { notIn: ['CLOSED'] }
                     }
                 }
             },
