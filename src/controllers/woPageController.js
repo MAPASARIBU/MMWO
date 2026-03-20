@@ -51,7 +51,7 @@ const listWorkOrders = async (req, res) => {
 
         res.render('layout', {
             title: 'Work Orders',
-            body: await renderView('wo/list', { wos, query: req.query }),
+            body: await renderView('wo/list', { wos, query: req.query, user }),
             user: req.session.user,
             path: '/work-orders'
         });
