@@ -71,6 +71,7 @@ app.get('/work-orders/:id', ensureAuthenticated, woPageController.detailWorkOrde
 
 const weeklyPlanPageController = require('./controllers/weeklyPlanPageController');
 app.get('/weekly-plan', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPage);
+app.get('/weekly-plan/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
 
 const adminController = require('./controllers/adminController');
 app.get('/admin/users', ensureRole(['ADMIN']), adminController.getUsersPage);

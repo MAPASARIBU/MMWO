@@ -80,6 +80,44 @@ const getWeeklyPlanPage = async (req, res) => {
     }
 };
 
+const getWeeklyPlanPrint = async (req, res) => {
+    try {
+        const { week, day } = req.query;
+        let where = {};
+        if (week) where.planned_week = week;
+        if (day) where.planned_day = day;
+
+        const plans = await prisma.weeklyPlan.findMany({
+            where,
+            include: {
+                wo: {
+                    include: {
+                        mill: true,
+                        station: true,
+                        equipment: true,
+                        pics: true
+                    }
+                },
+                planner: { select: { name: true } }
+            },
+            orderBy: { created_at: 'desc' }
+        });
+
+        const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+        res.render('weekly_plan_print', {
+            plans,
+            query: req.query,
+            user: req.session.user,
+            today
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error loading weekly plan print view');
+    }
+};
+
 module.exports = {
-    getWeeklyPlanPage
+    getWeeklyPlanPage,
+    getWeeklyPlanPrint
 };

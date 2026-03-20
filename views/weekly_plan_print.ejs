@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Maintenance Plan - <%= today %></title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            max-width: 100%;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .header p {
+            margin: 5px 0 0;
+            color: #666;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-left: 5px solid #007bff;
+            padding-left: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #e9ecef;
+            border-bottom: 2px solid #333;
+            font-weight: bold;
+            color: #495057;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        @media print {
+            tr:nth-child(even) {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                background-color: #f2f2f2 !important;
+            }
+
+            th {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                background-color: #e9ecef !important;
+            }
+            body {
+                padding: 0;
+            }
+            .no-print {
+                display: none;
+            }
+            a {
+                text-decoration: none;
+                color: #333;
+            }
+        }
+
+        .print-controls {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="print-controls no-print">
+        <button onclick="window.print()" class="btn">🖨️ Print Page</button>
+        <button onclick="window.close()" class="btn btn-secondary">Close</button>
+    </div>
+
+    <div class="header">
+        <h1>Weekly Maintenance Plan</h1>
+        <h2 style="margin: 5px 0 0; font-size: 18px; font-weight: normal; color: #333;">
+            <%= user.current_mill_name || (user.mill_id ? 'Mill ' + user.mill_id : 'All Mills' ) %>
+        </h2>
+        <p>Date: <%= today %></p>
+        <p>Printed by: <%= user.name %> (<%= user.role %>)</p>
+
+        <% if (query.week || query.day) { %>
+            <div style="margin-top: 10px; padding: 10px; background: #eee; border: 1px solid #ddd; display: inline-block;">
+                <strong>Filter Applied:</strong><br>
+                <% if (query.week) { %><span>Week: <%= query.week %></span><br><% } %>
+                <% if (query.day) { %><span>Day: <%= query.day %></span><% } %>
+            </div>
+        <% } %>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Maintenance Plan</div>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 10%;">Week</th>
+                    <th style="width: 10%;">Day</th>
+                    <th style="width: 15%;">WO No</th>
+                    <th style="width: 15%;">Station</th>
+                    <th style="width: 25%;">Description</th>
+                    <th style="width: 10%;">Planner</th>
+                    <th style="width: 15%;">PIC</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (plans && plans.length > 0) { %>
+                    <% plans.forEach(plan => { %>
+                        <tr>
+                            <td><%= plan.planned_week %></td>
+                            <td><%= plan.planned_day || '-' %></td>
+                            <td><%= plan.wo.wo_no %></td>
+                            <td><%= plan.wo.station ? plan.wo.station.name : '-' %></td>
+                            <td><%= plan.wo.description %></td>
+                            <td><%= plan.planner.name %></td>
+                            <td>
+                                <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
+                                    <%= plan.wo.pics.map(p => p.name).join(', ') %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px;">No planned work found matching the criteria.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+        <div style="text-align: center; width: 200px;">
+            <p>Prepared By,</p>
+            <br><br><br>
+            <p>( <%= user.name %> )</p>
+        </div>
+        <div style="text-align: center; width: 200px;">
+            <p>Approved By,</p>
+            <br><br><br>
+            <p>( __________________ )</p>
+        </div>
+    </div>
+
+    <script>
+        // Optional auto-print trigger if they opened this page meant to be printed
+        // window.onload = function() { window.print(); }
+    </script>
+</body>
+
+</html>

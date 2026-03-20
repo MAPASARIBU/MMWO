@@ -132,95 +132,13 @@
                 </select>
             </div>
             <button type="submit" class="btn btn-secondary">Filter</button>
-            <button type="button" class="btn btn-primary" onclick="forcePrintPlan()">
+            <a href="/weekly-plan/print?week=<%= query.week || '' %>&day=<%= query.day || '' %>" target="_blank" class="btn btn-primary" style="text-decoration: none;">
                 <i class="fas fa-print"></i> Print Plan
-            </button>
+            </a>
         </div>
     </form>
-
-    <script>
-        function forcePrintPlan() {
-            // Force DOM manipulation before print dialogue to bypass any CSS cache/bugs
-            const sidebar = document.getElementById('sidebar');
-            const topBar = document.querySelector('.top-bar');
-            const mainContent = document.querySelector('.main-content');
-            
-            // Save original styles
-            const origSidebarDisplay = sidebar ? sidebar.style.display : '';
-            const origTopBarDisplay = topBar ? topBar.style.display : '';
-            const origMargin = mainContent ? mainContent.style.marginLeft : '';
-            const origWidth = mainContent ? mainContent.style.width : '';
-
-            // Apply hides
-            if(sidebar) sidebar.style.display = 'none';
-            if(topBar) topBar.style.display = 'none';
-            if(mainContent) {
-                mainContent.style.marginLeft = '0';
-                mainContent.style.width = '100%';
-            }
-
-            // Small timeout to allow DOM to paint before triggering print dialog
-            setTimeout(() => {
-                window.print();
-                
-                // Restore after print dialog closes
-                if(sidebar) sidebar.style.display = origSidebarDisplay;
-                if(topBar) topBar.style.display = origTopBarDisplay;
-                if(mainContent) {
-                    mainContent.style.marginLeft = origMargin;
-                    mainContent.style.width = origWidth;
-                }
-            }, 100);
-        }
-    </script>
-
-    <style>
-        .hidden-print-block {
-            display: none;
-        }
-
-        @media print {
-
-            .no-print,
-            .card h4,
-            .card hr,
-            .card>form.flex,
-            .card>.filter-bar,
-            nav,
-            footer,
-            .btn,
-            .sidebar,
-            .top-bar {
-                display: none !important;
-            }
-
-            .main-content {
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-            }
-
-            .card {
-                border: none !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-
-            .hidden-print-block {
-                display: block !important;
-            }
-
-            .table-responsive {
-                overflow: visible !important;
-            }
-
-            body {
-                background: white;
-            }
-        }
-    </style>
+        </div>
+    </form>
 
     <div class="table-responsive">
         <table class="table">
