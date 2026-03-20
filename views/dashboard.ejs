@@ -198,6 +198,7 @@
 
         new Chart(document.getElementById('typeChart'), {
             type: 'bar', // Using Bar chart for clarity
+            plugins: [ChartDataLabels],
             data: {
                 labels: typeLabels,
                 datasets: [{
@@ -234,6 +235,7 @@
 
         new Chart(document.getElementById('categoryChart'), {
             type: 'doughnut', // Using Doughnut for category distribution
+            plugins: [ChartDataLabels],
             data: {
                 labels: catLabels,
                 datasets: [{
@@ -534,13 +536,13 @@
 
         <!-- Chart.js and Initialization -->
         <% if (typeof stationChartData !== 'undefined' && stationChartData.data && stationChartData.data.length > 0) { %>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
                 document.addEventListener("DOMContentLoaded", function () {
                     const ctx = document.getElementById('stationWoChart');
                     if (ctx) {
                         new Chart(ctx, {
                             type: 'doughnut',
+                            plugins: [ChartDataLabels],
                             data: {
                                 labels: <%- JSON.stringify(stationChartData.labels) %>,
                                 datasets: [{
