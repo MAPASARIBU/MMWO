@@ -61,7 +61,14 @@
                     <tr>
                         <td><strong><%= p.equipment.name %></strong> <br><small class="text-secondary"><%= p.equipment.code %></small></td>
                         <td><%= p.equipment.station.name %></td>
-                        <td><%= p.name %></td>
+                        <td>
+                            <div><%= p.name %></div>
+                            <% if (p.installed_at) { %>
+                                <div style="font-size: 0.8em; color: #6c757d; margin-top: 2px;">
+                                    <i class="fas fa-calendar-alt"></i> Last Replaced: <%= new Date(p.installed_at).toLocaleDateString() %>
+                                </div>
+                            <% } %>
+                        </td>
                         <td>
                             <div style="font-size: 0.85em; margin-bottom: 2px;"><%= p.current_hm %> / <%= p.lifetime_hm %></div>
                             <div style="height: 6px; background: #eee; border-radius: 3px; width: 100%;">
