@@ -5,7 +5,7 @@
     </div>
 
     <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
-        <h4>Find Unplanned Work</h4>
+        <h4>Find Unfinished Work</h4>
         <form action="/weekly-plan" method="GET" class="flex gap-4 items-end mb-4">
             <!-- Persist current week filter if any -->
             <input type="hidden" name="week" value="<%= query.week || '' %>">
@@ -63,6 +63,8 @@
                                 <th>WO No</th>
                                 <th>Date</th>
                                 <th>Priority</th>
+                                <th>Current Plan</th>
+                                <th>Status</th>
                                 <th>Description</th>
                             </tr>
                         </thead>
@@ -82,6 +84,18 @@
                                             <%= wo.priority %>
                                         </span></td>
                                     <td>
+                                        <% if (wo.weekly_plan) { %>
+                                            <%= wo.weekly_plan.planned_week %> (<%= wo.weekly_plan.planned_day || '-' %>)
+                                        <% } else { %>
+                                            <span class="text-muted italic text-sm">Unplanned</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-<%= wo.status === 'OPEN' ? 'warning' : (wo.status === 'IN PROGRESS' ? 'info' : 'secondary') %>">
+                                            <%= wo.status %>
+                                        </span>
+                                    </td>
+                                    <td>
                                         <%= wo.description.substring(0, 50) %>...
                                     </td>
                                 </tr>
@@ -99,7 +113,7 @@
                 }
             </script>
             <% } else if (query.candidateStart) { %>
-                <p class="text-muted italic">No unplanned open work orders found in this range.</p>
+                <p class="text-muted italic">No unfinished work orders found in this range.</p>
                 <% } %>
     </div>
 

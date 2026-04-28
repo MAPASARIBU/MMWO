@@ -36,8 +36,7 @@ const getWeeklyPlanPage = async (req, res) => {
 
             candidateWos = await prisma.workOrder.findMany({
                 where: {
-                    status: { not: 'CLOSED' },
-                    weekly_plan: null, // Only fetch those NOT yet planned
+                    status: { notIn: ['CLOSED', 'COMPLETED'] },
                     created_at: {
                         gte: start,
                         lte: end
@@ -45,7 +44,8 @@ const getWeeklyPlanPage = async (req, res) => {
                 },
                 include: {
                     station: true,
-                    equipment: true
+                    equipment: true,
+                    weekly_plan: true
                 },
                 orderBy: { priority: 'asc' }
             });
