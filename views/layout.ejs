@@ -215,6 +215,13 @@
                                             <i class="fas fa-calendar-alt"></i>
                                             <span>Plan</span>
                                         </a>
+                                        <% if (typeof user !== 'undefined' && user && (user.role === 'ADMIN' || user.role === 'PROC')) { %>
+                                        <a href="/input-hm"
+                                            class="mobile-nav-item <%= typeof path !== 'undefined' && path.startsWith('/input-hm') ? 'active' : '' %>">
+                                            <i class="fas fa-clock"></i>
+                                            <span>Input HM</span>
+                                        </a>
+                                        <% } %>
                                         <!-- Optional: Profile/Logout or More -->
                                         <a href="/auth/logout" class="mobile-nav-item">
                                             <i class="fas fa-sign-out-alt"></i>
