@@ -193,7 +193,7 @@ const updateStatus = async (req, res) => {
         // Logic for transitions
         if (status === 'ASSIGNED') {
             // AUTHORIZATION: ADMIN, SPV, MANAGER, MTC can assign
-            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER' && user.role !== 'MTC') {
+            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER' && user.role !== 'SENIOR_MANAGER' && user.role !== 'MTC') {
                 return res.status(403).json({ error: 'Access Denied: You cannot assign Work Orders.' });
             }
 
