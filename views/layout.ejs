@@ -117,6 +117,7 @@
             MMWO System
         </div>
         <ul class="nav-links">
+            <% if (user && user.role !== 'OPERATOR') { %>
             <li class="nav-item">
                 <a href="/dashboard" style="display: block; color: #fff; padding: 15px;">
                     Dashboard
@@ -132,6 +133,7 @@
                     Weekly Plan
                 </a>
             </li>
+            <% } %>
             <% if (user && user.role==='ADMIN' ) { %>
                 <li class="nav-item">
                     <a href="/admin/users" style="display: block; color: #fff; padding: 15px;">
@@ -149,7 +151,7 @@
                     </a>
                 </li>
             <% } %>
-            <% if (user && (user.role==='ADMIN' || user.role==='PROC')) { %>
+            <% if (user && (user.role==='ADMIN' || user.role==='PROC' || user.role==='OPERATOR')) { %>
                 <li class="nav-item" style="padding: 0 15px 15px 15px;">
                     <a href="/input-hm" style="display: block; color: #fff; padding: 10px 15px; background-color: #4a7acc; border: 1px solid #3961a3; text-decoration: none; font-size: 0.9em; letter-spacing: 0.5px;">
                         INPUT HM
@@ -200,6 +202,7 @@
     <!-- Mobile Bottom Navigation -->
     <!-- v2.1 Mobile Nav Indicator -->
     <nav class="mobile-bottom-nav">
+        <% if (typeof user !== 'undefined' && user && user.role !== 'OPERATOR') { %>
         <a href="/dashboard"
             class="mobile-nav-item <%= typeof path !== ' undefined' && path==='/dashboard' ? 'active' : '' %>">
                                         <i class="fas fa-home"></i>
@@ -215,7 +218,8 @@
                                             <i class="fas fa-calendar-alt"></i>
                                             <span>Plan</span>
                                         </a>
-                                        <% if (typeof user !== 'undefined' && user && (user.role === 'ADMIN' || user.role === 'PROC')) { %>
+        <% } %>
+                                        <% if (typeof user !== 'undefined' && user && (user.role === 'ADMIN' || user.role === 'PROC' || user.role === 'OPERATOR')) { %>
                                         <a href="/input-hm"
                                             class="mobile-nav-item <%= typeof path !== 'undefined' && path.startsWith('/input-hm') ? 'active' : '' %>">
                                             <i class="fas fa-clock"></i>

@@ -6,6 +6,11 @@ const getDashboard = async (req, res) => {
         const userId = req.session.user.id;
         const user = req.session.user;
 
+        // Redirect OPERATOR to Input HM page immediately
+        if (user.role === 'OPERATOR') {
+            return res.redirect('/input-hm');
+        }
+
         // Mill Handling
         let millId = null;
         let millName = "All Mills";

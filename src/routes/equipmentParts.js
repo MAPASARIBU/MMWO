@@ -12,6 +12,6 @@ router.delete('/:equipmentId/parts/:partId', ensureRole(['ADMIN']), equipmentPar
 
 // HM Record routes
 router.get('/:equipmentId/hm', ensureAuthenticated, equipmentPartsController.getHMRecords);
-router.post('/:equipmentId/hm', ensureRole(['ADMIN', 'PROC']), equipmentPartsController.recordHM);
+router.post('/:equipmentId/hm', ensureRole(['ADMIN', 'PROC', 'OPERATOR']), equipmentPartsController.recordHM);
 
 module.exports = router;
