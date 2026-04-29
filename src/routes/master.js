@@ -16,5 +16,7 @@ router.post('/equipment', ensureRole(['ADMIN']), masterController.createEquipmen
 const equipmentController = require('../controllers/equipmentController');
 
 router.post('/equipment/bulk', ensureRole(['ADMIN']), equipmentController.bulkCreateEquipment);
+router.put('/equipment/:id', ensureRole(['ADMIN']), equipmentController.updateEquipment);
+router.delete('/equipment/:id', ensureRole(['ADMIN']), equipmentController.deleteEquipment);
 
 module.exports = router;

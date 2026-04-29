@@ -43,6 +43,50 @@ const bulkCreateEquipment = async (req, res) => {
     }
 };
 
+const updateEquipment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name } = req.body;
+        
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ error: 'Name is required' });
+        }
+        
+        const updated = await prisma.equipment.update({
+            where: { id: parseInt(id) },
+            data: { name: name.trim() }
+        });
+        
+        res.json(updated);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to update equipment' });
+    }
+};
+
+const deleteEquipment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Also check if there are WOs related to this equipment before deleting
+        const wos = await prisma.workOrder.count({ where: { equipment_id: parseInt(id) } });
+        if (wos > 0) {
+            return res.status(400).json({ error: 'Cannot delete equipment. There are Work Orders attached to it.' });
+        }
+        
+        await prisma.equipment.delete({
+            where: { id: parseInt(id) }
+        });
+        
+        res.json({ message: 'Deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Failed to delete equipment' });
+    }
+};
+
 module.exports = {
-    bulkCreateEquipment
+    bulkCreateEquipment,
+    updateEquipment,
+    deleteEquipment
 };
