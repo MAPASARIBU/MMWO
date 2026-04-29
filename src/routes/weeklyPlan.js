@@ -5,6 +5,7 @@ const { ensureAuthenticated } = require('../middleware/authMiddleware');
 
 router.post('/', ensureAuthenticated, weeklyPlanController.upsertPlan);
 router.post('/bulk', ensureAuthenticated, weeklyPlanController.bulkPlan);
+router.post('/non-wo', ensureAuthenticated, weeklyPlanController.addNonWoJob);
 router.get('/', ensureAuthenticated, weeklyPlanController.getPlans);
 
 module.exports = router;

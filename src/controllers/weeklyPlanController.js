@@ -92,8 +92,66 @@ const getPlans = async (req, res) => {
     }
 };
 
+const addNonWoJob = async (req, res) => {
+    try {
+        const { category, station_id, equipment_id, description, planned_week, planned_day, pic_ids } = req.body;
+        const planner_id = req.session.user.id;
+        const mill_id = req.session.user.mill_id || 1; // Assuming default if admin
+
+        // Generate a pseudo-WO number
+        const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+        const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+        const wo_no = `FAB-${dateStr}-${randomNum}`;
+
+        // Create the WorkOrder
+        const wo = await prisma.workOrder.create({
+            data: {
+                wo_no,
+                mill_id,
+                station_id: parseInt(station_id),
+                equipment_id: equipment_id ? parseInt(equipment_id) : null,
+                category: category || 'Fabrication',
+                type: 'NON-WO',
+                priority: 'NORMAL',
+                description,
+                status: 'PLANNED',
+                reporter_id: planner_id,
+            }
+        });
+
+        // Link PICs if provided
+        if (pic_ids && Array.isArray(pic_ids)) {
+            const picsToConnect = pic_ids.map(id => ({ id: parseInt(id) }));
+            await prisma.workOrder.update({
+                where: { id: wo.id },
+                data: {
+                    pics: {
+                        connect: picsToConnect
+                    }
+                }
+            });
+        }
+
+        // Add to WeeklyPlan
+        await prisma.weeklyPlan.create({
+            data: {
+                wo_id: wo.id,
+                planned_week,
+                planned_day,
+                planned_by: planner_id
+            }
+        });
+
+        res.json({ success: true, wo });
+    } catch (error) {
+        console.error('Error adding Non-WO job:', error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     upsertPlan,
     bulkPlan,
-    getPlans
+    getPlans,
+    addNonWoJob
 };

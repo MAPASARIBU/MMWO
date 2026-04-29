@@ -77,6 +77,11 @@ const getWeeklyPlanPage = async (req, res) => {
             orderBy: { name: 'asc' }
         });
 
+        const stations = await prisma.station.findMany({
+            where: user.role !== 'ADMIN' ? { mill_id: user.mill_id } : {},
+            orderBy: { name: 'asc' }
+        });
+
         res.render('layout', {
             title: 'Weekly Plan',
             body: await renderView('weeklyPlan', {
@@ -85,6 +90,7 @@ const getWeeklyPlanPage = async (req, res) => {
                 query: req.query,
                 currentWeek,
                 workshopEmployees,
+                stations,
                 user
             }),
             user: req.session.user,
