@@ -1,9 +1,12 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
         <h3>Weekly Plan</h3>
-        <button type="button" class="btn btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
+        <% if (user && user.role !== 'PROC') { %>
+            <button type="button" class="btn btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
+        <% } %>
     </div>
 
+    <% if (user && user.role !== 'PROC') { %>
     <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
         <h4>Find Unfinished Work</h4>
         <form action="/weekly-plan" method="GET" class="flex gap-4 items-end mb-4">
@@ -116,6 +119,7 @@
                 <p class="text-muted italic">No unfinished work orders found in this range.</p>
                 <% } %>
     </div>
+    <% } %>
 
     <div class="print-header hidden-print-block">
         <h2 class="text-center mb-4">Weekly Maintenance Plan</h2>
