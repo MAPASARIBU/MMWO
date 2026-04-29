@@ -153,24 +153,31 @@
                 </tr>
             </thead>
             <tbody>
-                <% if (plans && plans.length > 0) { %>
-                    <% plans.forEach(plan => { %>
-                        <tr>
-                            <td><%= plan.planned_week %></td>
-                            <td><%= plan.planned_day || '-' %></td>
-                            <td><%= plan.wo.wo_no %></td>
-                            <td><%= plan.wo.station ? plan.wo.station.name : '-' %></td>
-                            <td><%= plan.wo.description %></td>
-                            <td><%= plan.planner.name %></td>
-                            <td>
-                                <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
-                                    <%= plan.wo.pics.map(p => p.name).join(', ') %>
-                                <% } else { %>
-                                    -
-                                <% } %>
+                <% if (Object.keys(groupedPlans).length > 0) { %>
+                    <% for (const category in groupedPlans) { %>
+                        <tr style="background-color: #d1ecf1; border-top: 2px solid #333;">
+                            <td colspan="7" style="font-weight: bold; font-size: 14px; text-transform: uppercase;">
+                                KATEGORI: <%= category %>
                             </td>
                         </tr>
-                    <% }); %>
+                        <% groupedPlans[category].forEach(plan => { %>
+                            <tr>
+                                <td><%= plan.planned_week %></td>
+                                <td><%= plan.planned_day || '-' %></td>
+                                <td><%= plan.wo.wo_no %></td>
+                                <td><%= plan.wo.station ? plan.wo.station.name : '-' %></td>
+                                <td><%= plan.wo.description %></td>
+                                <td><%= plan.planner.name %></td>
+                                <td>
+                                    <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
+                                        <%= plan.wo.pics.map(p => p.name).join(', ') %>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } %>
                 <% } else { %>
                     <tr>
                         <td colspan="7" style="text-align: center; padding: 20px;">No planned work found matching the criteria.</td>

@@ -121,8 +121,27 @@ const getWeeklyPlanPrint = async (req, res) => {
 
         const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+        // Group plans by category
+        const groupedPlans = {};
+        plans.forEach(plan => {
+            const category = plan.wo.category || 'Uncategorized';
+            if (!groupedPlans[category]) {
+                groupedPlans[category] = [];
+            }
+            groupedPlans[category].push(plan);
+        });
+
+        // Sort each category's plans by station name
+        for (const cat in groupedPlans) {
+            groupedPlans[cat].sort((a, b) => {
+                const statA = a.wo.station ? a.wo.station.name : 'Z';
+                const statB = b.wo.station ? b.wo.station.name : 'Z';
+                return statA.localeCompare(statB);
+            });
+        }
+
         res.render('weekly_plan_print', {
-            plans,
+            groupedPlans,
             query: req.query,
             user: req.session.user,
             today
