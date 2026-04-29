@@ -67,7 +67,7 @@
                                         <div class="mt-2 pl-4 border-l-2 border-primary ml-2">
                                             <% s.equipment.forEach(e => { %>
                                                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; margin-bottom: 2px; border-bottom: 1px dashed #e2e8f0;">
-                                                    <a href="javascript:void(0)" style="color: #0369a1; text-decoration: none; font-size: 0.9em; cursor: default;">
+                                                    <a href="/equipment/<%= e.id %>" style="color: #0369a1; text-decoration: none; font-size: 0.9em;">
                                                         <span style="font-family: monospace; background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 0.85em; margin-right: 5px;"><%= e.code || 'EQ-' + e.id %></span> <span id="equip-name-<%= e.id %>"><%= e.name %></span>
                                                     </a>
                                                     <div>
