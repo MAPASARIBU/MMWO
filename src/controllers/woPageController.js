@@ -16,7 +16,12 @@ const listWorkOrders = async (req, res) => {
         }
 
         const where = {};
-        if (status) where.status = status;
+        if (status) {
+            where.status = status;
+        } else {
+            // Hide CLOSED work orders by default unless explicitly filtered
+            where.status = { not: 'CLOSED' };
+        }
         if (priority) where.priority = priority;
         if (category) where.category = category;
 
