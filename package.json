@@ -30,6 +30,7 @@
     "express-session": "^1.19.0",
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
     "prisma": "^5.22.0"
   },
   "devDependencies": {

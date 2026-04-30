@@ -465,7 +465,8 @@ const deleteWorkOrder = async (req, res) => {
     }
 };
 
-const assignPics = async (req, res) => {
+const assignPics,
+    generateWONumber = async (req, res) => {
     try {
         const { id } = req.params;
         const { pic_ids } = req.body;
@@ -503,5 +504,6 @@ module.exports = {
     addComment,
     bulkCreateFromParts,
     deleteWorkOrder,
-    assignPics
+    assignPics,
+    generateWONumber
 };

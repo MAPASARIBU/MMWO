@@ -64,6 +64,7 @@ model Equipment {
   wos         WorkOrder[]
   parts       Part[]
   hm_records  HMRecord[]
+  periodic_pms PeriodicPM[]
 
   @@map("equipment")
 }
@@ -203,4 +204,21 @@ model WorkshopEmployee {
   wos        WorkOrder[] @relation("WoPics")
 
   @@map("workshop_employees")
+}
+
+model PeriodicPM {
+  id              Int       @id @default(autoincrement())
+  equipment_id    Int
+  name            String
+  interval_type   String    // 'Day', 'Week', 'Month', 'Year'
+  interval_value  Int
+  category        String    @default("Mechanical")
+  priority        String    @default("P3")
+  last_pm_date    DateTime?
+  next_due_date   DateTime
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  equipment       Equipment @relation(fields: [equipment_id], references: [id])
+
+  @@map("periodic_pms")
 }

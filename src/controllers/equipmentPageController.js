@@ -17,6 +17,9 @@ const getEquipmentDetail = async (req, res) => {
                 hm_records: {
                     orderBy: { record_date: 'desc' },
                     take: 10
+                },
+                periodic_pms: {
+                    orderBy: { next_due_date: 'asc' }
                 }
             }
         });

@@ -12,6 +12,7 @@ const woRoutes = require('./routes/workOrders');
 const weeklyPlanRoutes = require('./routes/weeklyPlan');
 const userRoutes = require('./routes/users');
 const equipmentPartsRoutes = require('./routes/equipmentParts');
+const { startPMCron } = require('./cron/pmCron');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -105,4 +106,7 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    
+    // Start background cron jobs
+    startPMCron();
 });

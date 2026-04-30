@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const equipmentPartsController = require('../controllers/equipmentPartsController');
+const periodicPMController = require('../controllers/periodicPMController');
 const { ensureAuthenticated, ensureRole } = require('../middleware/authMiddleware');
 
 // Part routes
@@ -13,5 +14,11 @@ router.delete('/:equipmentId/parts/:partId', ensureRole(['ADMIN']), equipmentPar
 // HM Record routes
 router.get('/:equipmentId/hm', ensureAuthenticated, equipmentPartsController.getHMRecords);
 router.post('/:equipmentId/hm', ensureRole(['ADMIN', 'PROC', 'OPERATOR']), equipmentPartsController.recordHM);
+
+// Periodic PM routes
+router.get('/:equipmentId/periodic-pms', ensureAuthenticated, periodicPMController.getPeriodicPMs);
+router.post('/:equipmentId/periodic-pms', ensureRole(['ADMIN', 'MTC', 'PROC']), periodicPMController.createPeriodicPM);
+router.put('/:equipmentId/periodic-pms/:pmId', ensureRole(['ADMIN', 'MTC', 'PROC']), periodicPMController.editPeriodicPM);
+router.delete('/:equipmentId/periodic-pms/:pmId', ensureRole(['ADMIN', 'MTC', 'PROC']), periodicPMController.deletePeriodicPM);
 
 module.exports = router;

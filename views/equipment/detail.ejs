@@ -84,6 +84,60 @@
     </div>
 </div>
 
+<div class="card mt-4">
+    <div class="flex justify-between items-center mb-4">
+        <h3>Periodic Preventive Maintenance (Time-Based)</h3>
+        <% if (user && (user.role === 'ADMIN' || user.role === 'MTC' || user.role === 'PROC')) { %>
+            <button class="btn btn-primary" onclick="openModal('addPeriodicPMModal')">+ Add PM Plan</button>
+        <% } %>
+    </div>
+    <% if(!equipment.periodic_pms || equipment.periodic_pms.length === 0) { %>
+        <p class="text-secondary">No periodic maintenance plans configured.</p>
+    <% } else { %>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Plan Name</th>
+                        <th>Interval</th>
+                        <th>Next Due Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% equipment.periodic_pms.forEach(pm => { 
+                        const isDueSoon = new Date(pm.next_due_date).getTime() - new Date().getTime() <= (7 * 24 * 60 * 60 * 1000); // 7 days
+                        const isOverdue = new Date(pm.next_due_date).getTime() < new Date().getTime();
+                        let badgeColor = isOverdue ? 'bg-danger text-white' : (isDueSoon ? 'bg-warning text-dark' : 'bg-success text-white');
+                    %>
+                    <tr>
+                        <td><strong><%= pm.name %></strong></td>
+                        <td>Every <%= pm.interval_value %> <%= pm.interval_type %>(s)</td>
+                        <td>
+                            <span class="badge <%= badgeColor %>">
+                                <%= new Date(pm.next_due_date).toLocaleDateString() %>
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge <%= pm.is_active ? 'bg-primary' : 'bg-secondary' %>">
+                                <%= pm.is_active ? 'Active' : 'Inactive' %>
+                            </span>
+                        </td>
+                        <td>
+                            <% if(user && (user.role === 'ADMIN' || user.role === 'MTC' || user.role === 'PROC')) { %>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="openEditPMModal(<%= pm.id %>, '<%= pm.name %>', '<%= pm.interval_type %>', <%= pm.interval_value %>, '<%= new Date(pm.next_due_date).toISOString().slice(0,10) %>')" title="Edit"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deletePeriodicPM(<%= pm.id %>)" title="Delete"><i class="fas fa-trash"></i></button>
+                            <% } %>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    <% } %>
+</div>
+
 <!-- Add Part Modal -->
 <div id="addPartModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
     <div class="card" style="margin: 50px auto; max-width: 400px;">
@@ -178,6 +232,79 @@
     </div>
 </div>
 
+<!-- Add Periodic PM Modal -->
+<div id="addPeriodicPMModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
+    <div class="card" style="margin: 50px auto; max-width: 500px;">
+        <h3>Add Periodic PM Plan</h3>
+        <form id="addPeriodicPMForm">
+            <div class="form-group">
+                <label>Plan Name / Description</label>
+                <input type="text" name="name" class="form-control" required placeholder="e.g Ganti Oli Rutin">
+            </div>
+            <div class="flex gap-4">
+                <div class="form-group flex-1">
+                    <label>Interval Value</label>
+                    <input type="number" name="interval_value" class="form-control" required min="1" placeholder="e.g 3">
+                </div>
+                <div class="form-group flex-1">
+                    <label>Interval Type</label>
+                    <select name="interval_type" class="form-control" required>
+                        <option value="Day">Day(s)</option>
+                        <option value="Week">Week(s)</option>
+                        <option value="Month">Month(s)</option>
+                        <option value="Year">Year(s)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>First / Next Due Date</label>
+                <input type="date" name="next_due_date" class="form-control" required>
+            </div>
+            <div class="flex justify-end mt-4 gap-2">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('addPeriodicPMModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Periodic PM Modal -->
+<div id="editPeriodicPMModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
+    <div class="card" style="margin: 50px auto; max-width: 500px;">
+        <h3>Edit Periodic PM Plan</h3>
+        <form id="editPeriodicPMForm">
+            <input type="hidden" id="editPmId" name="pm_id">
+            <div class="form-group">
+                <label>Plan Name / Description</label>
+                <input type="text" id="editPmName" name="name" class="form-control" required>
+            </div>
+            <div class="flex gap-4">
+                <div class="form-group flex-1">
+                    <label>Interval Value</label>
+                    <input type="number" id="editPmIntervalValue" name="interval_value" class="form-control" required min="1">
+                </div>
+                <div class="form-group flex-1">
+                    <label>Interval Type</label>
+                    <select id="editPmIntervalType" name="interval_type" class="form-control" required>
+                        <option value="Day">Day(s)</option>
+                        <option value="Week">Week(s)</option>
+                        <option value="Month">Month(s)</option>
+                        <option value="Year">Year(s)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Next Due Date</label>
+                <input type="date" id="editPmNextDue" name="next_due_date" class="form-control" required>
+            </div>
+            <div class="flex justify-end mt-4 gap-2">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('editPeriodicPMModal')">Cancel</button>
+                <button type="submit" class="btn btn-primary">Update Plan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     // Set default date to today for HM Record
     document.getElementById('hmDateInput').valueAsDate = new Date();
@@ -212,6 +339,29 @@
         } catch(err) {
             console.error(err);
             alert('Error deleting part');
+        }
+    }
+
+    function openEditPMModal(pmId, name, type, value, nextDue) {
+        document.getElementById('editPmId').value = pmId;
+        document.getElementById('editPmName').value = name;
+        document.getElementById('editPmIntervalType').value = type;
+        document.getElementById('editPmIntervalValue').value = value;
+        document.getElementById('editPmNextDue').value = nextDue;
+        openModal('editPeriodicPMModal');
+    }
+
+    async function deletePeriodicPM(pmId) {
+        if (!confirm('Are you sure you want to delete this PM plan?')) return;
+        try {
+            const res = await fetch(`/api/equipment/<%= equipment.id %>/periodic-pms/${pmId}`, {
+                method: 'DELETE'
+            });
+            if(res.ok) window.location.reload();
+            else alert('Failed to delete PM plan');
+        } catch(err) {
+            console.error(err);
+            alert('Error deleting PM plan');
         }
     }
 
@@ -305,4 +455,47 @@
             alert('Error recording HM');
         }
     });
+
+    // Periodic PM Add Submit
+    const addPmForm = document.getElementById('addPeriodicPMForm');
+    if (addPmForm) {
+        addPmForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            try {
+                const res = await fetch(`/api/equipment/${EQUIPMENT_ID}/periodic-pms`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.fromEntries(formData.entries()))
+                });
+                if(res.ok) window.location.reload();
+                else alert('Failed to add PM plan');
+            } catch(err) {
+                console.error(err);
+                alert('Error adding PM plan');
+            }
+        });
+    }
+
+    // Periodic PM Edit Submit
+    const editPmForm = document.getElementById('editPeriodicPMForm');
+    if (editPmForm) {
+        editPmForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const pmId = formData.get('pm_id');
+            try {
+                const res = await fetch(`/api/equipment/${EQUIPMENT_ID}/periodic-pms/${pmId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(Object.fromEntries(formData.entries()))
+                });
+                if(res.ok) window.location.reload();
+                else alert('Failed to edit PM plan');
+            } catch(err) {
+                console.error(err);
+                alert('Error editing PM plan');
+            }
+        });
+    }
 </script>
