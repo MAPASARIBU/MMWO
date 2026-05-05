@@ -14,12 +14,15 @@ const getWeeklyPlanPage = async (req, res) => {
         const isProcessing = req.path.includes('/processing');
         const categoryFilter = isProcessing ? 'Processing' : { not: 'Processing' };
 
+        let woFilter = { category: categoryFilter };
+        if (isProcessing) {
+            woFilter.status = { not: 'CLOSED' };
+        }
+
         const plans = await prisma.weeklyPlan.findMany({
             where: {
                 ...where,
-                wo: {
-                    category: categoryFilter
-                }
+                wo: woFilter
             },
             include: {
                 wo: {
