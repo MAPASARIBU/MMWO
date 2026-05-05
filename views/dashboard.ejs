@@ -709,6 +709,18 @@
                                 </div>
                             </div>
 
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Type / Category</label>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                                    <% ['Mechanical', 'Electrical', 'Processing', 'Others'].forEach(cat=> { %>
+                                        <label><input type="checkbox" name="category" value="<%= cat %>" <%=typeof
+                                                filterInfo !=='undefined' && filterInfo.category &&
+                                                (Array.isArray(filterInfo.category) ? filterInfo.category.includes(cat) :
+                                                filterInfo.category===cat) ? 'checked' : '' %>> <%= cat %></label>
+                                    <% }); %>
+                                </div>
+                            </div>
+
                             <div style="text-align: right; margin-top: 20px;">
                                 <button type="button" onclick="closePrintModal()" class="btn btn-secondary"
                                     style="margin-right: 5px;">Cancel</button>

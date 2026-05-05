@@ -318,6 +318,16 @@ const getPrintRecap = async (req, res) => {
             }
         }
 
+        // Category Filter
+        const { category } = req.query;
+        if (category) {
+            if (Array.isArray(category)) {
+                whereClause.category = { in: category };
+            } else {
+                whereClause.category = category;
+            }
+        }
+
         // Fetch WOs based on filters (or recent if no filters for consistency, 
         // but user likely wants 'all' matching filters, so we remove 'take' limitation if filters exist)
 
@@ -374,7 +384,8 @@ const getPrintRecap = async (req, res) => {
         const filterInfo = {
             startDate: startDate ? new Date(startDate).toLocaleDateString() : null,
             endDate: endDate ? new Date(endDate).toLocaleDateString() : null,
-            status: status ? (Array.isArray(status) ? status.join(', ') : status) : 'All'
+            status: status ? (Array.isArray(status) ? status.join(', ') : status) : 'All',
+            category: category ? (Array.isArray(category) ? category.join(', ') : category) : 'All'
         };
 
         res.render('dashboard_print', {
