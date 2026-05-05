@@ -154,10 +154,12 @@
                                         <option value="">Select Maintainer</option>
                                         <% if (typeof mtcUsers !=='undefined' ) { %>
                                             <% mtcUsers.forEach(function(u) { %>
-                                                <option value="<%= u.id %>">
-                                                    <%= u.name %>
-                                                </option>
-                                                <% }); %>
+                                                <% if (wo.category === 'Processing' && u.role === 'PROC') { %>
+                                                    <option value="<%= u.id %>"><%= u.name %></option>
+                                                <% } else if (wo.category !== 'Processing' && u.role === 'MTC') { %>
+                                                    <option value="<%= u.id %>"><%= u.name %></option>
+                                                <% } %>
+                                            <% }); %>
                                                     <% } %>
                                     </select>
                                     <button class="btn btn-primary" onclick="assignUser()">Assign</button>
