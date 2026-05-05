@@ -40,9 +40,7 @@ const getDashboard = async (req, res) => {
         }
 
         // Base where clause for general queries (Recent WOs, Stats)
-        let baseWhere = {
-            category: { not: 'Processing' }
-        };
+        let baseWhere = {};
         if (millId) {
             baseWhere.mill_id = millId;
         }
@@ -106,8 +104,7 @@ const getDashboard = async (req, res) => {
         const assignedWos = await prisma.workOrder.findMany({
             where: {
                 assignee_id: userId,
-                status: { not: 'CLOSED' },
-                category: { not: 'Processing' }
+                status: { not: 'CLOSED' }
             },
             include: { station: true },
             orderBy: { priority: 'asc' }

@@ -514,10 +514,9 @@
                 <tbody>
                     <% assignedWos.forEach(wo=> { %>
                         <tr>
-                            <td><a href="/work-orders/<%= wo.id %>"
-                                    style="color: var(--primary-color); font-weight: 500;">
+                            <td><span style="color: var(--primary-color); font-weight: 500;">
                                     <%= wo.wo_no %>
-                                </a></td>
+                                </span></td>
                             <td>
                                 <%= wo.station.name %>
                             </td>
@@ -531,7 +530,7 @@
                                     <%= wo.status %>
                                 </span></td>
                             <td>
-                                <a href="/work-orders/<%= wo.id %>" class="btn btn-sm btn-primary">Process</a>
+                                <span class="text-secondary" style="font-size: 0.85em;">View in List</span>
                             </td>
                         </tr>
                         <% }); %>
@@ -637,10 +636,9 @@
                         <% if (typeof recentWos !=='undefined' && recentWos.length> 0) { %>
                             <% recentWos.forEach(wo=> { %>
                                 <tr>
-                                    <td><a href="/work-orders/<%= wo.id %>"
-                                            style="color: var(--primary-color); font-weight: 500;">
+                                    <td><span style="color: var(--primary-color); font-weight: 500;">
                                             <%= wo.wo_no %>
-                                        </a></td>
+                                        </span></td>
                                     <td>
                                         <%= wo.description %>
                                     </td>
