@@ -122,7 +122,7 @@
     </div>
 
     <div class="header" style="position: relative;">
-        <h2><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Maintenance Plan' : 'Weekly Maintenance Plan' %></h2>
+        <h2><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Maintenance Weekly Plan' %></h2>
         <div class="meta">
             Mill: <strong>BUNGA TANJUNG MILL</strong> |
             Week: <strong><%= query.week || 'ALL' %></strong> |
@@ -149,7 +149,9 @@
                     <th style="width: 20%;">Station</th>
                     <th style="width: 40%;">Description</th>
                     <th style="width: 15%;">Planner</th>
+                    <% if (typeof isProcessing === 'undefined' || !isProcessing) { %>
                     <th style="width: 15%;">PIC</th>
+                    <% } %>
                 </tr>
             </thead>
             <tbody>
@@ -166,6 +168,7 @@
                                 <td><%= plan.wo.station ? plan.wo.station.name : '-' %></td>
                                 <td><%= plan.wo.description %></td>
                                 <td><%= plan.planner.name %></td>
+                                <% if (typeof isProcessing === 'undefined' || !isProcessing) { %>
                                 <td>
                                     <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
                                         <%= plan.wo.pics.map(p => p.name).join(', ') %>
@@ -173,6 +176,7 @@
                                         -
                                     <% } %>
                                 </td>
+                                <% } %>
                             </tr>
                         <% }); %>
                     <% } %>
