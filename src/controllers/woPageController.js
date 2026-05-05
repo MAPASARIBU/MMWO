@@ -22,6 +22,8 @@ const listWorkOrders = async (req, res) => {
             // Hide CLOSED work orders by default unless explicitly filtered
             where.status = { not: 'CLOSED' };
         }
+        
+        where.category = { not: 'Processing' };
         if (priority) where.priority = priority;
         if (category) where.category = category;
 
@@ -169,7 +171,9 @@ const printWORecap = async (req, res) => {
             targetMillId = user.mill_id;
         }
 
-        const where = {};
+        const where = {
+            category: { not: 'Processing' }
+        };
         if (targetMillId) where.mill_id = targetMillId;
 
         const wos = await prisma.workOrder.findMany({

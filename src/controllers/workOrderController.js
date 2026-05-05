@@ -118,6 +118,8 @@ const getWorkOrders = async (req, res) => {
             where.mill_id = user.current_mill_id;
         }
 
+        where.category = { not: 'Processing' };
+
         const wos = await prisma.workOrder.findMany({
             where,
             include: {
