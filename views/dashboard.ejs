@@ -2,7 +2,7 @@
     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem;">
     <div class="card">
         <h3>My Pending Tasks</h3>
-        <% if (user.role==='ADMIN' && typeof mills !=='undefined' && mills.length> 0) { %>
+        <% if ((user.role==='ADMIN' || user.role==='SENIOR_MANAGER') && typeof mills !=='undefined' && mills.length> 0) { %>
             <div style="margin-bottom: 10px;">
                 <select onchange="window.location.href='/dashboard?millId='+this.value" class="form-control"
                     style="width: 100%;">
@@ -627,7 +627,7 @@
                             <th>Station</th>
                             <th>Priority</th>
                             <th>Status</th>
-                            <% if (user.role === 'ADMIN') { %>
+                            <% if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') { %>
                             <th>Actions</th>
                             <% } %>
                         </tr>
@@ -651,11 +651,11 @@
                                     <td><span class="badge status-<%= wo.status %>">
                                             <%= wo.status %>
                                         </span></td>
-                                    <% if (user.role === 'ADMIN') { %>
+                                    <% if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') { %>
                                         <td>
                                             <% if (wo.status !== 'COMPLETED' && wo.status !== 'CLOSED') { %>
                                                 <button class="btn btn-sm" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="deleteWo(event, '<%= wo.id %>', '<%= wo.wo_no %>')">
-                                                    <i class="fas fa-trash"></i> Hapus
+                                                    <i class="fas fa-trash"></i>
                                                 </button>
                                             <% } else { %>
                                                 <span class="text-secondary" style="font-size: 0.8em;">-</span>

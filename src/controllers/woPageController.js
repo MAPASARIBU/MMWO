@@ -9,7 +9,7 @@ const listWorkOrders = async (req, res) => {
 
         // Determine Mill Context
         let targetMillId = null;
-        if (user.role === 'ADMIN') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
             targetMillId = user.current_mill_id || null;
         } else {
             targetMillId = user.mill_id;
@@ -73,8 +73,8 @@ const createWorkOrderPage = async (req, res) => {
         const user = req.session.user;
         let mills = [];
 
-        // Admin gets all mills, User gets only their own
-        if (user.role === 'ADMIN') {
+        // Admin and Senior Manager gets all mills, User gets only their own
+        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
             // If admin has a current_mill_id, maybe default/restrict? 
             // Usually Admin creates for any, but "making for specific mill" is safer.
             // Let's load ALL for admin.
@@ -136,8 +136,8 @@ const detailWorkOrderPage = async (req, res) => {
         if (!wo) return res.status(404).send('WO Not Found');
 
         // ACCESS CONTROL Check
-        // If not admin, and wo.mill_id != user.mill_id -> Forbidden
-        if (user.role !== 'ADMIN' && wo.mill_id !== user.mill_id) {
+        // If not admin/senior manager, and wo.mill_id != user.mill_id -> Forbidden
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).send('Access Denied: You cannot view Work Orders from another mill.');
         }
 
@@ -165,7 +165,7 @@ const printWORecap = async (req, res) => {
         const user = req.session.user;
         let targetMillId = null;
 
-        if (user.role === 'ADMIN') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
             targetMillId = user.current_mill_id;
         } else {
             targetMillId = user.mill_id;

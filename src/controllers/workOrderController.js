@@ -33,7 +33,7 @@ const createWorkOrder = async (req, res) => {
         let finalMillId = mill_id ? parseInt(mill_id) : null;
 
         // Security: Non-Admin forces their own mill_id
-        if (user.role !== 'ADMIN') {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
             finalMillId = user.mill_id;
         } else {
             // Admin: if no mill_id provided, default to current selected mill?
@@ -111,7 +111,7 @@ const getWorkOrders = async (req, res) => {
         if (assignee_id) where.assignee_id = parseInt(assignee_id);
 
         // MILL ISOLATION
-        if (user.role !== 'ADMIN') {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
             where.mill_id = user.mill_id;
         } else if (user.current_mill_id) {
             // Admin sees what they selected in context
@@ -162,7 +162,7 @@ const getWorkOrderById = async (req, res) => {
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
         // Access Check
-        if (user.role !== 'ADMIN' && wo.mill_id !== user.mill_id) {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
@@ -183,7 +183,7 @@ const updateStatus = async (req, res) => {
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
         // Access Check
-        if (user.role !== 'ADMIN' && wo.mill_id !== user.mill_id) {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
@@ -303,7 +303,7 @@ const addAttachment = async (req, res) => {
         const wo = await prisma.workOrder.findUnique({ where: { id: parseInt(id) }, select: { mill_id: true } });
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
-        if (user.role !== 'ADMIN' && wo.mill_id !== user.mill_id) {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
@@ -346,7 +346,7 @@ const addComment = async (req, res) => {
         const wo = await prisma.workOrder.findUnique({ where: { id: parseInt(id) }, select: { mill_id: true } });
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
-        if (user.role !== 'ADMIN' && wo.mill_id !== user.mill_id) {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
@@ -507,8 +507,8 @@ const deleteWorkOrder = async (req, res) => {
         const { id } = req.params;
         const user = req.session.user;
 
-        if (user.role !== 'ADMIN') {
-            return res.status(403).json({ error: 'Access Denied: Only ADMIN can delete Work Orders.' });
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
+            return res.status(403).json({ error: 'Access Denied: Only ADMIN and SENIOR_MANAGER can delete Work Orders.' });
         }
 
         const wo = await prisma.workOrder.findUnique({

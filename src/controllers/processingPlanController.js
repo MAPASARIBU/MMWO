@@ -19,7 +19,7 @@ const getProcessingPlansPage = async (req, res) => {
         const user = req.session.user;
         let where = {};
         
-        if (user.role !== 'ADMIN') {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
             where.mill_id = user.mill_id;
         }
 
@@ -34,7 +34,7 @@ const getProcessingPlansPage = async (req, res) => {
 
         const mills = await prisma.mill.findMany();
         const stations = await prisma.station.findMany({
-            where: user.role !== 'ADMIN' ? { mill_id: user.mill_id } : {}
+            where: (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') ? { mill_id: user.mill_id } : {}
         });
 
         res.render('layout', {

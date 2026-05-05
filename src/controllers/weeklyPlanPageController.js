@@ -77,7 +77,7 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const user = req.session.user;
         let empWhere = { is_active: true };
-        if (user.role !== 'ADMIN') {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
             empWhere.OR = [
                 { mill_id: user.mill_id },
                 { mill_id: null }
@@ -90,7 +90,7 @@ const getWeeklyPlanPage = async (req, res) => {
         });
 
         const stations = await prisma.station.findMany({
-            where: user.role !== 'ADMIN' ? { mill_id: user.mill_id } : {},
+            where: (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') ? { mill_id: user.mill_id } : {},
             orderBy: { name: 'asc' }
         });
 

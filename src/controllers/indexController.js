@@ -16,8 +16,8 @@ const getDashboard = async (req, res) => {
         let millName = "All Mills";
         let mills = [];
 
-        // Fetch all mills if Admin
-        if (user.role === 'ADMIN') {
+        // Fetch all mills if Admin or Senior Manager
+        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
             mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
 
             // Allow admin to select mill via query param
@@ -269,7 +269,7 @@ const getPrintRecap = async (req, res) => {
         let millId = null;
         let millName = "All Mills";
 
-        if (user.role === 'ADMIN') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
             if (req.query.millId) {
                 millId = parseInt(req.query.millId);
                 const tm = await prisma.mill.findUnique({ where: { id: millId } });

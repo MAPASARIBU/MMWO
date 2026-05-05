@@ -32,7 +32,7 @@
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Assignee</th>
-                    <% if (user.role === 'ADMIN') { %>
+                    <% if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') { %>
                     <th>Actions</th>
                     <% } %>
                 </tr>
@@ -67,7 +67,7 @@
                             <td>
                                 <%= wo.assignee ? wo.assignee.name : '-' %>
                             </td>
-                            <% if (user.role === 'ADMIN') { %>
+                            <% if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') { %>
                                 <td>
                                     <% if (wo.status !== 'COMPLETED' && wo.status !== 'CLOSED') { %>
                                         <button class="btn btn-sm" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="deleteWo(event, '<%= wo.id %>', '<%= wo.wo_no %>')">

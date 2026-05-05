@@ -49,8 +49,8 @@ const login = async (req, res) => {
         }
 
         // Validate Mill Access
-        // If NOT Admin, user MUST select their assigned mill
-        if (user.role !== 'ADMIN' && user.mill_id !== selectedMillId) {
+        // If NOT Admin or Senior Manager, user MUST select their assigned mill
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && user.mill_id !== selectedMillId) {
             return res.render('login', { error: `Access Denied: You are attempting to login to ${selectedMill.name} but your account is assigned to another mill.`, mills });
         }
 

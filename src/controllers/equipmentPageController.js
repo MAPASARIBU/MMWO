@@ -47,7 +47,7 @@ const getInputHmPage = async (req, res) => {
         let millId = null;
         
         // Handle admin viewing different mills or their own
-        if (user.role === 'ADMIN') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
             if (req.query.millId) {
                 millId = parseInt(req.query.millId);
             } else if (user.current_mill_id) {
@@ -77,7 +77,7 @@ const getInputHmPage = async (req, res) => {
         });
 
         // Also fetch mills for admin filter
-        const mills = user.role === 'ADMIN' ? await prisma.mill.findMany({ orderBy: { name: 'asc' } }) : [];
+        const mills = (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') ? await prisma.mill.findMany({ orderBy: { name: 'asc' } }) : [];
 
         res.render('layout', {
             title: `Input Daily HM`,

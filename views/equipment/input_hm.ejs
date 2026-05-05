@@ -7,7 +7,7 @@
     </div>
 </div>
 
-<% if (user.role === 'ADMIN' && mills.length > 0) { %>
+<% if ((user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') && mills.length > 0) { %>
     <div class="card mb-4">
         <div style="max-width: 300px;">
             <label class="form-label">Filter by Mill</label>
