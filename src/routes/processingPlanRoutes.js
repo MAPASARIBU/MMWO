@@ -10,5 +10,6 @@ router.get('/', (req, res) => res.redirect('/admin/master'));
 router.post('/api', ensureAuthenticated, ensureRole(['ADMIN', 'PROC']), processingPlanController.createProcessingPlan);
 router.put('/api/:id', ensureAuthenticated, ensureRole(['ADMIN', 'PROC']), processingPlanController.editProcessingPlan);
 router.delete('/api/:id', ensureAuthenticated, ensureRole(['ADMIN', 'PROC']), processingPlanController.deleteProcessingPlan);
+router.post('/api/bulk-create', ensureAuthenticated, processingPlanController.bulkCreateProcessingWOs);
 
 module.exports = router;

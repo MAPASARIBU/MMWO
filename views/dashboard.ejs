@@ -269,6 +269,117 @@
     </script>
 <% } %>
 
+<!-- Processing Plans Early Warning Widget -->
+<% if (typeof earlyWarningProcessingPlans !== 'undefined' && earlyWarningProcessingPlans.length > 0) { %>
+    <div class="card mt-4" style="border-left: 4px solid #0ea5e9; background: #f0f9ff;">
+        <div class="flex justify-between items-center mb-4">
+            <h3 style="color: #0369a1; margin-bottom: 0;"><i class="fas fa-industry"></i> Processing Plan Early Warning</h3>
+            <button id="bulkCreateProcessingBtn" class="btn btn-primary" style="background-color: #0ea5e9; border: none; color: white;" onclick="bulkCreateWOsFromProcessing()" disabled>
+                Create WOs for Selected (0)
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table" style="background: white;">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" id="selectAllProcessing" onclick="toggleAllProcessing(this)">
+                        </th>
+                        <th>Station</th>
+                        <th>Plan Name</th>
+                        <th>Interval</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% earlyWarningProcessingPlans.forEach(plan => { 
+                        const now = new Date();
+                        const isOverdue = new Date(plan.next_due_date) < now;
+                    %>
+                    <tr>
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="processing-checkbox" value="<%= plan.id %>" onchange="updateBulkProcessingButton()">
+                        </td>
+                        <td><%= plan.station.name %></td>
+                        <td>
+                            <div><%= plan.name %></div>
+                            <% if (plan.last_generated) { %>
+                                <div style="font-size: 0.8em; color: #6c757d; margin-top: 2px;">
+                                    <i class="fas fa-calendar-check"></i> Last PM: <%= new Date(plan.last_generated).toLocaleDateString() %>
+                                </div>
+                            <% } %>
+                        </td>
+                        <td>Every <%= plan.interval_value %> <%= plan.interval_type %>(s)</td>
+                        <td>
+                            <strong style="color: <%= isOverdue ? '#ef4444' : '#f59e0b' %>;">
+                                <%= new Date(plan.next_due_date).toLocaleDateString() %>
+                            </strong>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: <%= isOverdue ? '#ef4444' : '#f59e0b' %>; color: white;">
+                                <%= isOverdue ? 'OVERDUE' : 'DUE SOON' %>
+                            </span>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        function toggleAllProcessing(source) {
+            const checkboxes = document.querySelectorAll('.processing-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+            updateBulkProcessingButton();
+        }
+
+        function updateBulkProcessingButton() {
+            const checkboxes = document.querySelectorAll('.processing-checkbox:checked');
+            const btn = document.getElementById('bulkCreateProcessingBtn');
+            btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
+            btn.disabled = checkboxes.length === 0;
+        }
+
+        async function bulkCreateWOsFromProcessing() {
+            const checkboxes = document.querySelectorAll('.processing-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if (!confirm(`Tindakan ini akan membuat Work Order baru secara otomatis untuk ${checkboxes.length} jadwal Processing Plan yang dipilih, dan memasukkannya ke Weekly Plan. Lanjutkan?`)) return;
+
+            const planIds = Array.from(checkboxes).map(cb => cb.value);
+
+            try {
+                const btn = document.getElementById('bulkCreateProcessingBtn');
+                btn.disabled = true;
+                btn.innerHTML = 'Processing...';
+
+                const res = await fetch('/processing-plans/api/bulk-create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan_ids: planIds })
+                });
+
+                if (res.ok) {
+                    alert('Work Orders untuk Processing Plan berhasil dibuat dan masuk ke Weekly Plan!');
+                    window.location.reload();
+                } else {
+                    const data = await res.json();
+                    alert('Gagal membuat Work Orders: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan jaringan/server.');
+                document.getElementById('bulkCreateProcessingBtn').disabled = false;
+                updateBulkProcessingButton();
+            }
+        }
+    </script>
+<% } %>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>

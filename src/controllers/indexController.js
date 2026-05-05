@@ -201,7 +201,6 @@ const getDashboard = async (req, res) => {
             return percent >= 0.9; // 90% or more
         }).sort((a,b) => (b.current_hm/b.lifetime_hm) - (a.current_hm/a.lifetime_hm));
 
-        // Overdue Time-Based PMs
         const now = new Date();
         const overduePMs = await prisma.periodicPM.findMany({
             where: {
@@ -217,6 +216,23 @@ const getDashboard = async (req, res) => {
             orderBy: { next_due_date: 'asc' }
         });
 
+        // Early warning for Processing Plans (<= 2 days from now)
+        const twoDaysFromNow = new Date();
+        twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
+        
+        const earlyWarningProcessingPlans = await prisma.processingPlan.findMany({
+            where: {
+                is_active: true,
+                next_due_date: { lte: twoDaysFromNow },
+                mill_id: millId ? millId : undefined
+            },
+            include: {
+                mill: true,
+                station: true
+            },
+            orderBy: { next_due_date: 'asc' }
+        });
+
         res.render('layout', {
             title: 'Dashboard',
             body: await renderView('dashboard', {
@@ -228,6 +244,7 @@ const getDashboard = async (req, res) => {
                 stationChartData,
                 attentionParts,
                 overduePMs,
+                earlyWarningProcessingPlans,
                 mills,
                 selectedMillId: millId,
                 user, // Pass user for role check
