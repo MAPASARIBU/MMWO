@@ -16,7 +16,7 @@ const getWeeklyPlanPage = async (req, res) => {
 
         let woFilter = { category: categoryFilter };
         if (isProcessing) {
-            woFilter.status = { not: 'CLOSED' };
+            woFilter.status = { notIn: ['CLOSED', 'COMPLETED'] };
         }
 
         const plans = await prisma.weeklyPlan.findMany({
