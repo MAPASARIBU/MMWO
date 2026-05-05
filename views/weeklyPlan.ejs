@@ -6,7 +6,7 @@
         <% } %>
     </div>
 
-    <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && !(typeof isProcessing !== 'undefined' && isProcessing && user.role === 'SPV')) { %>
+    <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing)) { %>
     <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
         <h4>Find Unfinished Work</h4>
         <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : '/weekly-plan' %>" method="GET" class="flex gap-4 items-end mb-4">
