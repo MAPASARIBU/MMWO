@@ -187,8 +187,8 @@ const updateStatus = async (req, res) => {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
-        if (user.role === 'PROC') {
-            return res.status(403).json({ error: 'Access Denied: Procurement role is only allowed to submit Work Orders, not process them.' });
+        if (user.role === 'PROC' && wo.category !== 'Processing') {
+            return res.status(403).json({ error: 'Access Denied: Processing role is only allowed to process Processing Work Orders.' });
         }
 
         const updateData = { status };
@@ -204,7 +204,7 @@ const updateStatus = async (req, res) => {
         // Logic for transitions
         if (status === 'ASSIGNED') {
             // AUTHORIZATION: ADMIN, SPV, MANAGER, MTC can assign
-            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER' && user.role !== 'SENIOR_MANAGER' && user.role !== 'MTC') {
+            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER' && user.role !== 'SENIOR_MANAGER' && user.role !== 'MTC' && !(user.role === 'PROC' && wo.category === 'Processing')) {
                 return res.status(403).json({ error: 'Access Denied: You cannot assign Work Orders.' });
             }
 
@@ -214,8 +214,8 @@ const updateStatus = async (req, res) => {
         }
         else if (status === 'IN_PROGRESS') {
             // AUTHORIZATION: Only MTC or ADMIN can start work
-            if (user.role !== 'MTC' && user.role !== 'ADMIN') {
-                return res.status(403).json({ error: 'Only Maintenance Team can start work.' });
+            if (user.role !== 'MTC' && user.role !== 'ADMIN' && !(user.role === 'PROC' && wo.category === 'Processing')) {
+                return res.status(403).json({ error: 'Only Maintenance or Processing Team can start work.' });
             }
             updateData.started_at = new Date();
         }
