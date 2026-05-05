@@ -95,7 +95,7 @@ const getWeeklyPlanPage = async (req, res) => {
         });
 
         res.render('layout', {
-            title: 'Weekly Plan',
+            title: isProcessing ? 'Processing Weekly Plan' : 'Maintenance Weekly Plan',
             body: await renderView('weeklyPlan', {
                 plans,
                 candidateWos,

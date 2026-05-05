@@ -122,7 +122,7 @@
     <% } %>
 
     <div class="print-header hidden-print-block">
-        <h2 class="text-center mb-4">Weekly Maintenance Plan</h2>
+        <h2 class="text-center mb-4"><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Maintenance Weekly Plan' %></h2>
         <div class="flex justify-between mb-4">
             <div><strong>Week:</strong>
                 <%= query.week || 'All' %>
@@ -134,7 +134,7 @@
     </div>
 
     <div class="flex justify-between items-center mb-4">
-        <h4><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Maintenance Plan' : 'Weekly Maintenance Plan' %></h4>
+        <h4><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Maintenance Weekly Plan' %></h4>
         <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : '/weekly-plan' %>" method="GET" class="flex gap-2 items-center" id="filterForm">
             <div class="form-group mb-0">
                 <input type="text" name="week" class="form-control" placeholder="Week (e.g. 2026-W06)"
