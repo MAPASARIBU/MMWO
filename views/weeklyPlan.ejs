@@ -1,7 +1,7 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
         <h3><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Weekly Plan' %></h3>
-        <% if (user && user.role !== 'PROC' && (!typeof isProcessing !== 'undefined' || !isProcessing)) { %>
+        <% if (user && user.role !== 'PROC' && (typeof isProcessing === 'undefined' || !isProcessing)) { %>
             <button type="button" class="btn btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
         <% } %>
     </div>
