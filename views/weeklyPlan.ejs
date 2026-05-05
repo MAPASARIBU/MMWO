@@ -1,12 +1,12 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
         <h3><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Weekly Plan' %></h3>
-        <% if (user && user.role !== 'PROC' && (typeof isProcessing === 'undefined' || !isProcessing)) { %>
+        <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing)) { %>
             <button type="button" class="btn btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
         <% } %>
     </div>
 
-    <% if (user && user.role !== 'PROC' && !(typeof isProcessing !== 'undefined' && isProcessing && user.role === 'SPV')) { %>
+    <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && !(typeof isProcessing !== 'undefined' && isProcessing && user.role === 'SPV')) { %>
     <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
         <h4>Find Unfinished Work</h4>
         <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : '/weekly-plan' %>" method="GET" class="flex gap-4 items-end mb-4">
@@ -212,7 +212,7 @@
                                 <% } else { %>
                                     <span class="text-muted italic text-sm">Belum ada</span>
                                 <% } %>
-                                <% if (user && user.role !== 'PROC') { %>
+                                <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER') { %>
                                     <div class="mt-2 no-print">
                                         <button type="button" class="btn btn-sm" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.75rem; font-weight: 600;" onclick="openGlobalPicModal(<%= plan.wo.id %>, <%= JSON.stringify((plan.wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
                                     </div>
