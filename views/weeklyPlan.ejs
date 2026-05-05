@@ -178,7 +178,9 @@
                     <th>Station</th>
                     <th>Description</th>
                     <th>Planner</th>
+                    <% if (typeof isProcessing === 'undefined' || !isProcessing) { %>
                     <th>PIC</th>
+                    <% } %>
                 </tr>
             </thead>
             <tbody>
@@ -203,6 +205,7 @@
                             <td>
                                 <%= plan.planner.name %>
                             </td>
+                            <% if (typeof isProcessing === 'undefined' || !isProcessing) { %>
                             <td>
                                 <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
                                     <%= plan.wo.pics.map(p => p.name).join(', ') %>
@@ -215,6 +218,7 @@
                                     </div>
                                 <% } %>
                             </td>
+                            <% } %>
                         </tr>
                         <% }); %>
                             <% } else { %>

@@ -71,10 +71,11 @@
         </div>
     <% } %>
 
+    <% if (wo.category !== 'Processing') { %>
     <div class="mb-4">
         <div class="flex justify-between items-center mb-2">
             <label class="form-label" style="margin: 0;">Assigned Mechanics / PICs</label>
-            <% if (wo.status !== 'COMPLETED' && wo.status !== 'CLOSED' && (user.role !== 'PROC' || wo.category === 'Processing')) { %>
+            <% if (wo.status !== 'COMPLETED' && wo.status !== 'CLOSED' && user.role !== 'PROC') { %>
                 <button class="btn btn-sm btn-outline-primary" onclick="openPicModal()">+ Assign PICs</button>
             <% } %>
         </div>
@@ -92,6 +93,7 @@
             <% } %>
         </div>
     </div>
+    <% } %>
 
     <% if (wo.attachments && wo.attachments.length> 0) { %>
         <div class="mb-4">
