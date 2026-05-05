@@ -1,6 +1,15 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
+function calculateNextDueDate(currentDate, intervalType, intervalValue) {
+    const nextDate = new Date(currentDate);
+    if (intervalType === 'Day') nextDate.setDate(nextDate.getDate() + intervalValue);
+    else if (intervalType === 'Week') nextDate.setDate(nextDate.getDate() + (intervalValue * 7));
+    else if (intervalType === 'Month') nextDate.setMonth(nextDate.getMonth() + intervalValue);
+    else if (intervalType === 'Year') nextDate.setFullYear(nextDate.getFullYear() + intervalValue);
+    return nextDate;
+}
+
 const generateWONumber = async () => {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     
@@ -428,6 +437,69 @@ const bulkCreateFromParts = async (req, res) => {
     }
 };
 
+const bulkCreateFromPMs = async (req, res) => {
+    try {
+        const { pm_ids } = req.body;
+        const user = req.session.user || req.user;
+
+        if (!pm_ids || !Array.isArray(pm_ids) || pm_ids.length === 0) {
+            return res.status(400).json({ error: 'No PM plans selected' });
+        }
+
+        const pms = await prisma.periodicPM.findMany({
+            where: { id: { in: pm_ids.map(id => parseInt(id)) } },
+            include: { equipment: { include: { station: true } } }
+        });
+
+        const createdWos = [];
+        const now = new Date();
+
+        for (const pm of pms) {
+            const wo_no = await generateWONumber();
+            const description = `[MANUAL PM] ${pm.name}\nGenerated manually from Periodic Maintenance Plan via Dashboard.`;
+
+            const wo = await prisma.workOrder.create({
+                data: {
+                    wo_no,
+                    mill_id: pm.equipment.station.mill_id,
+                    station_id: pm.equipment.station_id,
+                    equipment_id: pm.equipment_id,
+                    category: pm.category || 'Mechanical',
+                    type: 'Preventive',
+                    priority: pm.priority || 'P3',
+                    description,
+                    status: 'OPEN',
+                    reporter_id: user.id,
+                }
+            });
+
+            await prisma.auditLog.create({
+                data: {
+                    wo_id: wo.id,
+                    user_id: user.id,
+                    action: 'CREATED',
+                    new_value: 'OPEN'
+                }
+            });
+            createdWos.push(wo);
+
+            const nextDue = calculateNextDueDate(now, pm.interval_type, pm.interval_value);
+            await prisma.periodicPM.update({
+                where: { id: pm.id },
+                data: {
+                    last_pm_date: now,
+                    next_due_date: nextDue
+                }
+            });
+        }
+
+        res.status(201).json({ success: true, count: createdWos.length });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 const deleteWorkOrder = async (req, res) => {
     try {
         const { id } = req.params;
@@ -502,6 +574,7 @@ module.exports = {
     addAttachment,
     addComment,
     bulkCreateFromParts,
+    bulkCreateFromPMs,
     deleteWorkOrder,
     assignPics,
     generateWONumber

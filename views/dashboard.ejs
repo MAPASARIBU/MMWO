@@ -153,6 +153,122 @@
     </script>
 <% } %>
 
+<!-- Overdue Periodic PMs Widget -->
+<% if (typeof overduePMs !== 'undefined' && overduePMs.length > 0) { %>
+    <div class="card mt-4" style="border-left: 4px solid var(--warning-color, #f59e0b); background: #fffbeb;">
+        <div class="flex justify-between items-center mb-4">
+            <h3 style="color: #b45309; margin-bottom: 0;"><i class="fas fa-clock"></i> Overdue Time-Based Maintenance</h3>
+            <button id="bulkCreateWoPmBtn" class="btn btn-primary" style="background-color: #f59e0b; border: none; color: white;" onclick="bulkCreateWOsFromPMs()" disabled>
+                Create WOs for Selected (0)
+            </button>
+        </div>
+        <div class="table-responsive">
+            <table class="table" style="background: white;">
+                <thead>
+                    <tr>
+                        <th style="width: 40px; text-align: center;">
+                            <input type="checkbox" id="selectAllPms" onclick="toggleAllPms(this)">
+                        </th>
+                        <th>Equipment</th>
+                        <th>Station</th>
+                        <th>Plan Name</th>
+                        <th>Interval</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% overduePMs.forEach(pm => { 
+                        const isCritical = new Date(pm.next_due_date) < new Date(new Date().setDate(new Date().getDate() - 7)); // More than 7 days overdue
+                    %>
+                    <tr>
+                        <td style="text-align: center;">
+                            <input type="checkbox" class="pm-checkbox" value="<%= pm.id %>" onchange="updateBulkPmButton()">
+                        </td>
+                        <td><strong><%= pm.equipment.name %></strong> <br><small class="text-secondary"><%= pm.equipment.code %></small></td>
+                        <td><%= pm.equipment.station.name %></td>
+                        <td>
+                            <div><%= pm.name %></div>
+                            <% if (pm.last_pm_date) { %>
+                                <div style="font-size: 0.8em; color: #6c757d; margin-top: 2px;">
+                                    <i class="fas fa-calendar-check"></i> Last PM: <%= new Date(pm.last_pm_date).toLocaleDateString() %>
+                                </div>
+                            <% } %>
+                        </td>
+                        <td>Every <%= pm.interval_value %> <%= pm.interval_type %>(s)</td>
+                        <td>
+                            <strong style="color: <%= isCritical ? '#ef4444' : '#f59e0b' %>;">
+                                <%= new Date(pm.next_due_date).toLocaleDateString() %>
+                            </strong>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: <%= isCritical ? '#ef4444' : '#f59e0b' %>; color: white;">
+                                <%= isCritical ? 'OVERDUE CRITICAL' : 'OVERDUE' %>
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/equipment/<%= pm.equipment_id %>" class="btn btn-sm btn-outline-primary">View</a>
+                        </td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        function toggleAllPms(source) {
+            const checkboxes = document.querySelectorAll('.pm-checkbox');
+            checkboxes.forEach(cb => cb.checked = source.checked);
+            updateBulkPmButton();
+        }
+
+        function updateBulkPmButton() {
+            const checkboxes = document.querySelectorAll('.pm-checkbox:checked');
+            const btn = document.getElementById('bulkCreateWoPmBtn');
+            btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
+            btn.disabled = checkboxes.length === 0;
+        }
+
+        async function bulkCreateWOsFromPMs() {
+            const checkboxes = document.querySelectorAll('.pm-checkbox:checked');
+            if (checkboxes.length === 0) return;
+
+            if (!confirm(`Tindakan ini akan membuat Work Order baru secara otomatis untuk ${checkboxes.length} jadwal PM yang dipilih. Lanjutkan?`)) return;
+
+            const pmIds = Array.from(checkboxes).map(cb => cb.value);
+
+            try {
+                const btn = document.getElementById('bulkCreateWoPmBtn');
+                btn.disabled = true;
+                btn.innerHTML = 'Processing...';
+
+                const res = await fetch('/api/work-orders/bulk/pms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pm_ids: pmIds })
+                });
+
+                if (res.ok) {
+                    alert('Work Orders untuk Periodic PM berhasil dibuat!');
+                    window.location.reload();
+                } else {
+                    const data = await res.json();
+                    alert('Gagal membuat Work Orders: ' + (data.error || 'Unknown error'));
+                    btn.disabled = false;
+                    btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Terjadi kesalahan jaringan/server.');
+                document.getElementById('bulkCreateWoPmBtn').disabled = false;
+                updateBulkPmButton();
+            }
+        }
+    </script>
+<% } %>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
 <script>

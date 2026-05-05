@@ -14,6 +14,7 @@ router.post('/:id/comments', ensureAuthenticated, workOrderController.addComment
 
 // Bulk Create from Parts
 router.post('/bulk/parts', ensureAuthenticated, workOrderController.bulkCreateFromParts);
+router.post('/bulk/pms', ensureAuthenticated, workOrderController.bulkCreateFromPMs);
 
 // Delete Work Order
 router.delete('/:id', ensureAuthenticated, workOrderController.deleteWorkOrder);
