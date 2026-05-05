@@ -5,6 +5,7 @@ const { renderView } = require('./indexController');
 const getWeeklyPlanPage = async (req, res) => {
     try {
         const { week, day, candidateStart, candidateEnd } = req.query;
+        const user = req.session.user;
         // Default to current week logic if needed, or just let user filter
 
         let where = {};
