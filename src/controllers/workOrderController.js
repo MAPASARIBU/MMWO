@@ -30,6 +30,10 @@ const createWorkOrder = async (req, res) => {
         const { mill_id, station_id, equipment_id, part_id, category, type, priority, description } = req.body;
         const user = req.session.user || req.user; // User from session or API token
 
+        if (user.role === 'SENIOR_MANAGER') {
+            return res.status(403).json({ error: 'Access Denied: Senior Manager is read-only.' });
+        }
+
         let finalMillId = mill_id ? parseInt(mill_id) : null;
 
         // Security: Non-Admin forces their own mill_id
@@ -204,7 +208,7 @@ const updateStatus = async (req, res) => {
         // Logic for transitions
         if (status === 'ASSIGNED') {
             // AUTHORIZATION: ADMIN, SPV, MANAGER, MTC can assign
-            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER' && user.role !== 'SENIOR_MANAGER' && user.role !== 'MTC' && !(user.role === 'PROC' && wo.category === 'Processing')) {
+            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER' && user.role !== 'MTC' && !(user.role === 'PROC' && wo.category === 'Processing')) {
                 return res.status(403).json({ error: 'Access Denied: You cannot assign Work Orders.' });
             }
 
@@ -370,6 +374,10 @@ const bulkCreateFromParts = async (req, res) => {
         const { part_ids } = req.body;
         const user = req.session.user || req.user;
 
+        if (user.role === 'SENIOR_MANAGER') {
+            return res.status(403).json({ error: 'Access Denied: Senior Manager is read-only.' });
+        }
+
         if (!part_ids || !Array.isArray(part_ids) || part_ids.length === 0) {
             return res.status(400).json({ error: 'No parts selected' });
         }
@@ -507,8 +515,8 @@ const deleteWorkOrder = async (req, res) => {
         const { id } = req.params;
         const user = req.session.user;
 
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
-            return res.status(403).json({ error: 'Access Denied: Only ADMIN and SENIOR_MANAGER can delete Work Orders.' });
+        if (user.role !== 'ADMIN') {
+            return res.status(403).json({ error: 'Access Denied: Only ADMIN can delete Work Orders.' });
         }
 
         const wo = await prisma.workOrder.findUnique({

@@ -42,17 +42,21 @@
     <div class="card mt-4" style="border-left: 4px solid var(--danger-color); background: #fef2f2;">
         <div class="flex justify-between items-center mb-4">
             <h3 style="color: #991b1b; margin-bottom: 0;"><i class="fas fa-exclamation-triangle"></i> Equipment Parts Need Attention</h3>
+            <% if (user.role !== 'SENIOR_MANAGER') { %>
             <button id="bulkCreateWoBtn" class="btn btn-primary" style="background-color: #ef4444; border: none;" onclick="bulkCreateWOs()" disabled>
                 Create WOs for Selected (0)
             </button>
+            <% } %>
         </div>
         <div class="table-responsive">
             <table class="table" style="background: white;">
                 <thead>
                     <tr>
+                        <% if (user.role !== 'SENIOR_MANAGER') { %>
                         <th style="width: 40px; text-align: center;">
                             <input type="checkbox" id="selectAllParts" onclick="toggleAllParts(this)">
                         </th>
+                        <% } %>
                         <th>Equipment</th>
                         <th>Station</th>
                         <th>Part Name</th>
@@ -67,9 +71,11 @@
                         const isCritical = percent >= 100;
                     %>
                     <tr>
+                        <% if (user.role !== 'SENIOR_MANAGER') { %>
                         <td style="text-align: center;">
                             <input type="checkbox" class="part-checkbox" value="<%= p.id %>" onchange="updateBulkButton()">
                         </td>
+                        <% } %>
                         <td><strong><%= p.equipment.name %></strong> <br><small class="text-secondary"><%= p.equipment.code %></small></td>
                         <td><%= p.equipment.station.name %></td>
                         <td>
@@ -627,7 +633,7 @@
                             <th>Station</th>
                             <th>Priority</th>
                             <th>Status</th>
-                            <% if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') { %>
+                            <% if (user.role === 'ADMIN') { %>
                             <th>Actions</th>
                             <% } %>
                         </tr>
@@ -651,7 +657,7 @@
                                     <td><span class="badge status-<%= wo.status %>">
                                             <%= wo.status %>
                                         </span></td>
-                                    <% if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') { %>
+                                    <% if (user.role === 'ADMIN') { %>
                                         <td>
                                             <% if (wo.status !== 'COMPLETED' && wo.status !== 'CLOSED') { %>
                                                 <button class="btn btn-sm" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="deleteWo(event, '<%= wo.id %>', '<%= wo.wo_no %>')">

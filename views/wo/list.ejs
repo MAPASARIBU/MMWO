@@ -1,9 +1,11 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
         <h3>Work Orders</h3>
+        <% if (user.role !== 'SENIOR_MANAGER') { %>
         <a href="/work-orders/create" class="btn btn-primary">
             + Create New WO
         </a>
+        <% } %>
     </div>
 
     <!-- Filters -->
@@ -32,7 +34,7 @@
                     <th>Priority</th>
                     <th>Status</th>
                     <th>Assignee</th>
-                    <% if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') { %>
+                    <% if (user.role === 'ADMIN') { %>
                     <th>Actions</th>
                     <% } %>
                 </tr>
@@ -67,7 +69,7 @@
                             <td>
                                 <%= wo.assignee ? wo.assignee.name : '-' %>
                             </td>
-                            <% if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') { %>
+                            <% if (user.role === 'ADMIN') { %>
                                 <td>
                                     <% if (wo.status !== 'COMPLETED' && wo.status !== 'CLOSED') { %>
                                         <button class="btn btn-sm" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="deleteWo(event, '<%= wo.id %>', '<%= wo.wo_no %>')">

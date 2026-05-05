@@ -148,7 +148,7 @@
                         <h4>Actions</h4>
 
                         <!-- Assign (Admin/Spv/Manager/Mtc/Proc) -->
-                        <% if (wo.status==='OPEN' && (user.role==='ADMIN' || user.role==='SPV' || user.role==='MANAGER' || user.role==='SENIOR_MANAGER' || user.role==='MTC' || (user.role === 'PROC' && wo.category === 'Processing') )) { %>
+                        <% if (wo.status==='OPEN' && (user.role==='ADMIN' || user.role==='SPV' || user.role==='MANAGER' || user.role==='MTC' || (user.role === 'PROC' && wo.category === 'Processing') )) { %>
                             <div class="card" style="background: #f9fafb; border: 1px solid #eee;">
                                 <h5>Assign Work Order</h5>
                                 <div class="flex gap-2">
