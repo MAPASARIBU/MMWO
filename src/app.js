@@ -83,7 +83,7 @@ app.get('/weekly-plan/processing/print', ensureAuthenticated, weeklyPlanPageCont
 
 const adminController = require('./controllers/adminController');
 app.get('/admin/users', ensureRole(['ADMIN']), adminController.getUsersPage);
-app.get('/admin/master', ensureRole(['ADMIN']), adminController.getMasterDataPage);
+app.get('/admin/master', ensureRole(['ADMIN', 'SPV']), adminController.getMasterDataPage);
 
 const employeeRoutes = require('./routes/employees');
 app.use('/auth', authRoutes);

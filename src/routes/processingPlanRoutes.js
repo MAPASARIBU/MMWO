@@ -7,9 +7,9 @@ const { ensureAuthenticated, ensureRole } = require('../middleware/authMiddlewar
 router.get('/', (req, res) => res.redirect('/admin/master'));
 
 // API Routes
-router.post('/api', ensureAuthenticated, ensureRole(['ADMIN', 'PROC']), processingPlanController.createProcessingPlan);
-router.put('/api/:id', ensureAuthenticated, ensureRole(['ADMIN', 'PROC']), processingPlanController.editProcessingPlan);
-router.delete('/api/:id', ensureAuthenticated, ensureRole(['ADMIN', 'PROC']), processingPlanController.deleteProcessingPlan);
+router.post('/api', ensureAuthenticated, ensureRole(['ADMIN', 'PROC', 'SPV']), processingPlanController.createProcessingPlan);
+router.put('/api/:id', ensureAuthenticated, ensureRole(['ADMIN', 'PROC', 'SPV']), processingPlanController.editProcessingPlan);
+router.delete('/api/:id', ensureAuthenticated, ensureRole(['ADMIN', 'PROC', 'SPV']), processingPlanController.deleteProcessingPlan);
 router.post('/api/bulk-create', ensureAuthenticated, processingPlanController.bulkCreateProcessingWOs);
 
 module.exports = router;

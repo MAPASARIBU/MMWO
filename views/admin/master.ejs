@@ -20,6 +20,7 @@
                 </div>
             </div>
 
+            <% if (user.role === 'ADMIN') { %>
             <div class="card" style="background: #e0f2fe; border: 1px solid #bae6fd; color: #0369a1;">
                 <h5>💡 How to add Equipment</h5>
                 <ol style="margin-left: 1.5rem; margin-top: 0.5rem; font-size: 0.9em;">
@@ -29,7 +30,9 @@
                     <li>Paste equipment names (one per line).</li>
                     <li>Click Save.</li>
                 </ol>
+                </ol>
             </div>
+            <% } %>
         </div>
 
         <!-- Right: Stations List (Dynamic) -->
@@ -57,10 +60,12 @@
                                         <span style="font-weight: 500;">
                                             <%= s.name %>
                                         </span>
+                                        <% if (user.role === 'ADMIN') { %>
                                         <button class="btn btn-sm btn-secondary"
                                             onclick="openBulkModal(<%= s.id %>, '<%= s.name %>')">
                                             + Add Equip
                                         </button>
+                                        <% } %>
                                     </div>
                                     <!-- List equipment for this station if available -->
                                     <% if(s.equipment && s.equipment.length > 0) { %>
@@ -70,10 +75,12 @@
                                                     <a href="/equipment/<%= e.id %>" style="color: #0369a1; text-decoration: none; font-size: 0.9em;">
                                                         <span style="font-family: monospace; background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 0.85em; margin-right: 5px;"><%= e.code || 'EQ-' + e.id %></span> <span id="equip-name-<%= e.id %>"><%= e.name %></span>
                                                     </a>
+                                                    <% if (user.role === 'ADMIN') { %>
                                                     <div>
                                                         <button onclick="editEquipment(<%= e.id %>)" class="btn btn-sm btn-secondary" style="padding: 2px 6px; font-size: 0.75rem; margin-right: 4px;">Edit</button>
                                                         <button onclick="deleteEquipment(<%= e.id %>)" class="btn btn-sm btn-danger" style="padding: 2px 6px; font-size: 0.75rem; background-color: #ef4444; color: white; border: none; border-radius: 4px;">Delete</button>
                                                     </div>
+                                                    <% } %>
                                                 </div>
                                             <% }); %>
                                         </div>
@@ -91,7 +98,7 @@
     <hr class="my-4">
     <div class="flex justify-between items-center mb-3">
         <h3>Processing Plan Schedules</h3>
-        <% if (user.role === 'ADMIN' || user.role === 'PROC') { %>
+        <% if (user.role === 'ADMIN' || user.role === 'PROC' || user.role === 'SPV') { %>
             <button class="btn btn-primary" onclick="openAddModal()">+ Add Schedule</button>
         <% } %>
     </div>
@@ -126,7 +133,7 @@
                                 <% } %>
                             </td>
                             <td>
-                                <% if (user.role === 'ADMIN' || user.role === 'PROC') { %>
+                                <% if (user.role === 'ADMIN' || user.role === 'PROC' || user.role === 'SPV') { %>
                                     <button class="btn btn-sm btn-info text-white" onclick='openEditModal(<%- JSON.stringify(plan) %>)'>Edit</button>
                                     <button class="btn btn-sm btn-danger text-white" onclick="deletePlan(<%= plan.id %>)">Delete</button>
                                 <% } %>
