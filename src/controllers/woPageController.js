@@ -141,7 +141,7 @@ const detailWorkOrderPage = async (req, res) => {
             return res.status(403).send('Access Denied: You cannot view Work Orders from another mill.');
         }
 
-        const users = await prisma.user.findMany({ where: { role: { in: ['MTC', 'PROC'] }, is_active: true }, orderBy: { name: 'asc' } });
+        const users = await prisma.user.findMany({ where: { role: { in: ['MTC', 'PROC', 'SPV'] }, is_active: true }, orderBy: { name: 'asc' } });
         const workshopEmployees = await prisma.workshopEmployee.findMany({
             where: { is_active: true, OR: [{ mill_id: wo.mill_id }, { mill_id: null }] },
             orderBy: { name: 'asc' }

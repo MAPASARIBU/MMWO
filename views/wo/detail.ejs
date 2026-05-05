@@ -154,7 +154,7 @@
                                         <option value="">Select Maintainer</option>
                                         <% if (typeof mtcUsers !=='undefined' ) { %>
                                             <% mtcUsers.forEach(function(u) { %>
-                                                <% if (wo.category === 'Processing' && u.role === 'PROC') { %>
+                                                <% if (wo.category === 'Processing' && (u.role === 'PROC' || u.role === 'SPV')) { %>
                                                     <option value="<%= u.id %>"><%= u.name %></option>
                                                 <% } else if (wo.category !== 'Processing' && u.role === 'MTC') { %>
                                                     <option value="<%= u.id %>"><%= u.name %></option>
