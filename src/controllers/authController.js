@@ -49,8 +49,19 @@ const login = async (req, res) => {
         }
 
         // Validate Mill Access
-        // If NOT Admin or Senior Manager, user MUST select their assigned mill
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && user.mill_id !== selectedMillId) {
+        let accessible_mills = [];
+        if (user.role === 'SENIOR_MANAGER') {
+            try {
+                accessible_mills = user.accessible_mills ? JSON.parse(user.accessible_mills) : [];
+            } catch (e) {
+                console.error("Error parsing accessible_mills:", e);
+                accessible_mills = [];
+            }
+            if (!accessible_mills.includes(selectedMillId)) {
+                return res.render('login', { error: `Access Denied: You do not have access to ${selectedMill.name}.`, mills });
+            }
+        } else if (user.role !== 'ADMIN' && user.mill_id !== selectedMillId) {
+            // If NOT Admin or Senior Manager, user MUST select their assigned mill
             return res.render('login', { error: `Access Denied: You are attempting to login to ${selectedMill.name} but your account is assigned to another mill.`, mills });
         }
 
@@ -67,6 +78,7 @@ const login = async (req, res) => {
             name: user.name,
             role: user.role,
             mill_id: user.mill_id,
+            accessible_mills: accessible_mills,
             current_mill_id: selectedMillId, // The mill they logged into
             current_mill_name: selectedMill.name
         };

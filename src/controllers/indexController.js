@@ -16,11 +16,18 @@ const getDashboard = async (req, res) => {
         let millName = "All Mills";
         let mills = [];
 
-        // Fetch all mills if Admin or Senior Manager
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+        // Fetch mills based on role
+        if (user.role === 'ADMIN') {
             mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
+        } else if (user.role === 'SENIOR_MANAGER') {
+            mills = await prisma.mill.findMany({
+                where: { id: { in: user.accessible_mills || [] } },
+                orderBy: { name: 'asc' }
+            });
+        }
 
-            // Allow admin to select mill via query param
+        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+            // Allow to select mill via query param
             if (req.query.millId) {
                 millId = parseInt(req.query.millId);
                 const selectedMill = mills.find(m => m.id === millId);
@@ -43,6 +50,9 @@ const getDashboard = async (req, res) => {
         let baseWhere = {};
         if (millId) {
             baseWhere.mill_id = millId;
+        } else if (user.role === 'SENIOR_MANAGER') {
+            // If SENIOR_MANAGER and no specific mill is selected, show only accessible mills
+            baseWhere.mill_id = { in: user.accessible_mills || [] };
         }
 
         // Filters
@@ -293,6 +303,8 @@ const getPrintRecap = async (req, res) => {
         // Apply Mill Filter
         if (millId) {
             whereClause.mill_id = millId;
+        } else if (user.role === 'SENIOR_MANAGER') {
+            whereClause.mill_id = { in: user.accessible_mills || [] };
         }
 
         // Date Range Filter

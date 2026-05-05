@@ -71,7 +71,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Role</label>
-                <select name="role" class="form-control" required>
+                <select name="role" id="roleSelect" class="form-control" required onchange="toggleMillSelect()">
                     <option value="PROC">PROC (Processing)</option>
                     <option value="MTC">MTC (Maintenance)</option>
                     <option value="SPV">SPV (Supervisor)</option>
@@ -81,9 +81,9 @@
                     <option value="ADMIN">ADMIN</option>
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="singleMillDiv">
                 <label class="form-label">Mill</label>
-                <select name="mill_id" class="form-control">
+                <select name="mill_id" id="millIdSelect" class="form-control">
                     <option value="">All Mills (Admin only)</option>
                     <% mills.forEach(m=> { %>
                         <option value="<%= m.id %>">
@@ -91,6 +91,17 @@
                         </option>
                         <% }); %>
                 </select>
+            </div>
+
+            <div class="form-group" id="multiMillDiv" style="display: none;">
+                <label class="form-label">Accessible Mills (For Senior Manager)</label>
+                <div style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px;">
+                    <% mills.forEach(m=> { %>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" name="accessible_mills" value="<%= m.id %>"> <%= m.name %>
+                        </label>
+                    <% }); %>
+                </div>
             </div>
 
             <div class="flex justify-between mt-4">
@@ -119,10 +130,32 @@
         } catch (e) { console.error(e); }
     }
 
+    function toggleMillSelect() {
+        const role = document.getElementById('roleSelect').value;
+        if (role === 'SENIOR_MANAGER') {
+            document.getElementById('singleMillDiv').style.display = 'none';
+            document.getElementById('millIdSelect').disabled = true;
+            document.getElementById('multiMillDiv').style.display = 'block';
+        } else {
+            document.getElementById('singleMillDiv').style.display = 'block';
+            document.getElementById('millIdSelect').disabled = false;
+            document.getElementById('multiMillDiv').style.display = 'none';
+        }
+    }
+
     document.getElementById('createUserForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
+        
+        // Handle multiple accessible_mills
+        const accessibleMills = formData.getAll('accessible_mills').map(id => parseInt(id));
+        formData.delete('accessible_mills');
+        
         const data = Object.fromEntries(formData.entries());
+        if (data.role === 'SENIOR_MANAGER') {
+            data.accessible_mills = accessibleMills;
+            data.mill_id = null; // Senior Managers don't use single mill_id
+        }
 
         try {
             const res = await fetch('/api/users', {

@@ -23,8 +23,13 @@ const getUsers = async (req, res) => {
 
 const createUser = async (req, res) => {
     try {
-        const { username, password, name, role, mill_id } = req.body;
+        const { username, password, name, role, mill_id, accessible_mills } = req.body;
         const password_hash = await bcrypt.hash(password, 10);
+
+        let accessibleMillsStr = null;
+        if (role === 'SENIOR_MANAGER' && Array.isArray(accessible_mills)) {
+            accessibleMillsStr = JSON.stringify(accessible_mills);
+        }
 
         const user = await prisma.user.create({
             data: {
@@ -32,7 +37,8 @@ const createUser = async (req, res) => {
                 password_hash,
                 name,
                 role,
-                mill_id: mill_id ? parseInt(mill_id) : null
+                mill_id: mill_id ? parseInt(mill_id) : null,
+                accessible_mills: accessibleMillsStr
             }
         });
 

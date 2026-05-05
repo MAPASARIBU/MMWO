@@ -57,11 +57,18 @@ const getInputHmPage = async (req, res) => {
             millId = user.mill_id;
         }
 
+        let stationCondition = undefined;
+        if (millId) {
+            stationCondition = { mill_id: millId };
+        } else if (user.role === 'SENIOR_MANAGER') {
+            stationCondition = { mill_id: { in: user.accessible_mills || [] } };
+        }
+
         // Fetch equipment that have at least one active part
         const equipments = await prisma.equipment.findMany({
             where: {
                 is_active: true,
-                station: millId ? { mill_id: millId } : undefined,
+                station: stationCondition,
                 parts: {
                     some: { is_active: true }
                 }
@@ -77,7 +84,15 @@ const getInputHmPage = async (req, res) => {
         });
 
         // Also fetch mills for admin filter
-        const mills = (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') ? await prisma.mill.findMany({ orderBy: { name: 'asc' } }) : [];
+        let mills = [];
+        if (user.role === 'ADMIN') {
+            mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
+        } else if (user.role === 'SENIOR_MANAGER') {
+            mills = await prisma.mill.findMany({ 
+                where: { id: { in: user.accessible_mills || [] } },
+                orderBy: { name: 'asc' } 
+            });
+        }
 
         res.render('layout', {
             title: `Input Daily HM`,

@@ -120,6 +120,8 @@ const getWorkOrders = async (req, res) => {
         } else if (user.current_mill_id) {
             // Admin sees what they selected in context
             where.mill_id = user.current_mill_id;
+        } else if (user.role === 'SENIOR_MANAGER') {
+            where.mill_id = { in: user.accessible_mills || [] };
         }
 
         where.category = { not: 'Processing' };
@@ -166,7 +168,11 @@ const getWorkOrderById = async (req, res) => {
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
         // Access Check
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
+        if (user.role === 'SENIOR_MANAGER') {
+            if (!user.accessible_mills || !user.accessible_mills.includes(wo.mill_id)) {
+                return res.status(403).json({ error: 'Access Denied: You do not have access to this mill.' });
+            }
+        } else if (user.role !== 'ADMIN' && wo.mill_id !== user.mill_id) {
             return res.status(403).json({ error: 'Access Denied' });
         }
 

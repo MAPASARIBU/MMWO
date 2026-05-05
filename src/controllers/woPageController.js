@@ -41,6 +41,8 @@ const listWorkOrders = async (req, res) => {
         // Apply Mill Filter
         if (targetMillId) {
             where.mill_id = targetMillId;
+        } else if (user.role === 'SENIOR_MANAGER') {
+            where.mill_id = { in: user.accessible_mills || [] };
         }
 
         // Fetch Data
@@ -73,12 +75,14 @@ const createWorkOrderPage = async (req, res) => {
         const user = req.session.user;
         let mills = [];
 
-        // Admin and Senior Manager gets all mills, User gets only their own
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
-            // If admin has a current_mill_id, maybe default/restrict? 
-            // Usually Admin creates for any, but "making for specific mill" is safer.
-            // Let's load ALL for admin.
+        // Admin gets all mills, Senior Manager gets accessible mills, User gets only their own
+        if (user.role === 'ADMIN') {
             mills = await prisma.mill.findMany({ include: { stations: true } });
+        } else if (user.role === 'SENIOR_MANAGER') {
+            mills = await prisma.mill.findMany({ 
+                where: { id: { in: user.accessible_mills || [] } },
+                include: { stations: true } 
+            });
         } else {
             mills = await prisma.mill.findMany({
                 where: { id: user.mill_id },

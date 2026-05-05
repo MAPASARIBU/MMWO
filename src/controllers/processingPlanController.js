@@ -19,7 +19,9 @@ const getProcessingPlansPage = async (req, res) => {
         const user = req.session.user;
         let where = {};
         
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
+        if (user.role === 'SENIOR_MANAGER') {
+            where.mill_id = { in: user.accessible_mills || [] };
+        } else if (user.role !== 'ADMIN') {
             where.mill_id = user.mill_id;
         }
 
@@ -33,8 +35,16 @@ const getProcessingPlansPage = async (req, res) => {
         });
 
         const mills = await prisma.mill.findMany();
+        
+        let stationWhere = {};
+        if (user.role === 'SENIOR_MANAGER') {
+            stationWhere = { mill_id: { in: user.accessible_mills || [] } };
+        } else if (user.role !== 'ADMIN') {
+            stationWhere = { mill_id: user.mill_id };
+        }
+
         const stations = await prisma.station.findMany({
-            where: (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') ? { mill_id: user.mill_id } : {}
+            where: stationWhere
         });
 
         res.render('layout', {

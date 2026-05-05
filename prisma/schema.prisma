@@ -13,7 +13,8 @@ model User {
   password_hash String
   name          String
   role          String
-  mill_id       Int?
+  mill_id          Int?
+  accessible_mills String?
   is_active     Boolean      @default(true)
   created_at    DateTime     @default(now())
   mill          Mill?        @relation(fields: [mill_id], references: [id])

@@ -18,6 +18,13 @@ const getWeeklyPlanPage = async (req, res) => {
         if (isProcessing) {
             woFilter.status = { notIn: ['CLOSED', 'COMPLETED'] };
         }
+        
+        // Mill Isolation for Plans and Candidates
+        if (user.role === 'SENIOR_MANAGER') {
+            woFilter.mill_id = { in: user.accessible_mills || [] };
+        } else if (user.role !== 'ADMIN') {
+            woFilter.mill_id = user.mill_id;
+        }
 
         const plans = await prisma.weeklyPlan.findMany({
             where: {
@@ -45,15 +52,22 @@ const getWeeklyPlanPage = async (req, res) => {
             const end = new Date(candidateEnd);
             end.setHours(23, 59, 59, 999);
 
+            let candidateWhere = {
+                status: { notIn: ['CLOSED', 'COMPLETED'] },
+                category: categoryFilter,
+                created_at: {
+                    gte: start,
+                    lte: end
+                }
+            };
+            if (user.role === 'SENIOR_MANAGER') {
+                candidateWhere.mill_id = { in: user.accessible_mills || [] };
+            } else if (user.role !== 'ADMIN') {
+                candidateWhere.mill_id = user.mill_id;
+            }
+
             candidateWos = await prisma.workOrder.findMany({
-                where: {
-                    status: { notIn: ['CLOSED', 'COMPLETED'] },
-                    category: categoryFilter,
-                    created_at: {
-                        gte: start,
-                        lte: end
-                    }
-                },
+                where: candidateWhere,
                 include: {
                     station: true,
                     equipment: true,
@@ -75,9 +89,13 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const currentWeek = getISOWeekString(new Date());
 
-        const user = req.session.user;
         let empWhere = { is_active: true };
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
+        if (user.role === 'SENIOR_MANAGER') {
+            empWhere.OR = [
+                { mill_id: { in: user.accessible_mills || [] } },
+                { mill_id: null }
+            ];
+        } else if (user.role !== 'ADMIN') {
             empWhere.OR = [
                 { mill_id: user.mill_id },
                 { mill_id: null }
@@ -89,8 +107,15 @@ const getWeeklyPlanPage = async (req, res) => {
             orderBy: { name: 'asc' }
         });
 
+        let stationWhere = {};
+        if (user.role === 'SENIOR_MANAGER') {
+            stationWhere = { mill_id: { in: user.accessible_mills || [] } };
+        } else if (user.role !== 'ADMIN') {
+            stationWhere = { mill_id: user.mill_id };
+        }
+
         const stations = await prisma.station.findMany({
-            where: (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') ? { mill_id: user.mill_id } : {},
+            where: stationWhere,
             orderBy: { name: 'asc' }
         });
 
