@@ -12,7 +12,9 @@ const woRoutes = require('./routes/workOrders');
 const weeklyPlanRoutes = require('./routes/weeklyPlan');
 const userRoutes = require('./routes/users');
 const equipmentPartsRoutes = require('./routes/equipmentParts');
+const processingPlanRoutes = require('./routes/processingPlanRoutes');
 const { startPMCron } = require('./cron/pmCron');
+const { startProcessingCron } = require('./cron/processingCron');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -76,6 +78,8 @@ app.get('/work-orders/:id', ensureAuthenticated, woPageController.detailWorkOrde
 const weeklyPlanPageController = require('./controllers/weeklyPlanPageController');
 app.get('/weekly-plan', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPage);
 app.get('/weekly-plan/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
+app.get('/weekly-plan/processing', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPage);
+app.get('/weekly-plan/processing/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
 
 const adminController = require('./controllers/adminController');
 app.get('/admin/users', ensureRole(['ADMIN']), adminController.getUsersPage);
@@ -89,6 +93,7 @@ app.use('/api/work-orders', woRoutes);
 app.use('/api/weekly-plan', weeklyPlanRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/employees', employeeRoutes);
+app.use('/processing-plans', processingPlanRoutes);
 
 // Admin Pages
 app.get('/admin/employees', ensureRole(['ADMIN']), adminController.getEmployeesPage);
@@ -109,4 +114,5 @@ app.listen(PORT, () => {
     
     // Start background cron jobs
     startPMCron();
+    startProcessingCron();
 });

@@ -86,7 +86,140 @@
                 <% }); %>
         </div>
     </div>
+
+    <!-- Processing Plans Section -->
+    <hr class="my-4">
+    <div class="flex justify-between items-center mb-3">
+        <h3>Processing Plan Schedules</h3>
+        <% if (user.role === 'ADMIN' || user.role === 'PROC') { %>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add Schedule</button>
+        <% } %>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" id="processingPlansTable">
+            <thead>
+                <tr>
+                    <th>Mill</th>
+                    <th>Station</th>
+                    <th>Name</th>
+                    <th>Interval</th>
+                    <th>Next Due Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (typeof processingPlans !== 'undefined' && processingPlans.length > 0) { %>
+                    <% processingPlans.forEach(plan => { %>
+                        <tr>
+                            <td><%= plan.mill.name %></td>
+                            <td><%= plan.station.name %></td>
+                            <td><%= plan.name %></td>
+                            <td><%= plan.interval_value %> <%= plan.interval_type %>(s)</td>
+                            <td><%= plan.next_due_date ? plan.next_due_date.toISOString().split('T')[0] : '-' %></td>
+                            <td>
+                                <% if (plan.is_active) { %>
+                                    <span class="badge badge-success">Active</span>
+                                <% } else { %>
+                                    <span class="badge badge-secondary">Inactive</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if (user.role === 'ADMIN' || user.role === 'PROC') { %>
+                                    <button class="btn btn-sm btn-info text-white" onclick='openEditModal(<%- JSON.stringify(plan) %>)'>Edit</button>
+                                    <button class="btn btn-sm btn-danger text-white" onclick="deletePlan(<%= plan.id %>)">Delete</button>
+                                <% } %>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No processing plans found.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
 </div>
+
+<!-- Modal Create / Edit Processing Plan -->
+<div id="planModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 1000;">
+    <div class="card" style="margin: 50px auto; max-width: 500px; position:relative;">
+        <h3 id="modalTitle">Add Processing Plan</h3>
+        <form id="planForm">
+            <input type="hidden" id="planId" name="id">
+            
+            <% if (user.role === 'ADMIN') { %>
+                <div class="form-group">
+                    <label class="form-label">Mill *</label>
+                    <select name="mill_id" id="millId" class="form-control" required onchange="filterStations(this.value)">
+                        <option value="">-- Select Mill --</option>
+                        <% mills.forEach(m => { %>
+                            <option value="<%= m.id %>"><%= m.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            <% } else { %>
+                <input type="hidden" name="mill_id" id="millId" value="<%= user.mill_id %>">
+            <% } %>
+
+            <div class="form-group">
+                <label class="form-label">Station *</label>
+                <select name="station_id" id="stationId" class="form-control" required>
+                    <option value="">-- Select Station --</option>
+                    <% mills.forEach(m => { %>
+                        <% m.stations.forEach(s => { %>
+                            <option value="<%= s.id %>" data-mill="<%= s.mill_id %>"><%= s.name %></option>
+                        <% }) %>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Name / Description *</label>
+                <input type="text" name="name" id="planName" class="form-control" required placeholder="e.g. Weekly Cleaning Boiler">
+            </div>
+
+            <div class="flex gap-4">
+                <div class="form-group flex-grow">
+                    <label class="form-label">Interval Value *</label>
+                    <input type="number" name="interval_value" id="intervalValue" class="form-control" required min="1" value="1">
+                </div>
+                <div class="form-group flex-grow">
+                    <label class="form-label">Interval Type *</label>
+                    <select name="interval_type" id="intervalType" class="form-control" required>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Semesterly">Semesterly</option>
+                        <option value="Annually">Annually</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">First / Next Due Date *</label>
+                <input type="date" name="next_due_date" id="nextDueDate" class="form-control" required>
+            </div>
+
+            <div class="form-group" id="statusGroup" style="display: none;">
+                <label class="form-label">Status</label>
+                <select name="is_active" id="isActive" class="form-control">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+
+            <div class="flex justify-between mt-4">
+                <button type="button" class="btn btn-secondary" onclick="closePlanModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="savePlanBtn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 
 <script>
     function showMillStations(millId) {
@@ -216,6 +349,121 @@
                 console.error(error);
                 alert("Error deleting equipment");
             }
+        }
+    }
+
+    // --- Processing Plan Scripts ---
+    function filterStations(millId) {
+        const stationSelect = document.getElementById('stationId');
+        const options = stationSelect.querySelectorAll('option[data-mill]');
+        let firstValid = null;
+        
+        options.forEach(opt => {
+            if (millId === '' || opt.getAttribute('data-mill') === millId) {
+                opt.style.display = '';
+                if (!firstValid) firstValid = opt.value;
+            } else {
+                opt.style.display = 'none';
+            }
+        });
+        
+        stationSelect.value = firstValid || '';
+    }
+
+    <% if (user.role === 'ADMIN') { %>
+        document.addEventListener('DOMContentLoaded', () => {
+            const millSelect = document.getElementById('millId');
+            if(millSelect && millSelect.value) filterStations(millSelect.value);
+        });
+    <% } %>
+
+    function openAddModal() {
+        document.getElementById('modalTitle').innerText = 'Add Processing Plan';
+        document.getElementById('planForm').reset();
+        document.getElementById('planId').value = '';
+        document.getElementById('statusGroup').style.display = 'none';
+        
+        <% if (user.role === 'ADMIN') { %>
+            filterStations(document.getElementById('millId').value);
+        <% } %>
+
+        document.getElementById('planModal').style.display = 'block';
+    }
+
+    function openEditModal(plan) {
+        document.getElementById('modalTitle').innerText = 'Edit Processing Plan';
+        document.getElementById('planId').value = plan.id;
+        
+        const millEl = document.getElementById('millId');
+        if (millEl && millEl.tagName === 'SELECT') {
+            millEl.value = plan.mill_id;
+            filterStations(plan.mill_id.toString());
+        }
+
+        document.getElementById('stationId').value = plan.station_id;
+        document.getElementById('planName').value = plan.name;
+        document.getElementById('intervalValue').value = plan.interval_value;
+        document.getElementById('intervalType').value = plan.interval_type;
+        
+        const dateStr = new Date(plan.next_due_date).toISOString().split('T')[0];
+        document.getElementById('nextDueDate').value = dateStr;
+        
+        document.getElementById('isActive').value = plan.is_active ? 'true' : 'false';
+        document.getElementById('statusGroup').style.display = 'block';
+        
+        document.getElementById('planModal').style.display = 'block';
+    }
+
+    function closePlanModal() {
+        document.getElementById('planModal').style.display = 'none';
+    }
+
+    document.getElementById('planForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('planId').value;
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/processing-plans/api/${id}` : '/processing-plans/api';
+
+        document.getElementById('savePlanBtn').disabled = true;
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Failed to save plan');
+                document.getElementById('savePlanBtn').disabled = false;
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error connecting to server.');
+            document.getElementById('savePlanBtn').disabled = false;
+        }
+    });
+
+    async function deletePlan(id) {
+        if (!confirm('Are you sure you want to delete this processing plan schedule?')) return;
+        
+        try {
+            const res = await fetch(`/processing-plans/api/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Failed to delete');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error connecting to server');
         }
     }
 </script>

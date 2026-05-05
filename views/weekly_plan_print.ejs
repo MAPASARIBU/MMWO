@@ -122,11 +122,13 @@
     </div>
 
     <div class="header" style="position: relative;">
-        <h1>Weekly Maintenance Plan</h1>
-        <h2 style="margin: 5px 0 0; font-size: 18px; font-weight: normal; color: #333;">
-            <%= user.current_mill_name || (user.mill_id ? 'Mill ' + user.mill_id : 'All Mills' ) %>
-        </h2>
-        <p>Date: <%= today %></p>
+        <h2><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Maintenance Plan' : 'Weekly Maintenance Plan' %></h2>
+        <div class="meta">
+            Mill: <strong>BUNGA TANJUNG MILL</strong> |
+            Week: <strong><%= query.week || 'ALL' %></strong> |
+            Day: <strong><%= query.day || 'ALL' %></strong> |
+            Printed: <strong><%= today %></strong>
+        </div>
         <p>Printed by: <%= user.name %> (<%= user.role %>)</p>
 
         <% if (query.week || query.day) { %>

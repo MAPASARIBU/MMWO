@@ -1,7 +1,7 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
-        <h3>Weekly Plan</h3>
-        <% if (user && user.role !== 'PROC') { %>
+        <h3><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Weekly Plan' %></h3>
+        <% if (user && user.role !== 'PROC' && (!typeof isProcessing !== 'undefined' || !isProcessing)) { %>
             <button type="button" class="btn btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
         <% } %>
     </div>
@@ -9,7 +9,7 @@
     <% if (user && user.role !== 'PROC') { %>
     <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
         <h4>Find Unfinished Work</h4>
-        <form action="/weekly-plan" method="GET" class="flex gap-4 items-end mb-4">
+        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : '/weekly-plan' %>" method="GET" class="flex gap-4 items-end mb-4">
             <!-- Persist current week filter if any -->
             <input type="hidden" name="week" value="<%= query.week || '' %>">
 
@@ -133,8 +133,9 @@
         </div>
     </div>
 
-    <form action="/weekly-plan" method="GET" class="filter-bar mb-4 no-print">
-        <div class="flex gap-2">
+    <div class="flex justify-between items-center mb-4">
+        <h4><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Maintenance Plan' : 'Weekly Maintenance Plan' %></h4>
+        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : '/weekly-plan' %>" method="GET" class="flex gap-2 items-center" id="filterForm">
             <div class="form-group mb-0">
                 <input type="text" name="week" class="form-control" placeholder="Week (e.g. 2026-W06)"
                     value="<%= query.week || '' %>">
@@ -150,12 +151,23 @@
                 </select>
             </div>
             <button type="submit" class="btn btn-secondary">Filter</button>
-            <a href="/weekly-plan/print?week=<%= query.week || '' %>&day=<%= query.day || '' %>" target="_blank" class="btn btn-primary" style="text-decoration: none;">
+            <button type="button" class="btn btn-primary" onclick="printPlan()">
                 <i class="fas fa-print"></i> Print Plan
-            </a>
-        </div>
-        </div>
-    </form>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        function printPlan() {
+            const week = document.querySelector('input[name="week"]').value;
+            const day = document.querySelector('select[name="day"]').value;
+            let url = '<%= typeof isProcessing !== "undefined" && isProcessing ? "/weekly-plan/processing/print" : "/weekly-plan/print" %>?';
+            if (week) url += `week=${week}&`;
+            if (day) url += `day=${day}`;
+            window.open(url, '_blank');
+        }
+    </script>
+
     <div class="table-responsive">
         <table class="table">
             <thead>

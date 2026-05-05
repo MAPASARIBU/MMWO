@@ -11,8 +11,16 @@ const getWeeklyPlanPage = async (req, res) => {
         if (week) where.planned_week = week;
         if (day) where.planned_day = day;
 
+        const isProcessing = req.path.includes('/processing');
+        const categoryFilter = isProcessing ? 'Processing' : { not: 'Processing' };
+
         const plans = await prisma.weeklyPlan.findMany({
-            where,
+            where: {
+                ...where,
+                wo: {
+                    category: categoryFilter
+                }
+            },
             include: {
                 wo: {
                     include: {
@@ -37,6 +45,7 @@ const getWeeklyPlanPage = async (req, res) => {
             candidateWos = await prisma.workOrder.findMany({
                 where: {
                     status: { notIn: ['CLOSED', 'COMPLETED'] },
+                    category: categoryFilter,
                     created_at: {
                         gte: start,
                         lte: end
@@ -91,7 +100,8 @@ const getWeeklyPlanPage = async (req, res) => {
                 currentWeek,
                 workshopEmployees,
                 stations,
-                user
+                user,
+                isProcessing
             }),
             user: req.session.user,
             path: '/weekly-plan'
@@ -109,8 +119,16 @@ const getWeeklyPlanPrint = async (req, res) => {
         if (week) where.planned_week = week;
         if (day) where.planned_day = day;
 
+        const isProcessing = req.path.includes('/processing');
+        const categoryFilter = isProcessing ? 'Processing' : { not: 'Processing' };
+
         const plans = await prisma.weeklyPlan.findMany({
-            where,
+            where: {
+                ...where,
+                wo: {
+                    category: categoryFilter
+                }
+            },
             include: {
                 wo: {
                     include: {
@@ -150,7 +168,8 @@ const getWeeklyPlanPrint = async (req, res) => {
             groupedPlans,
             query: req.query,
             user: req.session.user,
-            today
+            today,
+            isProcessing
         });
     } catch (error) {
         console.error(error);

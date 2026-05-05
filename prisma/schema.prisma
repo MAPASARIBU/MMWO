@@ -35,6 +35,7 @@ model Mill {
   users      User[]
   wos        WorkOrder[]
   employees  WorkshopEmployee[]
+  processing_plans ProcessingPlan[]
 
   @@map("mills")
 }
@@ -48,6 +49,7 @@ model Station {
   equipment   Equipment[]
   mill        Mill        @relation(fields: [mill_id], references: [id])
   wos         WorkOrder[]
+  processing_plans ProcessingPlan[]
 
   @@map("stations")
 }
@@ -221,4 +223,22 @@ model PeriodicPM {
   equipment       Equipment @relation(fields: [equipment_id], references: [id])
 
   @@map("periodic_pms")
+}
+
+model ProcessingPlan {
+  id              Int       @id @default(autoincrement())
+  mill_id         Int
+  station_id      Int
+  name            String
+  interval_type   String    // 'Week', 'Month', 'Quarter', 'Semester', 'Year'
+  interval_value  Int       @default(1)
+  last_generated  DateTime?
+  next_due_date   DateTime
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+
+  station         Station   @relation(fields: [station_id], references: [id])
+  mill            Mill      @relation(fields: [mill_id], references: [id])
+
+  @@map("processing_plans")
 }
