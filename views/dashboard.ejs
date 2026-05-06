@@ -37,6 +37,149 @@
 
 </div>
 
+<!-- Dashboard Monitoring Tables (Requested by User) -->
+<% if (typeof maintenanceTable !== 'undefined') { %>
+<div class="card mt-4" style="padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
+    <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 12px 16px; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-tools"></i> A. MAINTENANCE WEEKLY PLANT
+    </div>
+    <div style="overflow-x: auto;">
+        <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.85em;">
+            <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
+                <tr>
+                    <th style="text-align: left; padding: 8px 12px; width: 28%; font-weight: 600;">TYPE WO</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600;">TOTAL WO</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #3b82f6;">OPEN</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #f59e0b;">IN PROGRESS</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #10b981;">COMPLETE & CLOSE</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #8b5cf6;">ASSIGNED</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #64748b;">ON HOLD</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">WO PENGANTIAN PART (HM BASE)</td>
+                    <td style="padding: 8px; font-weight: 600;"><%= maintenanceTable.hmBase.total %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.open %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.inProgress %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.completeClose %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.assigned %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.onHold %></td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9; background-color: #fcfcfc;">
+                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">AUTO PM (TIME BASE)</td>
+                    <td style="padding: 8px; font-weight: 600;"><%= maintenanceTable.autoPm.total %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.open %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.inProgress %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.completeClose %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.assigned %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.onHold %></td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">WO (MECHANICAL, UTILITY, OTHER, CIVIL, FAB)</td>
+                    <td style="padding: 8px; font-weight: 600;"><%= maintenanceTable.mechCivilEtc.total %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.open %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.inProgress %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.completeClose %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.assigned %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.onHold %></td>
+                </tr>
+                <tr>
+                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">WO (ELECTRICAL, INSTRUMENT)</td>
+                    <td style="padding: 8px; font-weight: 600;"><%= maintenanceTable.electInst.total %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.electInst.open %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.electInst.inProgress %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.electInst.completeClose %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.electInst.assigned %></td>
+                    <td style="padding: 8px;"><%= maintenanceTable.electInst.onHold %></td>
+                </tr>
+                <tr style="border-top: 2px solid #e2e8f0; background-color: #f8fafc; font-weight: bold;">
+                    <td style="text-align: left; padding: 8px 12px; color: #334155;">TOTAL</td>
+                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.total + maintenanceTable.autoPm.total + maintenanceTable.mechCivilEtc.total + maintenanceTable.electInst.total %></td>
+                    <td style="padding: 8px; color: #3b82f6;"><%= maintenanceTable.hmBase.open + maintenanceTable.autoPm.open + maintenanceTable.mechCivilEtc.open + maintenanceTable.electInst.open %></td>
+                    <td style="padding: 8px; color: #f59e0b;"><%= maintenanceTable.hmBase.inProgress + maintenanceTable.autoPm.inProgress + maintenanceTable.mechCivilEtc.inProgress + maintenanceTable.electInst.inProgress %></td>
+                    <td style="padding: 8px; color: #10b981;"><%= maintenanceTable.hmBase.completeClose + maintenanceTable.autoPm.completeClose + maintenanceTable.mechCivilEtc.completeClose + maintenanceTable.electInst.completeClose %></td>
+                    <td style="padding: 8px; color: #8b5cf6;"><%= maintenanceTable.hmBase.assigned + maintenanceTable.autoPm.assigned + maintenanceTable.mechCivilEtc.assigned + maintenanceTable.electInst.assigned %></td>
+                    <td style="padding: 8px; color: #64748b;"><%= maintenanceTable.hmBase.onHold + maintenanceTable.autoPm.onHold + maintenanceTable.mechCivilEtc.onHold + maintenanceTable.electInst.onHold %></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
+
+<% if (typeof processingTable !== 'undefined') { %>
+<div class="card mt-4" style="padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
+    <div style="background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; padding: 12px 16px; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-industry"></i> B. PROCESSING WEEKLY PLANT
+    </div>
+    <div style="overflow-x: auto;">
+        <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.85em;">
+            <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
+                <tr>
+                    <th style="text-align: left; padding: 8px 12px; width: 28%; font-weight: 600;">TYPE WO</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600;">TOTAL WO</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #3b82f6;">OPEN</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #f59e0b;">IN PROGRESS</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #10b981;">COMPLETE & CLOSE</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #8b5cf6;">ASSIGNED</th>
+                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #64748b;">ON HOLD</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">MANUAL PROCESSING</td>
+                    <td style="padding: 8px; font-weight: 600;"><%= processingTable.manualProcessing.total %></td>
+                    <td style="padding: 8px;"><%= processingTable.manualProcessing.open %></td>
+                    <td style="padding: 8px;"><%= processingTable.manualProcessing.inProgress %></td>
+                    <td style="padding: 8px;"><%= processingTable.manualProcessing.completeClose %></td>
+                    <td style="padding: 8px;"><%= processingTable.manualProcessing.assigned %></td>
+                    <td style="padding: 8px;"><%= processingTable.manualProcessing.onHold %></td>
+                </tr>
+                <tr style="border-top: 2px solid #e2e8f0; background-color: #f8fafc; font-weight: bold;">
+                    <td style="text-align: left; padding: 8px 12px; color: #334155;">TOTAL</td>
+                    <td style="padding: 8px;"><%= processingTable.manualProcessing.total %></td>
+                    <td style="padding: 8px; color: #3b82f6;"><%= processingTable.manualProcessing.open %></td>
+                    <td style="padding: 8px; color: #f59e0b;"><%= processingTable.manualProcessing.inProgress %></td>
+                    <td style="padding: 8px; color: #10b981;"><%= processingTable.manualProcessing.completeClose %></td>
+                    <td style="padding: 8px; color: #8b5cf6;"><%= processingTable.manualProcessing.assigned %></td>
+                    <td style="padding: 8px; color: #64748b;"><%= processingTable.manualProcessing.onHold %></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
+
+<% if (typeof durationTable !== 'undefined') { %>
+<div class="card mt-4" style="padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
+    <div style="background: linear-gradient(135deg, #14b8a6, #0f766e); color: white; padding: 12px 16px; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+        <i class="fas fa-clock"></i> C. DURASI (waktu) PENYELESAIAN WO YANG CLOSE VS WAKTU COMPLETE TERHADAP WO TERBIT
+    </div>
+    <div style="overflow-x: auto;">
+        <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.85em;">
+            <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
+                <tr>
+                    <th style="text-align: left; padding: 8px 12px; width: 40%; font-weight: 600;">Description</th>
+                    <th style="padding: 8px; width: 15%; font-weight: 600;">DI BAWAH 3 HARI</th>
+                    <th style="padding: 8px; width: 15%; font-weight: 600;">4 HINGGA 7 HARI</th>
+                    <th style="padding: 8px; width: 15%; font-weight: 600;">DI ATAS 1 - 2 MINGGU</th>
+                    <th style="padding: 8px; width: 15%; font-weight: 600;">DI ATAS 2 MINGGU</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">Durasi penyelesaian total WO yang close & complete terhadap WO terbit/muncul</td>
+                    <td style="padding: 8px; font-size: 1.1em; font-weight: 600; color: #10b981;"><%= durationTable.under3 %></td>
+                    <td style="padding: 8px; font-size: 1.1em; font-weight: 600; color: #f59e0b;"><%= durationTable.days4to7 %></td>
+                    <td style="padding: 8px; font-size: 1.1em; font-weight: 600; color: #f97316;"><%= durationTable.days8to14 %></td>
+                    <td style="padding: 8px; font-size: 1.1em; font-weight: 600; color: #ef4444;"><%= durationTable.over14 %></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+<% } %>
 <!-- Equipment Parts Warning Widget -->
 <% if (typeof attentionParts !== 'undefined' && attentionParts.length > 0) { %>
     <div class="card mt-4" style="border-left: 4px solid var(--danger-color); background: #fef2f2;">
@@ -417,6 +560,20 @@
             <canvas id="categoryChart"></canvas>
         </div>
     </div>
+    <!-- New Chart: WO Status Percentage -->
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h3 style="width: 100%; text-align: left; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-chart-pie" style="color: #10b981;"></i> % Status WO (Dari Tabel)</h3>
+        <div style="width: 100%; height: 200px; position: relative;">
+            <canvas id="statusTableChart"></canvas>
+        </div>
+    </div>
+    <!-- New Chart: Duration -->
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h3 style="width: 100%; text-align: left; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-clock" style="color: #0f766e;"></i> Durasi Penyelesaian WO</h3>
+        <div style="width: 100%; height: 200px; position: relative;">
+            <canvas id="durationChart"></canvas>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -497,6 +654,121 @@
                 }
             }
         });
+
+        // Status Table Chart
+        const mtData = JSON.parse('<%- JSON.stringify(typeof maintenanceTable !== "undefined" ? maintenanceTable : null) %>');
+        const ptData = JSON.parse('<%- JSON.stringify(typeof processingTable !== "undefined" ? processingTable : null) %>');
+
+        let totalOpen = 0, totalInProgress = 0, totalCompleteClose = 0, totalAssigned = 0, totalOnHold = 0;
+
+        if (mtData) {
+            ['hmBase', 'autoPm', 'mechCivilEtc', 'electInst'].forEach(key => {
+                if(mtData[key]) {
+                    totalOpen += mtData[key].open || 0;
+                    totalInProgress += mtData[key].inProgress || 0;
+                    totalCompleteClose += mtData[key].completeClose || 0;
+                    totalAssigned += mtData[key].assigned || 0;
+                    totalOnHold += mtData[key].onHold || 0;
+                }
+            });
+        }
+
+        if (ptData && ptData.manualProcessing) {
+            totalOpen += ptData.manualProcessing.open || 0;
+            totalInProgress += ptData.manualProcessing.inProgress || 0;
+            totalCompleteClose += ptData.manualProcessing.completeClose || 0;
+            totalAssigned += ptData.manualProcessing.assigned || 0;
+            totalOnHold += ptData.manualProcessing.onHold || 0;
+        }
+
+        const statusLabels = ['OPEN', 'IN PROGRESS', 'COMPLETE & CLOSE', 'ASSIGNED', 'ON HOLD'];
+        const statusData = [totalOpen, totalInProgress, totalCompleteClose, totalAssigned, totalOnHold];
+        const hasStatusData = statusData.some(val => val > 0);
+
+        if(hasStatusData && document.getElementById('statusTableChart')) {
+            new Chart(document.getElementById('statusTableChart'), {
+                type: 'doughnut',
+                plugins: [ChartDataLabels],
+                data: {
+                    labels: statusLabels,
+                    datasets: [{
+                        data: statusData,
+                        backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#8b5cf6', '#64748b']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right' },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold', size: 11 },
+                            formatter: (value, ctx) => {
+                                if (value === 0) return '';
+                                let sum = 0;
+                                let dataArr = ctx.chart.data.datasets[0].data;
+                                dataArr.forEach(data => sum += data);
+                                return Math.round((value / sum) * 100) + "%";
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Duration Chart
+        const durData = JSON.parse('<%- JSON.stringify(typeof durationTable !== "undefined" ? durationTable : null) %>');
+        
+        if (durData) {
+            const durLabels = ['< 3 Hari', '4-7 Hari', '8-14 Hari', '> 14 Hari'];
+            const durCounts = [durData.under3 || 0, durData.days4to7 || 0, durData.days8to14 || 0, durData.over14 || 0];
+            const hasDurData = durCounts.some(val => val > 0);
+
+            if (hasDurData && document.getElementById('durationChart')) {
+                new Chart(document.getElementById('durationChart'), {
+                    type: 'bar',
+                    plugins: [ChartDataLabels],
+                    data: {
+                        labels: durLabels,
+                        datasets: [{
+                            label: 'Jumlah WO',
+                            data: durCounts,
+                            backgroundColor: [
+                                '#10b981', // green
+                                '#f59e0b', // yellow
+                                '#f97316', // orange
+                                '#ef4444'  // red
+                            ],
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'end',
+                                color: '#475569',
+                                font: { weight: 'bold' },
+                                formatter: function(value) {
+                                    return value > 0 ? value : '';
+                                }
+                            }
+                        }
+                    }
+                });
+            } else if (document.getElementById('durationChart')) {
+                const canvas = document.getElementById('durationChart');
+                canvas.parentElement.innerHTML = '<p class="text-secondary mt-3" style="text-align: center;">Belum ada data durasi penyelesaian WO.</p>';
+            }
+        }
     });
 </script>
 
@@ -718,7 +990,7 @@
                             <div style="margin-bottom: 15px;">
                                 <label style="display: block; margin-bottom: 5px; font-weight: bold;">Type / Category</label>
                                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
-                                    <% ['Mechanical', 'Electrical', 'Instrument', 'Civil', 'Utility', 'Processing', 'Others'].forEach(cat=> { %>
+                                    <% ['Mechanical', 'Electrical', 'Instrument', 'Civil', 'Utility', 'Fabrication', 'Processing', 'Others'].forEach(cat=> { %>
                                         <label><input type="checkbox" name="category" value="<%= cat %>" <%=typeof
                                                 filterInfo !=='undefined' && filterInfo.category &&
                                                 (Array.isArray(filterInfo.category) ? filterInfo.category.includes(cat) :

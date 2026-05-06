@@ -243,6 +243,90 @@ const getDashboard = async (req, res) => {
             orderBy: { next_due_date: 'asc' }
         });
 
+        // --- DATA AGGREGATION FOR DASHBOARD TABLES ---
+        const allWosForTables = await prisma.workOrder.findMany({
+            where: filterWhere,
+            select: {
+                id: true,
+                status: true,
+                category: true,
+                description: true,
+                created_at: true,
+                completed_at: true,
+                closed_at: true,
+                parts: { select: { id: true } }
+            }
+        });
+
+        const maintenanceTable = {
+            hmBase: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 },
+            autoPm: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 },
+            mechCivilEtc: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 },
+            electInst: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 }
+        };
+
+        const processingTable = {
+            manualProcessing: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 }
+        };
+
+        const durationTable = {
+            under3: 0,
+            days4to7: 0,
+            days8to14: 0,
+            over14: 0
+        };
+
+        const mapStatus = (status) => {
+            if (status === 'OPEN') return 'open';
+            if (status === 'IN_PROGRESS') return 'inProgress';
+            if (status === 'COMPLETED' || status === 'CLOSED') return 'completeClose';
+            if (status === 'ASSIGNED') return 'assigned';
+            if (status === 'ON_HOLD') return 'onHold';
+            return null;
+        };
+
+        allWosForTables.forEach(wo => {
+            const st = mapStatus(wo.status);
+            
+            let assignedRow = null;
+
+            if (wo.category === 'Processing') {
+                assignedRow = processingTable.manualProcessing;
+            } else {
+                if (wo.parts && wo.parts.length > 0) {
+                    assignedRow = maintenanceTable.hmBase;
+                } else if (wo.description && (wo.description.includes('[AUTO PM]') || wo.description.includes('[MANUAL PM]') || wo.description.includes('Periodic Maintenance'))) {
+                    assignedRow = maintenanceTable.autoPm;
+                } else if (['Mechanical', 'Utility', 'Others', 'Civil', 'Fabrication', 'FAB'].includes(wo.category)) {
+                    assignedRow = maintenanceTable.mechCivilEtc;
+                } else if (['Electrical', 'Instrument'].includes(wo.category)) {
+                    assignedRow = maintenanceTable.electInst;
+                }
+            }
+
+            if (assignedRow) {
+                assignedRow.total++;
+                if (st) {
+                    assignedRow[st]++;
+                }
+            }
+
+            // Duration calculation
+            if (wo.status === 'COMPLETED' || wo.status === 'CLOSED') {
+                const endTime = wo.closed_at || wo.completed_at;
+                if (endTime && wo.created_at) {
+                    const diffTime = Math.abs(new Date(endTime) - new Date(wo.created_at));
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    
+                    if (diffDays <= 3) durationTable.under3++;
+                    else if (diffDays >= 4 && diffDays <= 7) durationTable.days4to7++;
+                    else if (diffDays >= 8 && diffDays <= 14) durationTable.days8to14++;
+                    else durationTable.over14++;
+                }
+            }
+        });
+        // --- END DATA AGGREGATION ---
+
         res.render('layout', {
             title: 'Dashboard',
             body: await renderView('dashboard', {
@@ -259,7 +343,10 @@ const getDashboard = async (req, res) => {
                 selectedMillId: millId,
                 user, // Pass user for role check
                 hasFilters,
-                filterInfo
+                filterInfo,
+                maintenanceTable,
+                processingTable,
+                durationTable
             }),
             user: req.session.user,
             path: '/dashboard'
