@@ -128,6 +128,15 @@ const getDashboard = async (req, res) => {
             statsWhere.created_at = filterWhere.created_at;
         }
 
+        const totalWOs = await prisma.workOrder.count({ where: statsWhere });
+        const completedWos = await prisma.workOrder.count({
+            where: {
+                ...statsWhere,
+                status: { in: ['COMPLETED', 'CLOSED'] }
+            }
+        });
+        const realCompletionRate = totalWOs > 0 ? Math.round((completedWos / totalWOs) * 100) : 0;
+
         const stats = {
             pending: await prisma.workOrder.count({
                 where: {
@@ -135,7 +144,7 @@ const getDashboard = async (req, res) => {
                     status: { in: ['OPEN', 'ASSIGNED', 'IN_PROGRESS'] }
                 }
             }),
-            completionRate: 85, // Placeholder - calculating real rate is complex
+            completionRate: realCompletionRate,
             highPriority: await prisma.workOrder.count({
                 where: {
                     ...statsWhere,
@@ -470,11 +479,19 @@ const getPrintRecap = async (req, res) => {
             orderBy: { priority: 'asc' }
         });
 
-        // Mock stats for checks
+        const totalWOs = await prisma.workOrder.count({ where: whereClause });
+        const completedWos = await prisma.workOrder.count({
+            where: {
+                ...whereClause,
+                status: { in: ['COMPLETED', 'CLOSED'] }
+            }
+        });
+        const realCompletionRate = totalWOs > 0 ? Math.round((completedWos / totalWOs) * 100) : 0;
+
         const stats = {
-            pending: await prisma.workOrder.count({ where: { status: { in: ['OPEN', 'ASSIGNED', 'IN_PROGRESS'] } } }),
-            completionRate: 85,
-            highPriority: await prisma.workOrder.count({ where: { priority: 'P1', status: { not: 'CLOSED' } } })
+            pending: await prisma.workOrder.count({ where: { ...whereClause, status: { in: ['OPEN', 'ASSIGNED', 'IN_PROGRESS'] } } }),
+            completionRate: realCompletionRate,
+            highPriority: await prisma.workOrder.count({ where: { ...whereClause, priority: 'P1', status: { not: 'CLOSED' } } })
         };
 
         const today = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
