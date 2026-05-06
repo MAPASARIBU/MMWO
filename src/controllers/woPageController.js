@@ -153,7 +153,7 @@ const detailWorkOrderPage = async (req, res) => {
 
         res.render('layout', {
             title: wo.wo_no,
-            body: await renderView('wo/detail', { wo, mtcUsers: users, workshopEmployees, user }),
+            body: await renderView('wo/detail', { wo, mtcUsers: users, workshopEmployees, user, readonly: req.query.readonly === 'true' }),
             user: req.session.user,
             path: '/work-orders'
         });
