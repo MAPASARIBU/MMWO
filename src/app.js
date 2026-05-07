@@ -15,6 +15,7 @@ const equipmentPartsRoutes = require('./routes/equipmentParts');
 const processingPlanRoutes = require('./routes/processingPlanRoutes');
 const { startPMCron } = require('./cron/pmCron');
 const { startProcessingCron } = require('./cron/processingCron');
+const whatsappService = require('./services/whatsappService');
 
 const app = express();
 const prisma = new PrismaClient();
@@ -98,6 +99,10 @@ app.use('/processing-plans', processingPlanRoutes);
 // Admin Pages
 app.get('/admin/employees', ensureRole(['ADMIN']), adminController.getEmployeesPage);
 
+const whatsappController = require('./controllers/whatsappController');
+app.get('/admin/whatsapp', ensureRole(['ADMIN']), whatsappController.getAdminPage);
+app.get('/api/whatsapp/status', ensureRole(['ADMIN']), whatsappController.getStatusApi);
+
 // 404 Handler
 app.use((req, res) => {
     res.status(404).send('Not Found');
@@ -115,4 +120,7 @@ app.listen(PORT, () => {
     // Start background cron jobs
     startPMCron();
     startProcessingCron();
+    
+    // Start WhatsApp Service
+    whatsappService.initialize();
 });

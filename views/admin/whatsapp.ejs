@@ -1,0 +1,95 @@
+<div class="card" style="max-width: 800px; margin: 0 auto;">
+    <div style="margin-bottom: 20px;">
+        <h2 style="margin-bottom: 8px;">WhatsApp Bot Configuration</h2>
+        <p style="color: #64748b;">Manage the connection between MMWO Application and WhatsApp for automated notifications.</p>
+    </div>
+
+    <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; text-align: center;" id="status-container">
+        <h3 style="margin-bottom: 16px;">Current Status: <span id="status-badge" class="badge"></span></h3>
+        
+        <div id="qr-container" style="display: none; flex-direction: column; align-items: center; gap: 16px;">
+            <p>Scan this QR code with your WhatsApp app to connect the bot.</p>
+            <div style="background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: inline-block;">
+                <img id="qr-image" src="" alt="WhatsApp QR Code" style="width: 256px; height: 256px; display: block;" />
+            </div>
+            <p style="font-size: 0.875rem; color: #92400e; background: #fef3c7; padding: 10px 16px; border-radius: 6px; display: inline-block; border: 1px solid #fde68a;">
+                <i class="fas fa-info-circle" style="margin-right: 8px;"></i> This QR code updates periodically. If it expires, please refresh the page.
+            </p>
+        </div>
+
+        <div id="connected-container" style="display: none; flex-direction: column; align-items: center; padding: 30px 0;">
+            <div style="width: 80px; height: 80px; background: #d1fae5; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 16px auto;">
+                <i class="fab fa-whatsapp"></i>
+            </div>
+            <h3 style="margin-bottom: 8px;">Bot is Connected</h3>
+            <p style="color: #64748b; max-width: 400px; margin: 0 auto;">The WhatsApp bot is actively running and ready to send Work Order notifications.</p>
+        </div>
+        
+        <div id="loading-container" style="padding: 30px 0;">
+            <i class="fas fa-circle-notch fa-spin" style="font-size: 40px; color: #2563eb; margin-bottom: 16px;"></i>
+            <p style="color: #64748b;">Checking status...</p>
+        </div>
+        
+        <div id="failed-container" style="display: none; flex-direction: column; align-items: center; padding: 30px 0;">
+            <div style="width: 80px; height: 80px; background: #fee2e2; color: #ef4444; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 16px auto;">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h3 style="margin-bottom: 8px; color: #991b1b;">Connection Failed</h3>
+            <p style="color: #64748b; max-width: 400px; margin: 0 auto;">The WhatsApp bot encountered an error while starting. The system will automatically retry in the background.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    const statusBadge = document.getElementById('status-badge');
+    const qrContainer = document.getElementById('qr-container');
+    const connectedContainer = document.getElementById('connected-container');
+    const loadingContainer = document.getElementById('loading-container');
+    const failedContainer = document.getElementById('failed-container');
+    const qrImage = document.getElementById('qr-image');
+
+    function updateUI(status, qr) {
+        loadingContainer.style.display = 'none';
+        
+        // Reset state
+        qrContainer.style.display = 'none';
+        connectedContainer.style.display = 'none';
+        failedContainer.style.display = 'none';
+        
+        if (status === 'CONNECTED') {
+            statusBadge.textContent = 'Connected';
+            statusBadge.className = 'badge badge-green';
+            connectedContainer.style.display = 'flex';
+        } else if (status === 'AWAITING_SCAN') {
+            statusBadge.textContent = 'Awaiting Scan';
+            statusBadge.className = 'badge badge-yellow';
+            qrContainer.style.display = 'flex';
+            if (qr) qrImage.src = qr;
+        } else if (status === 'FAILED') {
+            statusBadge.textContent = 'Failed';
+            statusBadge.className = 'badge badge-red';
+            failedContainer.style.display = 'flex';
+        } else {
+            statusBadge.textContent = status || 'Disconnected';
+            statusBadge.className = 'badge badge-gray';
+            // If INITIALIZING, we can just show loading
+            if (status === 'INITIALIZING') {
+                loadingContainer.style.display = 'block';
+            }
+        }
+    }
+
+    // Initial load
+    updateUI('<%= status %>', '<%= qr %>');
+
+    // Poll every 5 seconds for status updates
+    setInterval(async () => {
+        try {
+            const res = await fetch('/api/whatsapp/status');
+            const data = await res.json();
+            updateUI(data.status, data.qr);
+        } catch (error) {
+            console.error('Failed to fetch WhatsApp status', error);
+        }
+    }, 5000);
+</script>

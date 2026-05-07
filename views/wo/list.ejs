@@ -1,8 +1,8 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
         <h3>Work Orders</h3>
-        <% if (user.role !== 'SENIOR_MANAGER') { %>
-        <a href="/work-orders/create" class="btn btn-primary">
+        <% if (user && user.role !== 'SENIOR_MANAGER') { %>
+        <a href="/work-orders/create" class="btn btn-primary" style="display: inline-flex; visibility: visible;">
             + Create New WO
         </a>
         <% } %>
@@ -23,17 +23,14 @@
     </form>
 
     <div class="table-responsive">
-        <table class="table">
+        <table class="table" style="font-size: 0.85rem; white-space: nowrap;">
             <thead>
                 <tr>
                     <th>WO No</th>
-                    <th>Type Kerusakan</th>
                     <th>Station</th>
-                    <th>Equipment</th>
                     <th>Description</th>
                     <th>Priority</th>
                     <th>Status</th>
-                    <th>Assignee</th>
                     <% if (user.role === 'ADMIN') { %>
                     <th>Actions</th>
                     <% } %>
@@ -48,17 +45,10 @@
                                     <%= wo.wo_no %>
                                 </span></td>
                             <td>
-                                <%= wo.type || '-' %>
-                            </td>
-                            <td>
                                 <%= wo.station.name %>
                             </td>
-                            <td>
-                                <%= wo.equipment ? wo.equipment.name : '-' %>
-                            </td>
-                            <td>
-                                <%= wo.description.length> 50 ? wo.description.substring(0, 50) + '...' : wo.description
-                                    %>
+                            <td style="white-space: normal; min-width: 150px; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+                                <%= wo.description.length > 40 ? wo.description.substring(0, 40) + '...' : wo.description %>
                             </td>
                             <td><span class="status-<%= wo.priority %>">
                                     <%= wo.priority %>
@@ -66,13 +56,10 @@
                             <td><span class="badge status-<%= wo.status %>">
                                     <%= wo.status %>
                                 </span></td>
-                            <td>
-                                <%= wo.assignee ? wo.assignee.name : '-' %>
-                            </td>
                             <% if (user.role === 'ADMIN') { %>
                                 <td>
                                     <% if (wo.status !== 'COMPLETED' && wo.status !== 'CLOSED') { %>
-                                        <button class="btn btn-sm" style="background-color: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;" onclick="deleteWo(event, '<%= wo.id %>', '<%= wo.wo_no %>')">
+                                        <button class="btn btn-sm" style="background-color: #dc3545; color: white; border: none; padding: 2px 6px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;" onclick="deleteWo(event, '<%= wo.id %>', '<%= wo.wo_no %>')">
                                             <i class="fas fa-trash"></i> Hapus
                                         </button>
                                     <% } else { %>
@@ -84,7 +71,7 @@
                         <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="8" class="text-center py-4">No work orders found matching your
+                                    <td colspan="6" class="text-center py-4">No work orders found matching your
                                         criteria.</td>
                                 </tr>
                                 <% } %>

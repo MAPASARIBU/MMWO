@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { generateWONumber } = require('../controllers/workOrderController');
+const { sendNewWONotification } = require('../services/notificationService');
 
 // Helper to calculate next due date based on interval
 function calculateNextDueDate(currentDate, intervalType, intervalValue) {
@@ -106,6 +107,8 @@ const startProcessingCron = () => {
                         planned_by: adminId
                     }
                 });
+
+                sendNewWONotification(wo.id);
 
                 // 3. Update Processing Plan Schedule
                 const nextDue = calculateNextDueDate(now, plan.interval_type, plan.interval_value);

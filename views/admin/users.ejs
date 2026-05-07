@@ -10,6 +10,7 @@
                 <tr>
                     <th>Username</th>
                     <th>Name</th>
+                    <th>WhatsApp / Phone</th>
                     <th>Role</th>
                     <th>Mill</th>
                     <th>Status</th>
@@ -25,6 +26,9 @@
                         <td>
                             <%= u.name %>
                         </td>
+                        <td>
+                            <%= u.phone || '-' %>
+                        </td>
                         <td><span class="badge badge-gray">
                                 <%= u.role %>
                             </span></td>
@@ -38,10 +42,16 @@
                         </td>
                         <td>
                             <% if (u.username !=='admin' ) { %>
-                                <button onclick="toggleActive(<%= u.id %>, <%= !u.is_active %>)"
-                                    class="btn btn-sm btn-secondary">
-                                    <%= u.is_active ? 'Deactivate' : 'Activate' %>
-                                </button>
+                                <div style="display: flex; gap: 5px;">
+                                    <button onclick="openEditModal(<%= u.id %>, '<%= u.name.replace(/'/g, '\\\'') %>', '<%= u.phone || '' %>', '<%= u.role %>', <%= u.mill_id || 'null' %>, <%= u.accessible_mills ? '\'' + u.accessible_mills + '\'' : 'null' %>)"
+                                        class="btn btn-sm btn-primary">
+                                        Edit
+                                    </button>
+                                    <button onclick="toggleActive(<%= u.id %>, <%= !u.is_active %>)"
+                                        class="btn btn-sm btn-secondary">
+                                        <%= u.is_active ? 'Deactivate' : 'Activate' %>
+                                    </button>
+                                </div>
                                 <% } %>
                         </td>
                     </tr>
@@ -68,6 +78,10 @@
             <div class="form-group">
                 <label class="form-label">Full Name</label>
                 <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">WhatsApp Number (e.g. 62812...)</label>
+                <input type="text" name="phone" class="form-control" placeholder="628xxx">
             </div>
             <div class="form-group">
                 <label class="form-label">Role</label>
@@ -107,6 +121,63 @@
             <div class="flex justify-between mt-4">
                 <button type="button" onclick="closeModal('createUserModal')" class="btn btn-secondary">Cancel</button>
                 <button type="submit" class="btn btn-primary">Create User</button>
+            </div>
+        </form>
+    </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal"
+    style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
+    <div class="card" style="margin: 50px auto; max-width: 500px;">
+        <h3>Edit User</h3>
+        <form id="editUserForm">
+            <input type="hidden" name="id" id="editUserId">
+            <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" name="name" id="editUserName" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">WhatsApp Number (e.g. 62812...)</label>
+                <input type="text" name="phone" id="editUserPhone" class="form-control" placeholder="628xxx">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                <select name="role" id="editUserRole" class="form-control" required onchange="toggleEditMillSelect()">
+                    <option value="PROC">PROC (Processing)</option>
+                    <option value="MTC">MTC (Maintenance)</option>
+                    <option value="SPV">SPV (Supervisor)</option>
+                    <option value="MANAGER">MANAGER</option>
+                    <option value="SENIOR_MANAGER">SENIOR MANAGER</option>
+                    <option value="OPERATOR">OPERATOR</option>
+                    <option value="ADMIN">ADMIN</option>
+                </select>
+            </div>
+            <div class="form-group" id="editSingleMillDiv">
+                <label class="form-label">Mill</label>
+                <select name="mill_id" id="editMillIdSelect" class="form-control">
+                    <option value="">All Mills (Admin only)</option>
+                    <% mills.forEach(m=> { %>
+                        <option value="<%= m.id %>"><%= m.name %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div class="form-group" id="editMultiMillDiv" style="display: none;">
+                <label class="form-label">Accessible Mills (For Senior Manager)</label>
+                <div style="max-height: 150px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px;">
+                    <% mills.forEach(m=> { %>
+                        <label style="display: block; margin-bottom: 5px;">
+                            <input type="checkbox" name="accessible_mills" class="edit-mill-checkbox" value="<%= m.id %>"> <%= m.name %>
+                        </label>
+                    <% }); %>
+                </div>
+            </div>
+
+            <div class="flex justify-between mt-4">
+                <button type="button" onclick="closeModal('editUserModal')" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
         </form>
     </div>
@@ -172,6 +243,79 @@
         } catch (error) {
             console.error(error);
             alert('Error creating user');
+        }
+    });
+
+    function toggleEditMillSelect() {
+        const role = document.getElementById('editUserRole').value;
+        if (role === 'SENIOR_MANAGER') {
+            document.getElementById('editSingleMillDiv').style.display = 'none';
+            document.getElementById('editMillIdSelect').disabled = true;
+            document.getElementById('editMultiMillDiv').style.display = 'block';
+        } else {
+            document.getElementById('editSingleMillDiv').style.display = 'block';
+            document.getElementById('editMillIdSelect').disabled = false;
+            document.getElementById('editMultiMillDiv').style.display = 'none';
+        }
+    }
+
+    function openEditModal(id, name, phone, role, mill_id, accessible_mills_json) {
+        document.getElementById('editUserId').value = id;
+        document.getElementById('editUserName').value = name || '';
+        document.getElementById('editUserPhone').value = phone || '';
+        document.getElementById('editUserRole').value = role || 'MTC';
+        document.getElementById('editMillIdSelect').value = mill_id || '';
+        
+        // Reset checkboxes
+        document.querySelectorAll('.edit-mill-checkbox').forEach(cb => cb.checked = false);
+        
+        // Check accessible_mills if exists
+        if (accessible_mills_json) {
+            try {
+                const arr = JSON.parse(accessible_mills_json);
+                if (Array.isArray(arr)) {
+                    arr.forEach(mId => {
+                        const cb = document.querySelector(`.edit-mill-checkbox[value="${mId}"]`);
+                        if (cb) cb.checked = true;
+                    });
+                }
+            } catch(e) { console.error('Error parsing accessible_mills', e); }
+        }
+        
+        toggleEditMillSelect();
+        openModal('editUserModal');
+    }
+
+    document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editUserId').value;
+        const formData = new FormData(e.target);
+        
+        const accessibleMills = formData.getAll('accessible_mills').map(v => parseInt(v));
+        formData.delete('accessible_mills');
+        formData.delete('id');
+        
+        const data = Object.fromEntries(formData.entries());
+        if (data.role === 'SENIOR_MANAGER') {
+            data.accessible_mills = accessibleMills;
+            data.mill_id = null;
+        }
+
+        try {
+            const res = await fetch(`/api/users/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) window.location.reload();
+            else {
+                const err = await res.json();
+                alert('Error updating user: ' + (err.error || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error updating user');
         }
     });
 </script>

@@ -13,6 +13,7 @@ model User {
   password_hash String
   name          String
   role          String
+  phone         String?
   mill_id          Int?
   accessible_mills String?
   is_active     Boolean      @default(true)

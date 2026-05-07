@@ -1,5 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const whatsappService = require('../services/whatsappService');
+const { sendNewWONotification } = require('../services/notificationService');
 
 function calculateNextDueDate(currentDate, intervalType, intervalValue) {
     const nextDate = new Date(currentDate);
@@ -95,6 +97,9 @@ const createWorkOrder = async (req, res) => {
                 }
             });
         }
+
+        // WhatsApp Notification
+        sendNewWONotification(wo.id);
 
         res.status(201).json(wo);
     } catch (error) {

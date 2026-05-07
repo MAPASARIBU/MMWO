@@ -2,6 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 const { renderView } = require('./indexController');
 const { generateWONumber } = require('./workOrderController');
+const { sendNewWONotification } = require('../services/notificationService');
 const { calculateNextDueDate } = require('../cron/processingCron');
 
 // Helper to get current ISO Week string (YYYY-W##)
@@ -178,6 +179,7 @@ const bulkCreateProcessingWOs = async (req, res) => {
             });
 
             createdWos.push(wo);
+            sendNewWONotification(wo.id);
 
             const nextDue = calculateNextDueDate(now, plan.interval_type, plan.interval_value);
             await prisma.processingPlan.update({

@@ -11,6 +11,7 @@ const getUsers = async (req, res) => {
                 name: true,
                 role: true,
                 is_active: true,
+                phone: true,
                 mill: true,
                 created_at: true
             }
@@ -23,7 +24,7 @@ const getUsers = async (req, res) => {
 
 const createUser = async (req, res) => {
     try {
-        const { username, password, name, role, mill_id, accessible_mills } = req.body;
+        const { username, password, name, role, phone, mill_id, accessible_mills } = req.body;
         const password_hash = await bcrypt.hash(password, 10);
 
         let accessibleMillsStr = null;
@@ -37,6 +38,7 @@ const createUser = async (req, res) => {
                 password_hash,
                 name,
                 role,
+                phone: phone || null,
                 mill_id: mill_id ? parseInt(mill_id) : null,
                 accessible_mills: accessibleMillsStr
             }
@@ -65,8 +67,44 @@ const toggleActive = async (req, res) => {
     }
 };
 
+const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, role, phone, mill_id, accessible_mills } = req.body;
+
+        let accessibleMillsStr = null;
+        if (role === 'SENIOR_MANAGER' && Array.isArray(accessible_mills)) {
+            accessibleMillsStr = JSON.stringify(accessible_mills);
+        }
+
+        const dataToUpdate = {
+            name,
+            role,
+            phone: phone || null,
+            mill_id: mill_id ? parseInt(mill_id) : null,
+            accessible_mills: accessibleMillsStr
+        };
+
+        // If password is provided in the future, we can add it here.
+        if (req.body.password) {
+            dataToUpdate.password_hash = await bcrypt.hash(req.body.password, 10);
+        }
+
+        const user = await prisma.user.update({
+            where: { id: parseInt(id) },
+            data: dataToUpdate
+        });
+
+        const { password_hash: _, ...userWithoutPassword } = user;
+        res.json(userWithoutPassword);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getUsers,
     createUser,
-    toggleActive
+    toggleActive,
+    updateUser
 };
