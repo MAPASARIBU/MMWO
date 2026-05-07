@@ -2,6 +2,7 @@
 nixPkgs = ["...", "chromium"]
 aptPkgs = [
   "...",
+  "libglib2.0-0",
   "libnss3",
   "libnspr4",
   "libatk1.0-0",
