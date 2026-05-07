@@ -36,6 +36,10 @@
             </div>
             <h3 style="margin-bottom: 8px; color: #991b1b;">Connection Failed</h3>
             <p style="color: #64748b; max-width: 400px; margin: 0 auto;">The WhatsApp bot encountered an error while starting. The system will automatically retry in the background.</p>
+            <div id="error-message-container" style="display: none; background: #fef2f2; border: 1px solid #fca5a5; padding: 12px; border-radius: 6px; margin-top: 16px; max-width: 500px; text-align: left; overflow-wrap: break-word;">
+                <strong style="color: #991b1b; display: block; margin-bottom: 4px;">Error Details:</strong>
+                <code id="error-message-text" style="color: #7f1d1d; font-size: 0.875rem;"></code>
+            </div>
         </div>
     </div>
 </div>
@@ -47,8 +51,10 @@
     const loadingContainer = document.getElementById('loading-container');
     const failedContainer = document.getElementById('failed-container');
     const qrImage = document.getElementById('qr-image');
+    const errorMessageContainer = document.getElementById('error-message-container');
+    const errorMessageText = document.getElementById('error-message-text');
 
-    function updateUI(status, qr) {
+    function updateUI(status, qr, error) {
         loadingContainer.style.display = 'none';
         
         // Reset state
@@ -69,6 +75,12 @@
             statusBadge.textContent = 'Failed';
             statusBadge.className = 'badge badge-red';
             failedContainer.style.display = 'flex';
+            if (error) {
+                errorMessageContainer.style.display = 'block';
+                errorMessageText.textContent = error;
+            } else {
+                errorMessageContainer.style.display = 'none';
+            }
         } else {
             statusBadge.textContent = status || 'Disconnected';
             statusBadge.className = 'badge badge-gray';
@@ -80,14 +92,14 @@
     }
 
     // Initial load
-    updateUI('<%= status %>', '<%= qr %>');
+    updateUI('<%= status %>', '<%= qr %>', `<%- typeof error !== 'undefined' && error ? error.replace(/`/g, '\\`') : '' %>`);
 
     // Poll every 5 seconds for status updates
     setInterval(async () => {
         try {
             const res = await fetch('/api/whatsapp/status');
             const data = await res.json();
-            updateUI(data.status, data.qr);
+            updateUI(data.status, data.qr, data.error);
         } catch (error) {
             console.error('Failed to fetch WhatsApp status', error);
         }

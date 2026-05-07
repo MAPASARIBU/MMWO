@@ -7,7 +7,7 @@ const getAdminPage = async (req, res) => {
         
         res.render('layout', {
             title: 'WhatsApp Bot Configuration',
-            body: await renderView('admin/whatsapp', { status: statusData.status, qr: statusData.qr }),
+            body: await renderView('admin/whatsapp', { status: statusData.status, qr: statusData.qr, error: statusData.error }),
             user: req.session.user,
             path: '/admin/whatsapp'
         });

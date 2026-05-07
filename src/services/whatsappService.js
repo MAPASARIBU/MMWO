@@ -24,6 +24,7 @@ class WhatsAppService {
 
         this.qrDataURL = null;
         this.status = 'DISCONNECTED';
+        this.lastError = null;
 
         this.client.on('qr', async (qr) => {
             console.log('WhatsApp QR Code received. Awaiting scan...');
@@ -63,8 +64,10 @@ class WhatsAppService {
         this.status = 'INITIALIZING';
         try {
             await this.client.initialize();
+            this.lastError = null;
         } catch (err) {
             console.error('Failed to initialize WhatsApp client:', err.message);
+            this.lastError = err.message;
             if (retries > 0) {
                 console.log(`Retrying initialization in 5 seconds... (${retries} attempts left)`);
                 setTimeout(() => this.initialize(retries - 1), 5000);
@@ -77,7 +80,8 @@ class WhatsAppService {
     getStatus() {
         return {
             status: this.status,
-            qr: this.qrDataURL
+            qr: this.qrDataURL,
+            error: this.lastError
         };
     }
 
