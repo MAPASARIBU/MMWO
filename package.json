@@ -11,7 +11,8 @@
     "build": "npx prisma generate",
     "dev": "nodemon src/app.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "postinstall": "npx puppeteer browsers install chrome"
   },
   "prisma": {
     "seed": "node prisma/seed.js"
