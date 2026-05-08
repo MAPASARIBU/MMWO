@@ -42,8 +42,18 @@ class WhatsAppService {
                             '--disable-setuid-sandbox',
                             '--disable-dev-shm-usage',
                             '--disable-accelerated-2d-canvas',
-                            '--disable-gpu'
+                            '--no-first-run',
+                            '--no-zygote',
+                            '--disable-gpu',
+                            '--js-flags="--max-old-space-size=256"',
+                            '--disable-extensions',
+                            '--mute-audio'
                         ]
+                    },
+                    webVersionCache: {
+                        type: 'remote',
+                        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/{version}.html',
+                        strict: false
                     }
                 });
 
