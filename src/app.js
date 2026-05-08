@@ -1,4 +1,5 @@
 const express = require('express');
+// Trigger Render restart to clear Prisma query engine schema cache
 const session = require('express-session');
 const morgan = require('morgan');
 const path = require('path');
