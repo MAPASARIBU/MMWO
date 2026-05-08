@@ -75,7 +75,7 @@
     <div class="mb-4">
         <div class="flex justify-between items-center mb-2">
             <label class="form-label" style="margin: 0;">Assigned Mechanics / PICs</label>
-            <% if ((typeof readonly === 'undefined' || !readonly) && wo.status !== 'COMPLETED' && wo.status !== 'CLOSED' && user.role !== 'PROC') { %>
+            <% if ((typeof readonly === 'undefined' || !readonly) && wo.status !== 'COMPLETED' && wo.status !== 'CLOSED' && user.role !== 'PROC' && user.role !== 'MTC') { %>
                 <button class="btn btn-sm btn-outline-primary" onclick="openPicModal()">+ Assign PICs</button>
             <% } %>
         </div>
@@ -147,8 +147,8 @@
                     <div style="border-top: 1px solid #eee; padding-top: 1rem;">
                         <h4>Actions</h4>
 
-                        <!-- Assign (Admin/Spv/Manager/Mtc/Proc) -->
-                        <% if (wo.status==='OPEN' && (user.role==='ADMIN' || user.role==='SPV' || user.role==='MANAGER' || user.role==='MTC' || (user.role === 'PROC' && wo.category === 'Processing') )) { %>
+                        <!-- Assign (Admin/Spv/Manager/Proc) -->
+                        <% if (wo.status==='OPEN' && (user.role==='ADMIN' || user.role==='SPV' || user.role==='MANAGER' || (user.role === 'PROC' && wo.category === 'Processing') )) { %>
                             <div class="card" style="background: #f9fafb; border: 1px solid #eee;">
                                 <h5>Assign Work Order</h5>
                                 <div class="flex gap-2">
