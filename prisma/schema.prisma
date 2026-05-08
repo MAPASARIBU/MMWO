@@ -244,3 +244,11 @@ model ProcessingPlan {
 
   @@map("processing_plans")
 }
+
+model WhatsAppSession {
+  id        String   @id
+  data      Bytes
+  updatedAt DateTime @updatedAt
+
+  @@map("whatsapp_sessions")
+}

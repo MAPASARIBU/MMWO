@@ -1,5 +1,8 @@
-const { Client, LocalAuth } = require('whatsapp-web.js');
+const { Client, RemoteAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
+const PrismaStore = require('./PrismaStore');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 class WhatsAppService {
     constructor() {
@@ -23,8 +26,14 @@ class WhatsAppService {
                     executablePath = await chromium.executablePath();
                 }
 
+                const store = new PrismaStore(prisma);
+
                 this.client = new Client({
-                    authStrategy: new LocalAuth(),
+                    authStrategy: new RemoteAuth({
+                        clientId: 'mmwo-bot',
+                        store: store,
+                        backupSyncIntervalMs: 60000 // Backup session every 1 minute
+                    }),
                     puppeteer: {
                         headless: true,
                         executablePath: executablePath,
@@ -56,6 +65,10 @@ class WhatsAppService {
                     console.log('WhatsApp Client is ready!');
                     this.status = 'CONNECTED';
                     this.qrDataURL = null; // Clear QR code once connected
+                });
+
+                this.client.on('remote_session_saved', () => {
+                    console.log('WhatsApp Remote Session successfully saved to Database!');
                 });
 
                 this.client.on('authenticated', () => {
