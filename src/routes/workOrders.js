@@ -26,9 +26,14 @@ router.post('/:id/pics', ensureAuthenticated, workOrderController.assignPics);
 router.get('/test-notification/:id', async (req, res) => {
     const { PrismaClient } = require('@prisma/client');
     const prisma = new PrismaClient();
+    const whatsappService = require('../services/whatsappService');
+    
     try {
         const woId = parseInt(req.params.id);
-        const wo = await prisma.workOrder.findUnique({ where: { id: woId } });
+        const wo = await prisma.workOrder.findUnique({ 
+            where: { id: woId },
+            include: { station: true, equipment: true, reporter: true }
+        });
         if (!wo) return res.json({ error: 'WO not found' });
         
         let targetRoles = [];
@@ -47,7 +52,30 @@ router.get('/test-notification/:id', async (req, res) => {
             }
         });
         
-        res.json({ wo, targetRoles, targetUsers });
+        const equipmentName = wo.equipment ? wo.equipment.name : '-';
+        const stationName = wo.station ? wo.station.name : '-';
+        const appUrl = process.env.APP_URL || 'http://localhost:3000';
+        const woLink = `${appUrl}/work-orders/${wo.id}`;
+        
+        const message = `*TEST WO BARU DIBUAT*\n\n` +
+            `*No WO:* ${wo.wo_no}\n` +
+            `*Kategori:* ${wo.category}\n` +
+            `*Prioritas:* ${wo.priority}\n` +
+            `*Station:* ${stationName}\n` +
+            `*Equipment:* ${equipmentName}\n` +
+            `*Pelapor:* ${wo.reporter ? wo.reporter.name : 'System'}\n\n` +
+            `*Deskripsi Masalah:*\n${wo.description}\n\n` +
+            `${woLink}`;
+
+        const results = [];
+        for (const targetUser of targetUsers) {
+            if (targetUser.phone) {
+                const success = await whatsappService.sendMessage(targetUser.phone, message);
+                results.push({ user: targetUser.username, phone: targetUser.phone, success });
+            }
+        }
+
+        res.json({ botStatus: whatsappService.getStatus(), wo_no: wo.wo_no, targetRoles, results });
     } catch (e) {
         res.json({ error: e.message });
     }
