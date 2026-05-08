@@ -3,66 +3,78 @@ const qrcode = require('qrcode');
 
 class WhatsAppService {
     constructor() {
-        this.client = new Client({
-            authStrategy: new LocalAuth(),
-            puppeteer: {
-                headless: true,
-                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-accelerated-2d-canvas',
-                    '--disable-gpu'
-                ]
-            },
-            webVersionCache: {
-                type: 'remote',
-                remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
-            }
-        });
-
+        this.client = null;
         this.qrDataURL = null;
         this.status = 'DISCONNECTED';
         this.lastError = null;
-
-        this.client.on('qr', async (qr) => {
-            console.log('WhatsApp QR Code received. Awaiting scan...');
-            this.status = 'AWAITING_SCAN';
-            try {
-                this.qrDataURL = await qrcode.toDataURL(qr);
-            } catch (err) {
-                console.error('Failed to generate QR data URL', err);
-            }
-        });
-
-        this.client.on('ready', () => {
-            console.log('WhatsApp Client is ready!');
-            this.status = 'CONNECTED';
-            this.qrDataURL = null; // Clear QR code once connected
-        });
-
-        this.client.on('authenticated', () => {
-            console.log('WhatsApp Client Authenticated');
-        });
-
-        this.client.on('auth_failure', msg => {
-            console.error('WhatsApp Auth failure', msg);
-            this.status = 'AUTH_FAILURE';
-        });
-
-        this.client.on('disconnected', (reason) => {
-            console.log('WhatsApp Client was disconnected', reason);
-            this.status = 'DISCONNECTED';
-            // Attempt to reconnect after a delay
-            setTimeout(() => this.initialize(), 5000);
-        });
     }
 
     async initialize(retries = 3) {
         console.log('Initializing WhatsApp Service...');
         this.status = 'INITIALIZING';
         try {
+            if (!this.client) {
+                let executablePath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+                
+                // If running on Render, use sparticuz chromium to bypass memory/download issues
+                if (process.env.RENDER) {
+                    console.log('Running on Render: using @sparticuz/chromium');
+                    const chromium = require('@sparticuz/chromium');
+                    executablePath = await chromium.executablePath();
+                }
+
+                this.client = new Client({
+                    authStrategy: new LocalAuth(),
+                    puppeteer: {
+                        headless: true,
+                        executablePath: executablePath,
+                        args: [
+                            '--no-sandbox',
+                            '--disable-setuid-sandbox',
+                            '--disable-dev-shm-usage',
+                            '--disable-accelerated-2d-canvas',
+                            '--disable-gpu'
+                        ]
+                    },
+                    webVersionCache: {
+                        type: 'remote',
+                        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html'
+                    }
+                });
+
+                this.client.on('qr', async (qr) => {
+                    console.log('WhatsApp QR Code received. Awaiting scan...');
+                    this.status = 'AWAITING_SCAN';
+                    try {
+                        this.qrDataURL = await qrcode.toDataURL(qr);
+                    } catch (err) {
+                        console.error('Failed to generate QR data URL', err);
+                    }
+                });
+
+                this.client.on('ready', () => {
+                    console.log('WhatsApp Client is ready!');
+                    this.status = 'CONNECTED';
+                    this.qrDataURL = null; // Clear QR code once connected
+                });
+
+                this.client.on('authenticated', () => {
+                    console.log('WhatsApp Client Authenticated');
+                });
+
+                this.client.on('auth_failure', msg => {
+                    console.error('WhatsApp Auth failure', msg);
+                    this.status = 'AUTH_FAILURE';
+                });
+
+                this.client.on('disconnected', (reason) => {
+                    console.log('WhatsApp Client was disconnected', reason);
+                    this.status = 'DISCONNECTED';
+                    // Attempt to reconnect after a delay
+                    setTimeout(() => this.initialize(), 5000);
+                });
+            }
+
             await this.client.initialize();
             this.lastError = null;
         } catch (err) {
