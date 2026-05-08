@@ -134,6 +134,8 @@ class WhatsAppService {
             console.error(`Failed to send WhatsApp message to ${to}:`, error);
             return false;
         }
+    }
+
     async logout() {
         try {
             if (this.client) {
