@@ -449,6 +449,9 @@ const bulkCreateFromParts = async (req, res) => {
                 }
             });
             createdWos.push(wo);
+            
+            // Send WhatsApp Notification for early warning
+            sendNewWONotification(wo.id);
         }
 
         res.status(201).json({ success: true, count: createdWos.length });
@@ -503,6 +506,9 @@ const bulkCreateFromPMs = async (req, res) => {
                 }
             });
             createdWos.push(wo);
+
+            // Send WhatsApp Notification for early warning
+            sendNewWONotification(wo.id);
 
             const nextDue = calculateNextDueDate(now, pm.interval_type, pm.interval_value);
             await prisma.periodicPM.update({
