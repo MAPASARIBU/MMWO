@@ -21,7 +21,17 @@ const getStatusApi = async (req, res) => {
     res.json(whatsappService.getStatus());
 };
 
+const resetSession = async (req, res) => {
+    try {
+        await whatsappService.logout();
+        res.json({ success: true, message: 'Session reset initiated.' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: 'Failed to reset session.' });
+    }
+};
+
 module.exports = {
     getAdminPage,
-    getStatusApi
+    getStatusApi,
+    resetSession
 };

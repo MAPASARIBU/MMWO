@@ -103,6 +103,7 @@ app.get('/admin/employees', ensureRole(['ADMIN']), adminController.getEmployeesP
 const whatsappController = require('./controllers/whatsappController');
 app.get('/admin/whatsapp', ensureRole(['ADMIN']), whatsappController.getAdminPage);
 app.get('/api/whatsapp/status', ensureRole(['ADMIN']), whatsappController.getStatusApi);
+app.post('/api/whatsapp/reset', ensureRole(['ADMIN']), whatsappController.resetSession);
 
 // 404 Handler
 app.use((req, res) => {

@@ -22,4 +22,35 @@ router.delete('/:id', ensureAuthenticated, workOrderController.deleteWorkOrder);
 // Assign PICs
 router.post('/:id/pics', ensureAuthenticated, workOrderController.assignPics);
 
+// TEST NOTIFICATION (Temporary)
+router.get('/test-notification/:id', async (req, res) => {
+    const { PrismaClient } = require('@prisma/client');
+    const prisma = new PrismaClient();
+    try {
+        const woId = parseInt(req.params.id);
+        const wo = await prisma.workOrder.findUnique({ where: { id: woId } });
+        if (!wo) return res.json({ error: 'WO not found' });
+        
+        let targetRoles = [];
+        if (wo.category === 'Processing') {
+            targetRoles = ['PROC', 'SPV', 'MANAGER'];
+        } else {
+            targetRoles = ['MTC', 'SPV', 'MANAGER'];
+        }
+
+        const targetUsers = await prisma.user.findMany({
+            where: {
+                mill_id: wo.mill_id,
+                role: { in: targetRoles },
+                is_active: true,
+                phone: { not: null }
+            }
+        });
+        
+        res.json({ wo, targetRoles, targetUsers });
+    } catch (e) {
+        res.json({ error: e.message });
+    }
+});
+
 module.exports = router;

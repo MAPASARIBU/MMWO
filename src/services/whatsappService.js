@@ -134,6 +134,28 @@ class WhatsAppService {
             console.error(`Failed to send WhatsApp message to ${to}:`, error);
             return false;
         }
+    async logout() {
+        try {
+            if (this.client) {
+                await this.client.logout();
+                this.status = 'DISCONNECTED';
+                this.qrDataURL = null;
+                // Delete session from DB
+                await prisma.whatsAppSession.deleteMany({});
+                
+                // Reinitialize to get new QR
+                setTimeout(() => this.initialize(), 2000);
+                return true;
+            }
+        } catch (error) {
+            console.error('Failed to logout WhatsApp client:', error);
+            // Force delete session from DB anyway
+            await prisma.whatsAppSession.deleteMany({});
+            this.client = null;
+            this.status = 'DISCONNECTED';
+            setTimeout(() => this.initialize(), 2000);
+            return false;
+        }
     }
 }
 

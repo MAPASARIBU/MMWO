@@ -22,7 +22,10 @@
                 <i class="fab fa-whatsapp"></i>
             </div>
             <h3 style="margin-bottom: 8px;">Bot is Connected</h3>
-            <p style="color: #64748b; max-width: 400px; margin: 0 auto;">The WhatsApp bot is actively running and ready to send Work Order notifications.</p>
+            <p style="color: #64748b; max-width: 400px; margin: 0 auto 20px auto;">The WhatsApp bot is actively running and ready to send Work Order notifications.</p>
+            <button onclick="resetWhatsAppSession()" class="btn btn-danger" style="background-color: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                <i class="fas fa-sync-alt" style="margin-right: 8px;"></i> Reset Session (Change Number)
+            </button>
         </div>
         
         <div id="loading-container" style="padding: 30px 0;">
@@ -104,4 +107,27 @@
             console.error('Failed to fetch WhatsApp status', error);
         }
     }, 5000);
+
+    async function resetWhatsAppSession() {
+        if (!confirm('Are you sure you want to reset the WhatsApp connection? You will need to scan a new QR code.')) return;
+        
+        try {
+            const btn = document.querySelector('#connected-container button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Resetting...';
+            btn.disabled = true;
+
+            const res = await fetch('/api/whatsapp/reset', { method: 'POST' });
+            if (res.ok) {
+                // UI will automatically update on next poll when status changes
+            } else {
+                alert('Failed to reset session.');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        } catch (error) {
+            console.error(error);
+            alert('An error occurred.');
+        }
+    }
 </script>
