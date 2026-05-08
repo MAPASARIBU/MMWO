@@ -585,6 +585,8 @@
         // Type Chart
         const typeLabels = typeData.map(d => d.type || 'Unknown');
         const typeCounts = typeData.map(d => d._count.type);
+        const totalTypes = typeCounts.reduce((acc, curr) => acc + curr, 0);
+        const typePercentages = typeCounts.map(count => totalTypes > 0 ? Math.round((count / totalTypes) * 100) : 0);
 
         new Chart(document.getElementById('typeChart'), {
             type: 'bar', // Using Bar chart for clarity
@@ -592,8 +594,8 @@
             data: {
                 labels: typeLabels,
                 datasets: [{
-                    label: 'Count',
-                    data: typeCounts,
+                    label: 'Percentage (%)',
+                    data: typePercentages,
                     backgroundColor: 'rgba(54, 162, 235, 0.6)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
@@ -603,16 +605,33 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    y: { 
+                        beginAtZero: true, 
+                        max: 100,
+                        ticks: { 
+                            stepSize: 20,
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        } 
+                    }
                 },
                 plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                return context.parsed.y + '% (' + typeCounts[index] + ' WO)';
+                            }
+                        }
+                    },
                     datalabels: {
                         anchor: 'end',
                         align: 'end',
                         color: '#475569',
                         font: { weight: 'bold' },
                         formatter: function(value) {
-                            return value > 0 ? value : '';
+                            return value > 0 ? value + '%' : '';
                         }
                     }
                 }
@@ -723,6 +742,8 @@
         if (durData) {
             const durLabels = ['< 3 Hari', '4-7 Hari', '8-14 Hari', '> 14 Hari'];
             const durCounts = [durData.under3 || 0, durData.days4to7 || 0, durData.days8to14 || 0, durData.over14 || 0];
+            const totalDur = durCounts.reduce((acc, curr) => acc + curr, 0);
+            const durPercentages = durCounts.map(count => totalDur > 0 ? Math.round((count / totalDur) * 100) : 0);
             const hasDurData = durCounts.some(val => val > 0);
 
             if (hasDurData && document.getElementById('durationChart')) {
@@ -732,8 +753,8 @@
                     data: {
                         labels: durLabels,
                         datasets: [{
-                            label: 'Jumlah WO',
-                            data: durCounts,
+                            label: 'Percentage (%)',
+                            data: durPercentages,
                             backgroundColor: [
                                 '#10b981', // green
                                 '#f59e0b', // yellow
@@ -748,17 +769,34 @@
                         responsive: true,
                         maintainAspectRatio: false,
                         scales: {
-                            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+                            y: { 
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { 
+                                    stepSize: 20,
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                } 
+                            }
                         },
                         plugins: {
                             legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const index = context.dataIndex;
+                                        return context.parsed.y + '% (' + durCounts[index] + ' WO)';
+                                    }
+                                }
+                            },
                             datalabels: {
                                 anchor: 'end',
                                 align: 'end',
                                 color: '#475569',
                                 font: { weight: 'bold' },
                                 formatter: function(value) {
-                                    return value > 0 ? value : '';
+                                    return value > 0 ? value + '%' : '';
                                 }
                             }
                         }
