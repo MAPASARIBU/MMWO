@@ -169,14 +169,13 @@
                             </div>
                             <% } %>
 
-                                <!-- Start Work (Assignee - MTC/Admin/Proc Only) -->
-                                <% if ((wo.status==='ASSIGNED' || wo.status==='PLANNED') && (user.role==='MTC' || user.role==='ADMIN' || (user.role === 'PROC' && wo.category === 'Processing') )) { %>
-                                    <button class="btn btn-primary" onclick="updateStatus('IN_PROGRESS')">Start
-                                        Work</button>
-                                    <% } %>
+                                <!-- Start Work -->
+                                <% if ((wo.status==='ASSIGNED' || wo.status==='PLANNED') && (user.role==='ADMIN' || (user.role==='MTC' && wo.category !== 'Processing') || (user.role === 'PROC' && wo.category === 'Processing') )) { %>
+                                    <button class="btn btn-primary" onclick="updateStatus('IN_PROGRESS')">Start Work</button>
+                                <% } %>
 
-                                        <!-- Complete Work (Assignee) -->
-                                        <% if (wo.status==='IN_PROGRESS' ) { %>
+                                <!-- Complete Work -->
+                                <% if (wo.status==='IN_PROGRESS' && (user.role==='ADMIN' || (user.role==='MTC' && wo.category !== 'Processing') || (user.role === 'PROC' && wo.category === 'Processing') )) { %>
                                             <div class="card" style="background: #f9fafb; border: 1px solid #eee;">
                                                 <h5>Complete Work</h5>
                                                 <div class="form-group">
@@ -210,8 +209,8 @@
                                             </div>
                                             <% } %>
 
-                                                <!-- Verification (Spv/Manager) -->
-                                                <% if (wo.status==='COMPLETED' ) { %>
+                                                <!-- Verification (Spv/Manager/Admin) -->
+                                                <% if (wo.status==='COMPLETED' && (user.role==='ADMIN' || user.role==='SPV' || user.role==='MANAGER')) { %>
                                                     <button onclick="updateStatus('VERIFIED')"
                                                         class="btn btn-primary">Verify</button>
                                                     <button
@@ -219,7 +218,7 @@
                                                         class="btn btn-danger">Reject</button>
                                                     <% } %>
 
-                                                        <% if (wo.status==='VERIFIED' ) { %>
+                                                        <% if (wo.status==='VERIFIED' && (user.role==='ADMIN' || user.role==='SPV' || user.role==='MANAGER')) { %>
                                                             <button onclick="updateStatus('CLOSED')"
                                                                 class="btn btn-primary">Close WO</button>
                                                             <% } %>
