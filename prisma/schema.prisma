@@ -107,8 +107,24 @@ model WorkOrder {
   part          Part?        @relation("LegacyWorkOrderPart", fields: [part_id], references: [id])
   parts         Part[]       @relation("WorkOrderParts")
   pics          WorkshopEmployee[]  @relation("WoPics")
+  monthly_plan_status String? // e.g. null, 'MONTHLY', 'NO', 'MONTHLY_DONE'
+  monthly_materials   MonthlyPlanMaterial[]
 
   @@map("work_orders")
+}
+
+model MonthlyPlanMaterial {
+  id            Int       @id @default(autoincrement())
+  wo_id         Int
+  material_name String
+  quantity      Int       @default(1)
+  is_complete   Boolean   @default(false)
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  wo            WorkOrder @relation(fields: [wo_id], references: [id], onDelete: Cascade)
+  
+  @@map("monthly_plan_materials")
 }
 
 model Attachment {

@@ -1,7 +1,7 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
-        <h3><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Weekly Plan' %></h3>
-        <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing)) { %>
+        <h3><%= typeof title !== 'undefined' ? title : (typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : 'Weekly Plan')) %></h3>
+        <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isCivil === 'undefined' || !isCivil)) { %>
             <button type="button" class="btn btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
         <% } %>
     </div>
@@ -9,7 +9,7 @@
     <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing)) { %>
     <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
         <h4>Find Unfinished Work</h4>
-        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : '/weekly-plan' %>" method="GET" class="flex gap-4 items-end mb-4">
+        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : (typeof isCivil !== 'undefined' && isCivil ? '/weekly-plan/civil' : '/weekly-plan') %>" method="GET" class="flex gap-4 items-end mb-4">
             <!-- Persist current week filter if any -->
             <input type="hidden" name="week" value="<%= query.week || '' %>">
 
@@ -79,6 +79,9 @@
                                     </td>
                                     <td>
                                         <%= wo.wo_no %>
+                                        <% if (wo.monthly_plan_status === 'MONTHLY_DONE') { %>
+                                            <span class="badge" style="background: #10b981; color: white; font-size: 0.6rem; margin-left: 5px;">Material Ready</span>
+                                        <% } %>
                                     </td>
                                     <td>
                                         <%= new Date(wo.created_at).toLocaleDateString() %>
@@ -122,7 +125,7 @@
     <% } %>
 
     <div class="print-header hidden-print-block">
-        <h2 class="text-center mb-4"><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Maintenance Weekly Plan' %></h2>
+        <h2 class="text-center mb-4"><%= typeof title !== 'undefined' ? title : (typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : 'Maintenance Weekly Plan')) %></h2>
         <div class="flex justify-between mb-4">
             <div><strong>Week:</strong>
                 <%= query.week || 'All' %>
@@ -134,8 +137,8 @@
     </div>
 
     <div class="flex justify-between items-center mb-4">
-        <h4><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : 'Maintenance Weekly Plan' %></h4>
-        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : '/weekly-plan' %>" method="GET" class="flex gap-2 items-center" id="filterForm">
+        <h4><%= typeof title !== 'undefined' ? title : (typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : 'Maintenance Weekly Plan')) %></h4>
+        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : (typeof isCivil !== 'undefined' && isCivil ? '/weekly-plan/civil' : '/weekly-plan') %>" method="GET" class="flex gap-2 items-center" id="filterForm">
             <div class="form-group mb-0">
                 <input type="text" name="week" class="form-control" placeholder="Week (e.g. 2026-W06)"
                     value="<%= query.week || '' %>">
@@ -161,7 +164,7 @@
         function printPlan() {
             const week = document.querySelector('input[name="week"]').value;
             const day = document.querySelector('select[name="day"]').value;
-            let url = '<%= typeof isProcessing !== "undefined" && isProcessing ? "/weekly-plan/processing/print" : "/weekly-plan/print" %>?';
+            let url = '<%= typeof isProcessing !== "undefined" && isProcessing ? "/weekly-plan/processing/print" : (typeof isCivil !== "undefined" && isCivil ? "/weekly-plan/civil/print" : "/weekly-plan/print") %>?';
             if (week) url += `week=${week}&`;
             if (day) url += `day=${day}`;
             window.open(url, '_blank');

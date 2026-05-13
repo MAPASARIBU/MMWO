@@ -105,20 +105,7 @@ const getDashboard = async (req, res) => {
             status: status || null,
         };
 
-        // Fetch assigned WOs for current user (User specific, so mill filter is implicit via user, 
-        // BUT strict enforcing: users only see their own anyway. 
-        // If Admin, they see 'Assigned to Me' (likely empty or global). 
-        // Let's keep assignedWos as "My Assigned" regardless of mill filter, 
-        // OR filtering my assignments by mill? usually "My Tasks" are "My Tasks".
-        // Let's keep it user-centric.
-        const assignedWos = await prisma.workOrder.findMany({
-            where: {
-                assignee_id: userId,
-                status: { not: 'CLOSED' }
-            },
-            include: { station: true },
-            orderBy: { priority: 'asc' }
-        });
+
 
         // Stats (Apply Filters - specifically DATE and MILL, but careful with STATUS)
         // We want Date Range to apply to Stats, but NOT the dashboard "Status" filter 
@@ -132,7 +119,7 @@ const getDashboard = async (req, res) => {
         const completedWos = await prisma.workOrder.count({
             where: {
                 ...statsWhere,
-                status: { in: ['COMPLETED', 'CLOSED'] }
+                status: { in: ['COMPLETED', 'VERIFIED', 'CLOSED'] }
             }
         });
         const realCompletionRate = totalWOs > 0 ? Math.round((completedWos / totalWOs) * 100) : 0;
@@ -141,7 +128,7 @@ const getDashboard = async (req, res) => {
             pending: await prisma.workOrder.count({
                 where: {
                     ...statsWhere,
-                    status: { in: ['OPEN', 'ASSIGNED', 'IN_PROGRESS'] }
+                    status: { in: ['OPEN', 'PLANNED', 'ASSIGNED', 'IN_PROGRESS'] }
                 }
             }),
             completionRate: realCompletionRate,
@@ -197,61 +184,6 @@ const getDashboard = async (req, res) => {
         });
 
         // Parts that need attention (Warning > 90% or Critical >= 100%)
-        // We fetch all active parts and filter in JS because we can't easily query mathematical operations (current_hm >= 0.9 * lifetime_hm) natively in Prisma without raw queries, which is fine for UI but raw is better for scale. Since we don't have many active parts per mill usually, we can fetch them. Better yet, we can filter in DB if we know the exact values, but since it's a ratio:
-        const criticalParts = await prisma.part.findMany({
-            where: {
-                is_active: true,
-                equipment: millId ? { station: { mill_id: millId } } : undefined,
-                wos: {
-                    none: {
-                        status: { notIn: ['CLOSED'] }
-                    }
-                }
-            },
-            include: {
-                equipment: {
-                    include: { station: true }
-                }
-            }
-        });
-        
-        const attentionParts = criticalParts.filter(p => {
-            const percent = (p.current_hm / p.lifetime_hm);
-            return percent >= 0.9; // 90% or more
-        }).sort((a,b) => (b.current_hm/b.lifetime_hm) - (a.current_hm/a.lifetime_hm));
-
-        const now = new Date();
-        const overduePMs = await prisma.periodicPM.findMany({
-            where: {
-                is_active: true,
-                next_due_date: { lte: now },
-                equipment: millId ? { station: { mill_id: millId } } : undefined
-            },
-            include: {
-                equipment: {
-                    include: { station: true }
-                }
-            },
-            orderBy: { next_due_date: 'asc' }
-        });
-
-        // Early warning for Processing Plans (<= 2 days from now)
-        const twoDaysFromNow = new Date();
-        twoDaysFromNow.setDate(twoDaysFromNow.getDate() + 2);
-        
-        const earlyWarningProcessingPlans = await prisma.processingPlan.findMany({
-            where: {
-                is_active: true,
-                next_due_date: { lte: twoDaysFromNow },
-                mill_id: millId ? millId : undefined
-            },
-            include: {
-                mill: true,
-                station: true
-            },
-            orderBy: { next_due_date: 'asc' }
-        });
-
         // --- DATA AGGREGATION FOR DASHBOARD TABLES ---
         const allWosForTables = await prisma.workOrder.findMany({
             where: filterWhere,
@@ -278,6 +210,14 @@ const getDashboard = async (req, res) => {
             manualProcessing: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 }
         };
 
+        const statusTableDetails = {
+            open: {},
+            inProgress: {},
+            completeClose: {},
+            assigned: {},
+            onHold: {}
+        };
+
         const durationTable = {
             under3: 0,
             days4to7: 0,
@@ -285,11 +225,32 @@ const getDashboard = async (req, res) => {
             over14: 0
         };
 
+        const durationDetails = {
+            under3: {},
+            days4to7: {},
+            days8to14: {},
+            over14: {}
+        };
+
+        const outstandingDurationTable = {
+            under3: 0,
+            days4to7: 0,
+            days8to14: 0,
+            over14: 0
+        };
+
+        const outstandingDurationDetails = {
+            under3: {},
+            days4to7: {},
+            days8to14: {},
+            over14: {}
+        };
+
         const mapStatus = (status) => {
             if (status === 'OPEN') return 'open';
+            if (status === 'PLANNED' || status === 'ASSIGNED') return 'assigned';
             if (status === 'IN_PROGRESS') return 'inProgress';
-            if (status === 'COMPLETED' || status === 'CLOSED') return 'completeClose';
-            if (status === 'ASSIGNED') return 'assigned';
+            if (status === 'COMPLETED' || status === 'VERIFIED' || status === 'CLOSED') return 'completeClose';
             if (status === 'ON_HOLD') return 'onHold';
             return null;
         };
@@ -298,6 +259,11 @@ const getDashboard = async (req, res) => {
             const st = mapStatus(wo.status);
             
             let assignedRow = null;
+            const cat = wo.category || 'Unknown';
+
+            if (st && statusTableDetails[st]) {
+                statusTableDetails[st][cat] = (statusTableDetails[st][cat] || 0) + 1;
+            }
 
             if (wo.category === 'Processing') {
                 assignedRow = processingTable.manualProcessing;
@@ -321,16 +287,53 @@ const getDashboard = async (req, res) => {
             }
 
             // Duration calculation
-            if (wo.status === 'COMPLETED' || wo.status === 'CLOSED') {
-                const endTime = wo.closed_at || wo.completed_at;
+            if (wo.status === 'COMPLETED' || wo.status === 'VERIFIED' || wo.status === 'CLOSED') {
+                const endTime = wo.closed_at || wo.completed_at || wo.updated_at;
                 if (endTime && wo.created_at) {
                     const diffTime = Math.abs(new Date(endTime) - new Date(wo.created_at));
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    const cat = wo.category || 'Unknown';
                     
-                    if (diffDays <= 3) durationTable.under3++;
-                    else if (diffDays >= 4 && diffDays <= 7) durationTable.days4to7++;
-                    else if (diffDays >= 8 && diffDays <= 14) durationTable.days8to14++;
-                    else durationTable.over14++;
+                    if (diffDays <= 3) {
+                        durationTable.under3++;
+                        durationDetails.under3[cat] = (durationDetails.under3[cat] || 0) + 1;
+                    }
+                    else if (diffDays >= 4 && diffDays <= 7) {
+                        durationTable.days4to7++;
+                        durationDetails.days4to7[cat] = (durationDetails.days4to7[cat] || 0) + 1;
+                    }
+                    else if (diffDays >= 8 && diffDays <= 14) {
+                        durationTable.days8to14++;
+                        durationDetails.days8to14[cat] = (durationDetails.days8to14[cat] || 0) + 1;
+                    }
+                    else {
+                        durationTable.over14++;
+                        durationDetails.over14[cat] = (durationDetails.over14[cat] || 0) + 1;
+                    }
+                }
+            } else {
+                // Outstanding WO calculation
+                if (wo.created_at) {
+                    const diffTime = Math.abs(new Date() - new Date(wo.created_at));
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                    const cat = wo.category || 'Unknown';
+                    
+                    if (diffDays <= 3) {
+                        outstandingDurationTable.under3++;
+                        outstandingDurationDetails.under3[cat] = (outstandingDurationDetails.under3[cat] || 0) + 1;
+                    }
+                    else if (diffDays >= 4 && diffDays <= 7) {
+                        outstandingDurationTable.days4to7++;
+                        outstandingDurationDetails.days4to7[cat] = (outstandingDurationDetails.days4to7[cat] || 0) + 1;
+                    }
+                    else if (diffDays >= 8 && diffDays <= 14) {
+                        outstandingDurationTable.days8to14++;
+                        outstandingDurationDetails.days8to14[cat] = (outstandingDurationDetails.days8to14[cat] || 0) + 1;
+                    }
+                    else {
+                        outstandingDurationTable.over14++;
+                        outstandingDurationDetails.over14[cat] = (outstandingDurationDetails.over14[cat] || 0) + 1;
+                    }
                 }
             }
         });
@@ -340,14 +343,10 @@ const getDashboard = async (req, res) => {
             title: 'Dashboard',
             body: await renderView('dashboard', {
                 recentWos,
-                assignedWos,
                 stats,
                 typeStats,
                 categoryStats,
                 stationChartData,
-                attentionParts,
-                overduePMs,
-                earlyWarningProcessingPlans,
                 mills,
                 selectedMillId: millId,
                 user, // Pass user for role check
@@ -355,14 +354,18 @@ const getDashboard = async (req, res) => {
                 filterInfo,
                 maintenanceTable,
                 processingTable,
-                durationTable
+                durationTable,
+                durationDetails,
+                outstandingDurationTable,
+                outstandingDurationDetails,
+                statusTableDetails
             }),
             user: req.session.user,
             path: '/dashboard'
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error loading dashboard');
+        console.error("DASHBOARD RENDER ERROR:", error);
+        res.status(500).send('Error loading dashboard: ' + error.message);
     }
 };
 

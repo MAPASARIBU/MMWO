@@ -138,6 +138,16 @@
                     Processing Weekly Plan
                 </a>
             </li>
+            <li class="nav-item">
+                <a href="/weekly-plan/civil" style="display: block; color: #fff; padding: 15px;">
+                    Civil Weekly Plan
+                </a>
+                <% if (user.role !== 'PROC') { %>
+                <a href="/monthly-plan" style="display: block; color: #fff; padding: 15px;">
+                    Monthly Plan
+                </a>
+                <% } %>
+            </li>
             <% } %>
             <% if (user && (user.role==='ADMIN' || user.role==='SPV') ) { %>
                 <li class="nav-item">
@@ -230,6 +240,13 @@
                                             <i class="fas fa-calendar-alt"></i>
                                             <span>Plan</span>
                                         </a>
+                                        <% if (user.role !== 'PROC') { %>
+                                        <a href="/monthly-plan"
+                                            class="mobile-nav-item <%= typeof path !== 'undefined' && path.startsWith('/monthly-plan') ? 'active' : '' %>">
+                                            <i class="fas fa-calendar-check"></i>
+                                            <span>Monthly</span>
+                                        </a>
+                                        <% } %>
         <% } %>
                                         <% if (typeof user !== 'undefined' && user && (user.role === 'ADMIN' || user.role === 'PROC' || user.role === 'OPERATOR')) { %>
                                         <a href="/input-hm"

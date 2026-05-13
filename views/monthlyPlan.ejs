@@ -1,0 +1,281 @@
+<div class="card">
+    <div class="flex justify-between items-center mb-4">
+        <h3>Monthly Plan (Material Preparation)</h3>
+        <span class="badge" style="background: var(--primary-color); color: white;">Monitoring</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table" style="font-size: 0.85rem; white-space: nowrap;">
+            <thead>
+                <tr>
+                    <th>WO No</th>
+                    <th>Station</th>
+                    <th>Description</th>
+                    <th>Material Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (wos && wos.length > 0) { %>
+                    <% wos.forEach(wo => { %>
+                        <% 
+                            const total = wo.monthly_materials ? wo.monthly_materials.length : 0;
+                            const completed = wo.monthly_materials ? wo.monthly_materials.filter(m => m.is_complete).length : 0;
+                            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                        %>
+                        <tr class="hover:bg-gray-50">
+                            <td>
+                                <span style="color: var(--primary-color); font-weight: 500; cursor: pointer; text-decoration: underline;" onclick="openMaterialModal('<%= wo.id %>', '<%= wo.wo_no %>')">
+                                    <%= wo.wo_no %>
+                                </span>
+                            </td>
+                            <td><%= wo.station ? wo.station.name : '-' %></td>
+                            <td style="white-space: normal; min-width: 150px; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+                                <%= wo.description.length > 40 ? wo.description.substring(0, 40) + '...' : wo.description %>
+                            </td>
+                            <td>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span><%= completed %> / <%= total %> Lengkap</span>
+                                    <div style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
+                                        <div style="width: <%= percentage %>%; background: <%= percentage === 100 ? '#10b981' : '#f59e0b' %>; height: 100%;"></div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="openMaterialModal('<%= wo.id %>', '<%= wo.wo_no %>')">
+                                    Manage Materials
+                                </button>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="5" class="text-center py-4">Belum ada Work Order berstatus Monthly Plan.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="flex justify-between items-center mb-4">
+        <h3>Historical Monthly Plan (Completed)</h3>
+        <span class="badge" style="background: #10b981; color: white;">Completed</span>
+    </div>
+
+    <!-- Date Filter -->
+    <form action="/monthly-plan" method="GET" class="filter-bar mb-4" style="display: flex; gap: 1rem; align-items: end;">
+        <div class="form-group mb-0">
+            <label class="form-label" style="font-size: 0.75rem;">Start Date</label>
+            <input type="date" name="startDate" class="form-control" value="<%= query.startDate || '' %>">
+        </div>
+        <div class="form-group mb-0">
+            <label class="form-label" style="font-size: 0.75rem;">End Date</label>
+            <input type="date" name="endDate" class="form-control" value="<%= query.endDate || '' %>">
+        </div>
+        <div class="form-group mb-0">
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            <a href="/monthly-plan" class="btn btn-outline-secondary ml-2">Clear</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table" style="font-size: 0.85rem; white-space: nowrap;">
+            <thead>
+                <tr>
+                    <th>WO No</th>
+                    <th>Station</th>
+                    <th>Description</th>
+                    <th>Material Status</th>
+                    <th>Current WO Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (typeof historicalWos !== 'undefined' && historicalWos.length > 0) { %>
+                    <% historicalWos.forEach(wo => { %>
+                        <tr class="hover:bg-gray-50">
+                            <td>
+                                <a href="/work-orders/<%= wo.id %>" style="color: var(--primary-color); font-weight: 500;">
+                                    <%= wo.wo_no %>
+                                </a>
+                            </td>
+                            <td><%= wo.station ? wo.station.name : '-' %></td>
+                            <td style="white-space: normal; min-width: 150px; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+                                <%= wo.description.length > 40 ? wo.description.substring(0, 40) + '...' : wo.description %>
+                            </td>
+                            <td>
+                                <span class="badge" style="background: #10b981; color: white;">All Ready</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-<%= wo.status === 'OPEN' ? 'warning' : (wo.status === 'IN PROGRESS' ? 'info' : 'secondary') %>">
+                                    <%= wo.status %>
+                                </span>
+                            </td>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="5" class="text-center py-4">Tidak ada history Monthly Plan pada rentang tanggal ini.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Material Modal -->
+<div id="materialModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+    <div class="card" style="width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; background: white; border-radius: 8px; padding: 20px;">
+        <div class="flex justify-between items-center mb-4">
+            <h3 id="modalWoTitle">Materials for WO</h3>
+            <button onclick="closeMaterialModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+        </div>
+
+        <!-- Add Material Form -->
+        <form id="addMaterialForm" style="display: flex; gap: 10px; margin-bottom: 20px;" onsubmit="addMaterial(event)">
+            <input type="hidden" id="modalWoId">
+            <input type="text" id="matName" class="form-control" placeholder="Nama Material" required style="flex: 1;">
+            <input type="number" id="matQty" class="form-control" placeholder="Qty" value="1" min="1" required style="width: 80px;">
+            <button type="submit" class="btn btn-primary">Tambah</button>
+        </form>
+
+        <!-- Material List -->
+        <div class="table-responsive">
+            <table class="table" style="font-size: 0.85rem;">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">Status</th>
+                        <th>Material</th>
+                        <th style="width: 80px;">Qty</th>
+                        <th style="width: 60px;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="materialListBody">
+                    <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+        <p id="emptyMaterialText" class="text-center text-secondary mt-3" style="display: none;">Belum ada material yang ditambahkan.</p>
+    </div>
+</div>
+
+<script>
+    // Store WO data for quick modal populating without extra fetch
+    const woData = <%- JSON.stringify(wos || []) %>;
+    
+    function openMaterialModal(woId, woNo) {
+        document.getElementById('modalWoId').value = woId;
+        document.getElementById('modalWoTitle').innerText = 'Materials: ' + woNo;
+        document.getElementById('materialModal').style.display = 'flex';
+        renderMaterialList(woId);
+    }
+
+    function closeMaterialModal() {
+        document.getElementById('materialModal').style.display = 'none';
+        // Reload page to update progress bars
+        window.location.reload();
+    }
+
+    function renderMaterialList(woId) {
+        const wo = woData.find(w => w.id == woId);
+        const tbody = document.getElementById('materialListBody');
+        const emptyText = document.getElementById('emptyMaterialText');
+        
+        tbody.innerHTML = '';
+        
+        if (!wo || !wo.monthly_materials || wo.monthly_materials.length === 0) {
+            emptyText.style.display = 'block';
+            return;
+        }
+        
+        emptyText.style.display = 'none';
+        
+        wo.monthly_materials.forEach(mat => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: center;">
+                    <input type="checkbox" ${mat.is_complete ? 'checked' : ''} onchange="toggleMaterial('${woId}', '${mat.id}', this.checked)" style="width: 18px; height: 18px; cursor: pointer;">
+                </td>
+                <td style="${mat.is_complete ? 'text-decoration: line-through; color: #94a3b8;' : ''}">${mat.material_name}</td>
+                <td style="${mat.is_complete ? 'text-decoration: line-through; color: #94a3b8;' : ''}">${mat.quantity}</td>
+                <td>
+                    <button class="btn btn-sm" style="color: #ef4444; background: none; border: none; font-size: 1rem; cursor: pointer;" onclick="deleteMaterial('${woId}', '${mat.id}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function addMaterial(e) {
+        e.preventDefault();
+        const woId = document.getElementById('modalWoId').value;
+        const name = document.getElementById('matName').value;
+        const qty = document.getElementById('matQty').value;
+        
+        try {
+            const res = await fetch(`/api/monthly-plan/${woId}/materials`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ material_name: name, quantity: qty })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Update local data
+                const wo = woData.find(w => w.id == woId);
+                if (!wo.monthly_materials) wo.monthly_materials = [];
+                wo.monthly_materials.push(data.material);
+                
+                document.getElementById('matName').value = '';
+                document.getElementById('matQty').value = '1';
+                renderMaterialList(woId);
+            } else {
+                alert('Gagal menambah material: ' + data.error);
+            }
+        } catch (err) {
+            alert('Kesalahan jaringan');
+        }
+    }
+
+    async function toggleMaterial(woId, matId, isComplete) {
+        try {
+            const res = await fetch(`/api/monthly-plan/${woId}/materials/${matId}/toggle`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_complete: isComplete })
+            });
+            const data = await res.json();
+            if (data.success) {
+                // Update local data
+                const wo = woData.find(w => w.id == woId);
+                const mat = wo.monthly_materials.find(m => m.id == matId);
+                if (mat) mat.is_complete = isComplete;
+                
+                renderMaterialList(woId);
+
+                if (data.allComplete) {
+                    alert('Semua material sudah lengkap! WO ini akan otomatis dikeluarkan dari Monthly Plan (Selesai persiapan).');
+                    window.location.reload();
+                }
+            }
+        } catch (err) {
+            alert('Kesalahan jaringan');
+        }
+    }
+
+    async function deleteMaterial(woId, matId) {
+        if (!confirm('Hapus material ini?')) return;
+        try {
+            const res = await fetch(`/api/monthly-plan/materials/${matId}`, { method: 'DELETE' });
+            if (res.ok) {
+                const wo = woData.find(w => w.id == woId);
+                wo.monthly_materials = wo.monthly_materials.filter(m => m.id != matId);
+                renderMaterialList(woId);
+            }
+        } catch (err) {
+            alert('Kesalahan jaringan');
+        }
+    }
+</script>

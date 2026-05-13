@@ -228,9 +228,9 @@ const updateStatus = async (req, res) => {
             action = 'ASSIGNED';
         }
         else if (status === 'IN_PROGRESS') {
-            // AUTHORIZATION: Only MTC or ADMIN can start work
-            if (user.role !== 'MTC' && user.role !== 'ADMIN' && !(user.role === 'PROC' && wo.category === 'Processing')) {
-                return res.status(403).json({ error: 'Only Maintenance or Processing Team can start work.' });
+            // AUTHORIZATION: Only MTC, ADMIN, PROC (for processing), or SPV (for civil) can start work
+            if (user.role !== 'MTC' && user.role !== 'ADMIN' && !(user.role === 'PROC' && wo.category === 'Processing') && !(user.role === 'SPV' && wo.category === 'Civil')) {
+                return res.status(403).json({ error: 'Only Maintenance, Processing, or Supervisor (Civil) can start work.' });
             }
             updateData.started_at = new Date();
         }

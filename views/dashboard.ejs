@@ -39,11 +39,11 @@
 
 <!-- Dashboard Monitoring Tables (Requested by User) -->
 <% if (typeof maintenanceTable !== 'undefined') { %>
-<div class="card mt-4" style="padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
-    <div style="background: linear-gradient(135deg, #1e40af, #3b82f6); color: white; padding: 12px 16px; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-        <i class="fas fa-tools"></i> A. MAINTENANCE WEEKLY PLANT
+<div class="card mt-4">
+    <div class="flex justify-between items-center mb-4">
+        <h3><i class="fas fa-tools"></i> A. MAINTENANCE WEEKLY PLANT</h3>
     </div>
-    <div style="overflow-x: auto;">
+    <div class="table-responsive" style="overflow-x: auto;">
         <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.85em;">
             <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
                 <tr>
@@ -109,11 +109,11 @@
 <% } %>
 
 <% if (typeof processingTable !== 'undefined') { %>
-<div class="card mt-4" style="padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
-    <div style="background: linear-gradient(135deg, #0ea5e9, #0284c7); color: white; padding: 12px 16px; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-        <i class="fas fa-industry"></i> B. PROCESSING WEEKLY PLANT
+<div class="card mt-4">
+    <div class="flex justify-between items-center mb-4">
+        <h3><i class="fas fa-industry"></i> B. PROCESSING WEEKLY PLANT</h3>
     </div>
-    <div style="overflow-x: auto;">
+    <div class="table-responsive" style="overflow-x: auto;">
         <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.85em;">
             <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
                 <tr>
@@ -151,383 +151,7 @@
 </div>
 <% } %>
 
-<% if (typeof durationTable !== 'undefined') { %>
-<div class="card mt-4" style="padding: 0; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); border: 1px solid #e2e8f0;">
-    <div style="background: linear-gradient(135deg, #14b8a6, #0f766e); color: white; padding: 12px 16px; font-weight: 600; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
-        <i class="fas fa-clock"></i> C. DURASI (waktu) PENYELESAIAN WO YANG CLOSE VS WAKTU COMPLETE TERHADAP WO TERBIT
-    </div>
-    <div style="overflow-x: auto;">
-        <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.85em;">
-            <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
-                <tr>
-                    <th style="text-align: left; padding: 8px 12px; width: 40%; font-weight: 600;">Description</th>
-                    <th style="padding: 8px; width: 15%; font-weight: 600;">DI BAWAH 3 HARI</th>
-                    <th style="padding: 8px; width: 15%; font-weight: 600;">4 HINGGA 7 HARI</th>
-                    <th style="padding: 8px; width: 15%; font-weight: 600;">DI ATAS 1 - 2 MINGGU</th>
-                    <th style="padding: 8px; width: 15%; font-weight: 600;">DI ATAS 2 MINGGU</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">Durasi penyelesaian total WO yang close & complete terhadap WO terbit/muncul</td>
-                    <td style="padding: 8px; font-size: 1.1em; font-weight: 600; color: #10b981;"><%= durationTable.under3 %></td>
-                    <td style="padding: 8px; font-size: 1.1em; font-weight: 600; color: #f59e0b;"><%= durationTable.days4to7 %></td>
-                    <td style="padding: 8px; font-size: 1.1em; font-weight: 600; color: #f97316;"><%= durationTable.days8to14 %></td>
-                    <td style="padding: 8px; font-size: 1.1em; font-weight: 600; color: #ef4444;"><%= durationTable.over14 %></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-<% } %>
-<!-- Equipment Parts Warning Widget -->
-<% if (typeof attentionParts !== 'undefined' && attentionParts.length > 0) { %>
-    <div class="card mt-4" style="border-left: 4px solid var(--danger-color); background: #fef2f2;">
-        <div class="flex justify-between items-center mb-4">
-            <h3 style="color: #991b1b; margin-bottom: 0;"><i class="fas fa-exclamation-triangle"></i> Equipment Parts Need Attention</h3>
-            <% if (user.role !== 'SENIOR_MANAGER') { %>
-            <button id="bulkCreateWoBtn" class="btn btn-primary" style="background-color: #ef4444; border: none;" onclick="bulkCreateWOs()" disabled>
-                Create WOs for Selected (0)
-            </button>
-            <% } %>
-        </div>
-        <div class="table-responsive">
-            <table class="table" style="background: white;">
-                <thead>
-                    <tr>
-                        <% if (user.role !== 'SENIOR_MANAGER') { %>
-                        <th style="width: 40px; text-align: center;">
-                            <input type="checkbox" id="selectAllParts" onclick="toggleAllParts(this)">
-                        </th>
-                        <% } %>
-                        <th>Equipment</th>
-                        <th>Station</th>
-                        <th>Part Name</th>
-                        <th>HM Progress</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% attentionParts.forEach(p => { 
-                        const percent = (p.current_hm / p.lifetime_hm) * 100;
-                        const isCritical = percent >= 100;
-                    %>
-                    <tr>
-                        <% if (user.role !== 'SENIOR_MANAGER') { %>
-                        <td style="text-align: center;">
-                            <input type="checkbox" class="part-checkbox" value="<%= p.id %>" onchange="updateBulkButton()">
-                        </td>
-                        <% } %>
-                        <td><strong><%= p.equipment.name %></strong> <br><small class="text-secondary"><%= p.equipment.code %></small></td>
-                        <td><%= p.equipment.station.name %></td>
-                        <td>
-                            <div><%= p.name %></div>
-                            <% if (p.installed_at) { %>
-                                <div style="font-size: 0.8em; color: #6c757d; margin-top: 2px;">
-                                    <i class="fas fa-calendar-alt"></i> Last Replaced: <%= new Date(p.installed_at).toLocaleDateString() %>
-                                </div>
-                            <% } %>
-                        </td>
-                        <td>
-                            <div style="font-size: 0.85em; margin-bottom: 2px;"><%= p.current_hm %> / <%= p.lifetime_hm %></div>
-                            <div style="height: 6px; background: #eee; border-radius: 3px; width: 100%;">
-                                <div style="height: 100%; width: <%= Math.min(100, percent) %>%; background-color: <%= isCritical ? '#ef4444' : '#f59e0b' %>;"></div>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge" style="background: <%= isCritical ? '#ef4444' : '#f59e0b' %>; color: white;">
-                                <%= isCritical ? 'CRITICAL' : 'WARNING' %>
-                            </span>
-                        </td>
-                        <td>
-                            <a href="/equipment/<%= p.equipment_id %>" class="btn btn-sm btn-outline-primary">View</a>
-                        </td>
-                    </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-    <script>
-        function toggleAllParts(source) {
-            const checkboxes = document.querySelectorAll('.part-checkbox');
-            checkboxes.forEach(cb => cb.checked = source.checked);
-            updateBulkButton();
-        }
 
-        function updateBulkButton() {
-            const checkboxes = document.querySelectorAll('.part-checkbox:checked');
-            const btn = document.getElementById('bulkCreateWoBtn');
-            btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
-            btn.disabled = checkboxes.length === 0;
-        }
-
-        async function bulkCreateWOs() {
-            const checkboxes = document.querySelectorAll('.part-checkbox:checked');
-            if (checkboxes.length === 0) return;
-
-            if (!confirm(`Tindakan ini akan membuat Work Order baru (P1 - Preventive) untuk ${checkboxes.length} part(s) yang dipilih. Lanjutkan?`)) return;
-
-            const partIds = Array.from(checkboxes).map(cb => cb.value);
-
-            try {
-                const btn = document.getElementById('bulkCreateWoBtn');
-                btn.disabled = true;
-                btn.innerHTML = 'Processing...';
-
-                const res = await fetch('/api/work-orders/bulk/parts', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ part_ids: partIds })
-                });
-
-                if (res.ok) {
-                    alert('Work Orders berhasil dibuat berkat sistem massal ini!');
-                    window.location.reload();
-                } else {
-                    const data = await res.json();
-                    alert('Gagal membuat Work Orders: ' + (data.error || 'Unknown error'));
-                    btn.disabled = false;
-                    btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Terjadi kesalahan jaringan/server.');
-                document.getElementById('bulkCreateWoBtn').disabled = false;
-                updateBulkButton();
-            }
-        }
-    </script>
-<% } %>
-
-<!-- Overdue Periodic PMs Widget -->
-<% if (typeof overduePMs !== 'undefined' && overduePMs.length > 0) { %>
-    <div class="card mt-4" style="border-left: 4px solid var(--warning-color, #f59e0b); background: #fffbeb;">
-        <div class="flex justify-between items-center mb-4">
-            <h3 style="color: #b45309; margin-bottom: 0;"><i class="fas fa-clock"></i> Overdue Time-Based Maintenance</h3>
-            <button id="bulkCreateWoPmBtn" class="btn btn-primary" style="background-color: #f59e0b; border: none; color: white;" onclick="bulkCreateWOsFromPMs()" disabled>
-                Create WOs for Selected (0)
-            </button>
-        </div>
-        <div class="table-responsive">
-            <table class="table" style="background: white;">
-                <thead>
-                    <tr>
-                        <th style="width: 40px; text-align: center;">
-                            <input type="checkbox" id="selectAllPms" onclick="toggleAllPms(this)">
-                        </th>
-                        <th>Equipment</th>
-                        <th>Station</th>
-                        <th>Plan Name</th>
-                        <th>Interval</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% overduePMs.forEach(pm => { 
-                        const isCritical = new Date(pm.next_due_date) < new Date(new Date().setDate(new Date().getDate() - 7)); // More than 7 days overdue
-                    %>
-                    <tr>
-                        <td style="text-align: center;">
-                            <input type="checkbox" class="pm-checkbox" value="<%= pm.id %>" onchange="updateBulkPmButton()">
-                        </td>
-                        <td><strong><%= pm.equipment.name %></strong> <br><small class="text-secondary"><%= pm.equipment.code %></small></td>
-                        <td><%= pm.equipment.station.name %></td>
-                        <td>
-                            <div><%= pm.name %></div>
-                            <% if (pm.last_pm_date) { %>
-                                <div style="font-size: 0.8em; color: #6c757d; margin-top: 2px;">
-                                    <i class="fas fa-calendar-check"></i> Last PM: <%= new Date(pm.last_pm_date).toLocaleDateString() %>
-                                </div>
-                            <% } %>
-                        </td>
-                        <td>Every <%= pm.interval_value %> <%= pm.interval_type %>(s)</td>
-                        <td>
-                            <strong style="color: <%= isCritical ? '#ef4444' : '#f59e0b' %>;">
-                                <%= new Date(pm.next_due_date).toLocaleDateString() %>
-                            </strong>
-                        </td>
-                        <td>
-                            <span class="badge" style="background: <%= isCritical ? '#ef4444' : '#f59e0b' %>; color: white;">
-                                <%= isCritical ? 'OVERDUE CRITICAL' : 'OVERDUE' %>
-                            </span>
-                        </td>
-                        <td>
-                            <a href="/equipment/<%= pm.equipment_id %>" class="btn btn-sm btn-outline-primary">View</a>
-                        </td>
-                    </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-    <script>
-        function toggleAllPms(source) {
-            const checkboxes = document.querySelectorAll('.pm-checkbox');
-            checkboxes.forEach(cb => cb.checked = source.checked);
-            updateBulkPmButton();
-        }
-
-        function updateBulkPmButton() {
-            const checkboxes = document.querySelectorAll('.pm-checkbox:checked');
-            const btn = document.getElementById('bulkCreateWoPmBtn');
-            btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
-            btn.disabled = checkboxes.length === 0;
-        }
-
-        async function bulkCreateWOsFromPMs() {
-            const checkboxes = document.querySelectorAll('.pm-checkbox:checked');
-            if (checkboxes.length === 0) return;
-
-            if (!confirm(`Tindakan ini akan membuat Work Order baru secara otomatis untuk ${checkboxes.length} jadwal PM yang dipilih. Lanjutkan?`)) return;
-
-            const pmIds = Array.from(checkboxes).map(cb => cb.value);
-
-            try {
-                const btn = document.getElementById('bulkCreateWoPmBtn');
-                btn.disabled = true;
-                btn.innerHTML = 'Processing...';
-
-                const res = await fetch('/api/work-orders/bulk/pms', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pm_ids: pmIds })
-                });
-
-                if (res.ok) {
-                    alert('Work Orders untuk Periodic PM berhasil dibuat!');
-                    window.location.reload();
-                } else {
-                    const data = await res.json();
-                    alert('Gagal membuat Work Orders: ' + (data.error || 'Unknown error'));
-                    btn.disabled = false;
-                    btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Terjadi kesalahan jaringan/server.');
-                document.getElementById('bulkCreateWoPmBtn').disabled = false;
-                updateBulkPmButton();
-            }
-        }
-    </script>
-<% } %>
-
-<!-- Processing Plans Early Warning Widget -->
-<% if (typeof earlyWarningProcessingPlans !== 'undefined' && earlyWarningProcessingPlans.length > 0) { %>
-    <div class="card mt-4" style="border-left: 4px solid #0ea5e9; background: #f0f9ff;">
-        <div class="flex justify-between items-center mb-4">
-            <h3 style="color: #0369a1; margin-bottom: 0;"><i class="fas fa-industry"></i> Processing Plan Early Warning</h3>
-            <button id="bulkCreateProcessingBtn" class="btn btn-primary" style="background-color: #0ea5e9; border: none; color: white;" onclick="bulkCreateWOsFromProcessing()" disabled>
-                Create WOs for Selected (0)
-            </button>
-        </div>
-        <div class="table-responsive">
-            <table class="table" style="background: white;">
-                <thead>
-                    <tr>
-                        <th style="width: 40px; text-align: center;">
-                            <input type="checkbox" id="selectAllProcessing" onclick="toggleAllProcessing(this)">
-                        </th>
-                        <th>Station</th>
-                        <th>Plan Name</th>
-                        <th>Interval</th>
-                        <th>Due Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% earlyWarningProcessingPlans.forEach(plan => { 
-                        const now = new Date();
-                        const isOverdue = new Date(plan.next_due_date) < now;
-                    %>
-                    <tr>
-                        <td style="text-align: center;">
-                            <input type="checkbox" class="processing-checkbox" value="<%= plan.id %>" onchange="updateBulkProcessingButton()">
-                        </td>
-                        <td><%= plan.station.name %></td>
-                        <td>
-                            <div><%= plan.name %></div>
-                            <% if (plan.last_generated) { %>
-                                <div style="font-size: 0.8em; color: #6c757d; margin-top: 2px;">
-                                    <i class="fas fa-calendar-check"></i> Last PM: <%= new Date(plan.last_generated).toLocaleDateString() %>
-                                </div>
-                            <% } %>
-                        </td>
-                        <td>Every <%= plan.interval_value %> <%= plan.interval_type %>(s)</td>
-                        <td>
-                            <strong style="color: <%= isOverdue ? '#ef4444' : '#f59e0b' %>;">
-                                <%= new Date(plan.next_due_date).toLocaleDateString() %>
-                            </strong>
-                        </td>
-                        <td>
-                            <span class="badge" style="background: <%= isOverdue ? '#ef4444' : '#f59e0b' %>; color: white;">
-                                <%= isOverdue ? 'OVERDUE' : 'DUE SOON' %>
-                            </span>
-                        </td>
-                    </tr>
-                    <% }); %>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-    <script>
-        function toggleAllProcessing(source) {
-            const checkboxes = document.querySelectorAll('.processing-checkbox');
-            checkboxes.forEach(cb => cb.checked = source.checked);
-            updateBulkProcessingButton();
-        }
-
-        function updateBulkProcessingButton() {
-            const checkboxes = document.querySelectorAll('.processing-checkbox:checked');
-            const btn = document.getElementById('bulkCreateProcessingBtn');
-            btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
-            btn.disabled = checkboxes.length === 0;
-        }
-
-        async function bulkCreateWOsFromProcessing() {
-            const checkboxes = document.querySelectorAll('.processing-checkbox:checked');
-            if (checkboxes.length === 0) return;
-
-            if (!confirm(`Tindakan ini akan membuat Work Order baru secara otomatis untuk ${checkboxes.length} jadwal Processing Plan yang dipilih, dan memasukkannya ke Weekly Plan. Lanjutkan?`)) return;
-
-            const planIds = Array.from(checkboxes).map(cb => cb.value);
-
-            try {
-                const btn = document.getElementById('bulkCreateProcessingBtn');
-                btn.disabled = true;
-                btn.innerHTML = 'Processing...';
-
-                const res = await fetch('/processing-plans/api/bulk-create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plan_ids: planIds })
-                });
-
-                if (res.ok) {
-                    alert('Work Orders untuk Processing Plan berhasil dibuat dan masuk ke Weekly Plan!');
-                    window.location.reload();
-                } else {
-                    const data = await res.json();
-                    alert('Gagal membuat Work Orders: ' + (data.error || 'Unknown error'));
-                    btn.disabled = false;
-                    btn.innerHTML = `Create WOs for Selected (${checkboxes.length})`;
-                }
-            } catch (err) {
-                console.error(err);
-                alert('Terjadi kesalahan jaringan/server.');
-                document.getElementById('bulkCreateProcessingBtn').disabled = false;
-                updateBulkProcessingButton();
-            }
-        }
-    </script>
-<% } %>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -572,6 +196,13 @@
         <h3 style="width: 100%; text-align: left; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-clock" style="color: #0f766e;"></i> Durasi Penyelesaian WO</h3>
         <div style="width: 100%; height: 200px; position: relative;">
             <canvas id="durationChart"></canvas>
+        </div>
+    </div>
+    <!-- New Chart: Outstanding Duration -->
+    <div class="card" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <h3 style="width: 100%; text-align: left; font-size: 1rem; margin-bottom: 10px;"><i class="fas fa-exclamation-circle" style="color: #ef4444;"></i> Durasi WO Outstanding</h3>
+        <div style="width: 100%; height: 200px; position: relative;">
+            <canvas id="outstandingDurationChart"></canvas>
         </div>
     </div>
 </div>
@@ -704,6 +335,8 @@
         const statusData = [totalOpen, totalInProgress, totalCompleteClose, totalAssigned, totalOnHold];
         const hasStatusData = statusData.some(val => val > 0);
 
+        const statusDetailsData = JSON.parse('<%- JSON.stringify(typeof statusTableDetails !== "undefined" ? statusTableDetails : null) %>');
+
         if(hasStatusData && document.getElementById('statusTableChart')) {
             new Chart(document.getElementById('statusTableChart'), {
                 type: 'doughnut',
@@ -720,6 +353,32 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'right' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const index = context.dataIndex;
+                                    const count = statusData[index];
+                                    let sum = 0;
+                                    statusData.forEach(data => sum += data);
+                                    const percentage = sum > 0 ? Math.round((count / sum) * 100) : 0;
+                                    
+                                    let lines = [percentage + '% (' + count + ' WO)'];
+                                    
+                                    if (statusDetailsData) {
+                                        const keys = ['open', 'inProgress', 'completeClose', 'assigned', 'onHold'];
+                                        const key = keys[index];
+                                        const details = statusDetailsData[key];
+                                        if (details && Object.keys(details).length > 0) {
+                                            lines.push('--- Detail ---');
+                                            Object.keys(details).forEach(cat => {
+                                                lines.push(details[cat] + ' ' + cat);
+                                            });
+                                        }
+                                    }
+                                    return lines;
+                                }
+                            }
+                        },
                         datalabels: {
                             color: '#fff',
                             font: { weight: 'bold', size: 11 },
@@ -738,6 +397,7 @@
 
         // Duration Chart
         const durData = JSON.parse('<%- JSON.stringify(typeof durationTable !== "undefined" ? durationTable : null) %>');
+        const durDetailsData = JSON.parse('<%- JSON.stringify(typeof durationDetails !== "undefined" ? durationDetails : null) %>');
         
         if (durData) {
             const durLabels = ['< 3 Hari', '4-7 Hari', '8-14 Hari', '> 14 Hari'];
@@ -786,7 +446,20 @@
                                 callbacks: {
                                     label: function(context) {
                                         const index = context.dataIndex;
-                                        return context.parsed.y + '% (' + durCounts[index] + ' WO)';
+                                        let lines = [context.parsed.y + '% (' + durCounts[index] + ' WO)'];
+                                        
+                                        if (durDetailsData) {
+                                            const keys = ['under3', 'days4to7', 'days8to14', 'over14'];
+                                            const key = keys[index];
+                                            const details = durDetailsData[key];
+                                            if (details && Object.keys(details).length > 0) {
+                                                lines.push('--- Detail ---');
+                                                Object.keys(details).forEach(cat => {
+                                                    lines.push(details[cat] + ' ' + cat);
+                                                });
+                                            }
+                                        }
+                                        return lines;
                                     }
                                 }
                             },
@@ -802,59 +475,103 @@
                         }
                     }
                 });
-            } else if (document.getElementById('durationChart')) {
-                const canvas = document.getElementById('durationChart');
-                canvas.parentElement.innerHTML = '<p class="text-secondary mt-3" style="text-align: center;">Belum ada data durasi penyelesaian WO.</p>';
             }
+        }
+
+        // Outstanding Duration Chart
+        const outDurData = JSON.parse('<%- JSON.stringify(typeof outstandingDurationTable !== "undefined" ? outstandingDurationTable : null) %>');
+        const outDurDetailsData = JSON.parse('<%- JSON.stringify(typeof outstandingDurationDetails !== "undefined" ? outstandingDurationDetails : null) %>');
+        
+        if (outDurData) {
+            const outDurLabels = ['< 3 Hari', '4-7 Hari', '8-14 Hari', '> 15 Hari'];
+            const outDurCounts = [outDurData.under3 || 0, outDurData.days4to7 || 0, outDurData.days8to14 || 0, outDurData.over14 || 0];
+            const totalOutDur = outDurCounts.reduce((acc, curr) => acc + curr, 0);
+            const outDurPercentages = outDurCounts.map(count => totalOutDur > 0 ? Math.round((count / totalOutDur) * 100) : 0);
+            const hasOutDurData = outDurCounts.some(val => val > 0);
+
+            if (hasOutDurData && document.getElementById('outstandingDurationChart')) {
+                new Chart(document.getElementById('outstandingDurationChart'), {
+                    type: 'bar',
+                    plugins: [ChartDataLabels],
+                    data: {
+                        labels: outDurLabels,
+                        datasets: [{
+                            label: 'Percentage (%)',
+                            data: outDurPercentages,
+                            backgroundColor: [
+                                '#10b981', // green
+                                '#f59e0b', // yellow
+                                '#f97316', // orange
+                                '#ef4444'  // red
+                            ],
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { 
+                                beginAtZero: true,
+                                max: 100,
+                                ticks: { 
+                                    stepSize: 20,
+                                    callback: function(value) {
+                                        return value + '%';
+                                    }
+                                } 
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const index = context.dataIndex;
+                                        let lines = [context.parsed.y + '% (' + outDurCounts[index] + ' WO)'];
+                                        
+                                        if (outDurDetailsData) {
+                                            const keys = ['under3', 'days4to7', 'days8to14', 'over14'];
+                                            const key = keys[index];
+                                            const details = outDurDetailsData[key];
+                                            if (details && Object.keys(details).length > 0) {
+                                                lines.push('--- Detail ---');
+                                                Object.keys(details).forEach(cat => {
+                                                    lines.push(details[cat] + ' ' + cat);
+                                                });
+                                            }
+                                        }
+                                        return lines;
+                                    }
+                                }
+                            },
+                            datalabels: {
+                                anchor: 'end',
+                                align: 'end',
+                                color: '#475569',
+                                font: { weight: 'bold' },
+                                formatter: function(value) {
+                                    return value > 0 ? value + '%' : '';
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        if (typeof hasDurData !== 'undefined' && !hasDurData && document.getElementById('durationChart')) {
+            const canvas = document.getElementById('durationChart');
+            canvas.parentElement.innerHTML = '<p class="text-secondary mt-3" style="text-align: center;">Belum ada data durasi penyelesaian WO.</p>';
+        }
+
+        if (typeof hasOutDurData !== 'undefined' && !hasOutDurData && document.getElementById('outstandingDurationChart')) {
+            const canvas = document.getElementById('outstandingDurationChart');
+            canvas.parentElement.innerHTML = '<p class="text-secondary mt-3" style="text-align: center;">Belum ada data durasi WO Outstanding.</p>';
         }
     });
 </script>
-
-<% if (typeof assignedWos !=='undefined' && assignedWos.length> 0) { %>
-    <div class="card mt-4" style="border-left: 4px solid var(--primary-color);">
-        <div class="flex justify-between items-center mb-4">
-            <h3>My Assigned Work Orders (Action Required)</h3>
-        </div>
-        <div class="table-responsive">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>WO No</th>
-                        <th>Station</th>
-                        <th>Description</th>
-                        <th>Priority</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% assignedWos.forEach(wo=> { %>
-                        <tr>
-                            <td><a href="/work-orders/<%= wo.id %>?readonly=true" style="color: var(--primary-color); font-weight: 500; text-decoration: none;">
-                                    <%= wo.wo_no %>
-                                </a></td>
-                            <td>
-                                <%= wo.station.name %>
-                            </td>
-                            <td>
-                                <%= wo.description.length> 50 ? wo.description.substring(0,50)+'...' : wo.description %>
-                            </td>
-                            <td><span class="status-<%= wo.priority %>">
-                                    <%= wo.priority %>
-                                </span></td>
-                            <td><span class="badge status-<%= wo.status %>">
-                                    <%= wo.status %>
-                                </span></td>
-                            <td>
-                                <a href="/work-orders/<%= wo.id %>?readonly=true" class="btn btn-sm btn-outline-primary" style="font-size: 0.85em;">View</a>
-                            </td>
-                        </tr>
-                        <% }); %>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    <% } %>
 
         <div class="card mt-4">
 

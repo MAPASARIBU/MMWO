@@ -37,8 +37,9 @@ const bulkPlan = async (req, res) => {
             return res.status(400).send("No Work Orders selected");
         }
 
-        const updates = wo_ids.map(id => {
-            return prisma.weeklyPlan.upsert({
+        // Use sequential upserts to prevent overwhelming serverless DB connections
+        for (const id of wo_ids) {
+            await prisma.weeklyPlan.upsert({
                 where: { wo_id: parseInt(id) },
                 update: {
                     planned_week,
@@ -52,16 +53,19 @@ const bulkPlan = async (req, res) => {
                     planned_by: planner_id
                 }
             });
-        });
-
-        await Promise.all(updates);
-
-        let redirectUrl = `/weekly-plan?week=${planned_week}`;
-        if (planned_day) {
-            redirectUrl += `&day=${planned_day}`;
         }
 
-        res.redirect(redirectUrl);
+        // Redirect back to the page the user came from (Civil, Processing, or Maintenance)
+        const referer = req.get('Referer');
+        if (referer) {
+            res.redirect(referer);
+        } else {
+            let redirectUrl = `/weekly-plan?week=${planned_week}`;
+            if (planned_day) {
+                redirectUrl += `&day=${planned_day}`;
+            }
+            res.redirect(redirectUrl);
+        }
     } catch (error) {
         console.error(error);
         res.status(500).send(error.message);

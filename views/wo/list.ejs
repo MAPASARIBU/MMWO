@@ -30,6 +30,9 @@
                     <th>Station</th>
                     <th>Description</th>
                     <th>Priority</th>
+                    <% if (user.role !== 'PROC') { %>
+                    <th>Plan Type</th>
+                    <% } %>
                     <th>Status</th>
                     <% if (user.role === 'ADMIN') { %>
                     <th>Actions</th>
@@ -53,6 +56,20 @@
                             <td><span class="status-<%= wo.priority %>">
                                     <%= wo.priority %>
                                 </span></td>
+                            <% if (user.role !== 'PROC') { %>
+                            <td onclick="event.stopPropagation();">
+                                <% if (wo.monthly_plan_status === 'MONTHLY' || wo.monthly_plan_status === 'MONTHLY_DONE') { %>
+                                    <span class="badge" style="background: #6366f1; color: white;">Monthly</span>
+                                <% } else if (wo.monthly_plan_status === 'NO') { %>
+                                    <span class="badge" style="background: #94a3b8; color: white;">No</span>
+                                <% } else { %>
+                                    <div style="display: flex; gap: 4px;">
+                                        <button class="btn btn-sm" style="background: #6366f1; color: white; border: none; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="setPlanType(event, '<%= wo.id %>', 'MONTHLY')">Monthly</button>
+                                        <button class="btn btn-sm" style="background: #94a3b8; color: white; border: none; padding: 2px 6px; font-size: 0.7rem; border-radius: 4px;" onclick="setPlanType(event, '<%= wo.id %>', 'NO')">No</button>
+                                    </div>
+                                <% } %>
+                            </td>
+                            <% } %>
                             <td><span class="badge status-<%= wo.status %>">
                                     <%= wo.status %>
                                 </span></td>
@@ -103,6 +120,28 @@
         } catch (err) {
             console.error(err);
             alert('Terjadi kesalahan koneksi/server.');
+        }
+    }
+
+    async function setPlanType(e, id, status) {
+        e.stopPropagation();
+        if(!confirm(`Kunci pilihan menjadi ${status}? Pilihan tidak bisa diubah lagi.`)) return;
+        
+        try {
+            const res = await fetch(`/api/work-orders/${id}/monthly-plan-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                const data = await res.json();
+                alert('Gagal mengunci status: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            alert('Terjadi kesalahan koneksi.');
         }
     }
 </script>

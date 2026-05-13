@@ -16,6 +16,7 @@ const equipmentPartsRoutes = require('./routes/equipmentParts');
 const processingPlanRoutes = require('./routes/processingPlanRoutes');
 const { startPMCron } = require('./cron/pmCron');
 const { startProcessingCron } = require('./cron/processingCron');
+const { startHMCron } = require('./cron/hmCron');
 const whatsappService = require('./services/whatsappService');
 
 const app = express();
@@ -82,6 +83,15 @@ app.get('/weekly-plan', ensureAuthenticated, weeklyPlanPageController.getWeeklyP
 app.get('/weekly-plan/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
 app.get('/weekly-plan/processing', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPage);
 app.get('/weekly-plan/processing/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
+app.get('/weekly-plan/civil', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPage);
+app.get('/weekly-plan/civil/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
+
+const monthlyPlanController = require('./controllers/monthlyPlanController');
+app.get('/monthly-plan', ensureAuthenticated, monthlyPlanController.getMonthlyPlanPage);
+app.post('/api/work-orders/:id/monthly-plan-status', ensureAuthenticated, monthlyPlanController.setMonthlyPlanStatus);
+app.post('/api/monthly-plan/:id/materials', ensureAuthenticated, monthlyPlanController.addMaterial);
+app.delete('/api/monthly-plan/materials/:material_id', ensureAuthenticated, monthlyPlanController.deleteMaterial);
+app.patch('/api/monthly-plan/:id/materials/:material_id/toggle', ensureAuthenticated, monthlyPlanController.toggleMaterialComplete);
 
 const adminController = require('./controllers/adminController');
 app.get('/admin/users', ensureRole(['ADMIN']), adminController.getUsersPage);
@@ -105,6 +115,18 @@ app.get('/admin/whatsapp', ensureRole(['ADMIN']), whatsappController.getAdminPag
 app.get('/api/whatsapp/status', ensureRole(['ADMIN']), whatsappController.getStatusApi);
 app.post('/api/whatsapp/reset', ensureRole(['ADMIN']), whatsappController.resetSession);
 
+// TEMPORARY ENDPOINT FOR TESTING
+const { runHMChecks } = require('./cron/hmCron');
+app.get('/test-hm', async (req, res) => {
+    try {
+        console.log('--- TRIGGERED VIA API ---');
+        await runHMChecks();
+    } catch (e) {
+        console.error(e);
+    }
+    res.send('HM checks run successfully');
+});
+
 // 404 Handler
 app.use((req, res) => {
     res.status(404).send('Not Found');
@@ -122,7 +144,8 @@ app.listen(PORT, () => {
     // Start background cron jobs
     startPMCron();
     startProcessingCron();
-    
+    const { startHMCron } = require('./cron/hmCron');
+    startHMCron();
     // Start WhatsApp Service
     whatsappService.initialize();
 });

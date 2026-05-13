@@ -12,11 +12,20 @@ const getWeeklyPlanPage = async (req, res) => {
         if (week) where.planned_week = week;
         if (day) where.planned_day = day;
 
+        let categoryFilter;
         const isProcessing = req.path.includes('/processing');
-        const categoryFilter = isProcessing ? 'Processing' : { not: 'Processing' };
+        const isCivil = req.path.includes('/civil');
+        
+        if (isProcessing) {
+            categoryFilter = 'Processing';
+        } else if (isCivil) {
+            categoryFilter = 'Civil';
+        } else {
+            categoryFilter = { notIn: ['Processing', 'Civil'] };
+        }
 
         let woFilter = { category: categoryFilter };
-        if (isProcessing) {
+        if (isProcessing || isCivil) {
             woFilter.status = { notIn: ['CLOSED', 'COMPLETED'] };
         }
         
@@ -56,10 +65,17 @@ const getWeeklyPlanPage = async (req, res) => {
             let candidateWhere = {
                 status: { notIn: ['CLOSED', 'COMPLETED'] },
                 category: categoryFilter,
-                created_at: {
-                    gte: start,
-                    lte: end
-                }
+                OR: [
+                    {
+                        created_at: {
+                            gte: start,
+                            lte: end
+                        }
+                    },
+                    {
+                        monthly_plan_status: 'MONTHLY_DONE'
+                    }
+                ]
             };
             if (user.role === 'SENIOR_MANAGER') {
                 candidateWhere.mill_id = { in: user.accessible_mills || [] };
@@ -75,6 +91,13 @@ const getWeeklyPlanPage = async (req, res) => {
                     weekly_plan: true
                 },
                 orderBy: { priority: 'asc' }
+            });
+
+            // Prioritize MONTHLY_DONE WOs to the very top
+            candidateWos.sort((a, b) => {
+                if (a.monthly_plan_status === 'MONTHLY_DONE' && b.monthly_plan_status !== 'MONTHLY_DONE') return -1;
+                if (b.monthly_plan_status === 'MONTHLY_DONE' && a.monthly_plan_status !== 'MONTHLY_DONE') return 1;
+                return 0;
             });
         }
 
@@ -121,7 +144,7 @@ const getWeeklyPlanPage = async (req, res) => {
         });
 
         res.render('layout', {
-            title: isProcessing ? 'Processing Weekly Plan' : 'Maintenance Weekly Plan',
+            title: isProcessing ? 'Processing Weekly Plan' : (isCivil ? 'Civil Weekly Plan' : 'Maintenance Weekly Plan'),
             body: await renderView('weeklyPlan', {
                 plans,
                 candidateWos,
@@ -130,7 +153,8 @@ const getWeeklyPlanPage = async (req, res) => {
                 workshopEmployees,
                 stations,
                 user,
-                isProcessing
+                isProcessing,
+                isCivil
             }),
             user: req.session.user,
             path: '/weekly-plan'
@@ -149,10 +173,19 @@ const getWeeklyPlanPrint = async (req, res) => {
         if (day) where.planned_day = day;
 
         const isProcessing = req.path.includes('/processing');
-        const categoryFilter = isProcessing ? 'Processing' : { not: 'Processing' };
+        const isCivil = req.path.includes('/civil');
+        
+        let categoryFilter;
+        if (isProcessing) {
+            categoryFilter = 'Processing';
+        } else if (isCivil) {
+            categoryFilter = 'Civil';
+        } else {
+            categoryFilter = { notIn: ['Processing', 'Civil'] };
+        }
 
         let woFilter = { category: categoryFilter };
-        if (isProcessing) {
+        if (isProcessing || isCivil) {
             woFilter.status = { notIn: ['CLOSED', 'COMPLETED'] };
         }
 
@@ -201,7 +234,8 @@ const getWeeklyPlanPrint = async (req, res) => {
             query: req.query,
             user: req.session.user,
             today,
-            isProcessing
+            isProcessing,
+            isCivil
         });
     } catch (error) {
         console.error(error);
