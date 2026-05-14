@@ -194,8 +194,10 @@
                 <%= user.role %> | <%= user.current_mill_name || (user.mill_id ? 'Mill ' + user.mill_id : 'All Mills' )
                         %>
             </small>
-            <div style="margin-top: 0.5rem;">
-                <a href="/auth/logout" style="color: #ef4444; padding: 0;">Logout</a>
+            <div style="margin-top: 0.5rem; display: flex; gap: 10px; justify-content: center;">
+                <a href="/auth/change-password" style="color: #38bdf8; padding: 0; font-size: 0.85em;"><i class="fas fa-key"></i> Password</a>
+                <span style="color: #475569;">|</span>
+                <a href="/auth/logout" style="color: #ef4444; padding: 0; font-size: 0.85em;"><i class="fas fa-sign-out-alt"></i> Logout</a>
             </div>
         </div>
     </aside>
@@ -215,8 +217,11 @@
                                 <% } %>
                     </h2>
                 </div>
-                <div class="actions">
-                    <!-- Global Actions can go here -->
+                <div class="actions" style="display: flex; gap: 10px;">
+                    <% if (typeof user !=='undefined') { %>
+                        <a href="/auth/change-password" title="Change Password" style="color: #64748b; padding: 0.5rem;"><i class="fas fa-key"></i></a>
+                        <a href="/auth/logout" title="Logout" style="color: #ef4444; padding: 0.5rem;"><i class="fas fa-sign-out-alt"></i></a>
+                    <% } %>
                 </div>
             </header>
 

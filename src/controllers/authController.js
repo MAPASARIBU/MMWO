@@ -1,5 +1,6 @@
 const { PrismaClient } = require('@prisma/client');
 const bcrypt = require('bcryptjs');
+const { renderView } = require('./indexController');
 
 const prisma = new PrismaClient();
 
@@ -98,8 +99,80 @@ const logout = (req, res) => {
     });
 };
 
+const changePasswordPage = async (req, res) => {
+    try {
+        res.render('layout', {
+            title: 'Change Password',
+            user: req.session.user,
+            path: '/auth/change-password',
+            body: await renderView('auth/change-password', { error: null, success: null })
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).send('Internal Server Error');
+    }
+};
+
+const changePassword = async (req, res) => {
+    try {
+        const { oldPassword, newPassword, confirmPassword } = req.body;
+        const userId = req.session.user.id;
+
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            return res.render('layout', {
+                title: 'Change Password',
+                user: req.session.user,
+                path: '/auth/change-password',
+                body: await renderView('auth/change-password', { error: 'Semua kolom harus diisi.', success: null })
+            });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.render('layout', {
+                title: 'Change Password',
+                user: req.session.user,
+                path: '/auth/change-password',
+                body: await renderView('auth/change-password', { error: 'Password baru dan konfirmasi tidak sama.', success: null })
+            });
+        }
+
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        const isValid = await bcrypt.compare(oldPassword, user.password_hash);
+
+        if (!isValid) {
+            return res.render('layout', {
+                title: 'Change Password',
+                user: req.session.user,
+                path: '/auth/change-password',
+                body: await renderView('auth/change-password', { error: 'Password lama salah.', success: null })
+            });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        await prisma.user.update({
+            where: { id: userId },
+            data: { password_hash: hashedPassword }
+        });
+
+        return res.render('layout', {
+            title: 'Change Password',
+            user: req.session.user,
+            path: '/auth/change-password',
+            body: await renderView('auth/change-password', { error: null, success: 'Password berhasil diubah!' })
+        });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).send('Internal Server Error');
+    }
+};
+
 module.exports = {
     loginPage,
     login,
-    logout
+    logout,
+    changePasswordPage,
+    changePassword
 };
