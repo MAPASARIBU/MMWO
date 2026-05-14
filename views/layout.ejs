@@ -148,6 +148,11 @@
                 </a>
                 <% } %>
             </li>
+            <li class="nav-item">
+                <a href="/analytics" style="display: block; color: #38bdf8; padding: 15px; font-weight: bold;">
+                    <i class="fas fa-chart-line"></i> Analytics & KPI
+                </a>
+            </li>
             <% } %>
             <% if (user && (user.role==='ADMIN' || user.role==='SPV') ) { %>
                 <li class="nav-item">
@@ -247,6 +252,11 @@
                                             <span>Monthly</span>
                                         </a>
                                         <% } %>
+                                        <a href="/analytics"
+                                            class="mobile-nav-item <%= typeof path !== 'undefined' && path.startsWith('/analytics') ? 'active' : '' %>">
+                                            <i class="fas fa-chart-line"></i>
+                                            <span>Analytics</span>
+                                        </a>
         <% } %>
                                         <% if (typeof user !== 'undefined' && user && (user.role === 'ADMIN' || user.role === 'PROC' || user.role === 'OPERATOR')) { %>
                                         <a href="/input-hm"

@@ -109,6 +109,10 @@ model WorkOrder {
   pics          WorkshopEmployee[]  @relation("WoPics")
   monthly_plan_status String? // e.g. null, 'MONTHLY', 'NO', 'MONTHLY_DONE'
   monthly_materials   MonthlyPlanMaterial[]
+  downtime_hours      Float?
+  rca_category        String?
+  rca_notes           String?
+  materials           WorkOrderMaterial[]
 
   @@map("work_orders")
 }
@@ -125,6 +129,20 @@ model MonthlyPlanMaterial {
   wo            WorkOrder @relation(fields: [wo_id], references: [id], onDelete: Cascade)
   
   @@map("monthly_plan_materials")
+}
+
+model WorkOrderMaterial {
+  id            Int       @id @default(autoincrement())
+  wo_id         Int
+  item_name     String
+  quantity      Int       @default(1)
+  estimated_cost Float?   
+  total_cost    Float?
+  created_at    DateTime  @default(now())
+
+  wo            WorkOrder @relation(fields: [wo_id], references: [id], onDelete: Cascade)
+  
+  @@map("work_order_materials")
 }
 
 model Attachment {

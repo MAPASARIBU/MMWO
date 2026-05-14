@@ -59,6 +59,30 @@
         </div>
     </div>
 
+    <% if (wo.rca_category || wo.downtime_hours) { %>
+    <div class="mb-4">
+        <label class="form-label"><i class="fas fa-search-location" style="color: #ea580c;"></i> Root Cause Analysis (RCA)</label>
+        <div style="background: #fff7ed; padding: 1rem; border: 1px solid #fed7aa; border-left: 4px solid #ea580c; border-radius: 4px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 0.5rem;">
+                <div>
+                    <strong style="color: #9a3412;">Category:</strong>
+                    <span style="display: block; color: #431407;"><%= wo.rca_category || 'N/A' %></span>
+                </div>
+                <div>
+                    <strong style="color: #9a3412;">Downtime:</strong>
+                    <span style="display: block; color: #431407;"><%= wo.downtime_hours ? wo.downtime_hours + ' Hours' : 'N/A' %></span>
+                </div>
+            </div>
+            <% if (wo.rca_notes) { %>
+            <div style="margin-top: 0.5rem;">
+                <strong style="color: #9a3412;">Notes (5-Why):</strong>
+                <span style="display: block; color: #431407; white-space: pre-wrap; margin-top: 0.25rem;"><%= wo.rca_notes %></span>
+            </div>
+            <% } %>
+        </div>
+    </div>
+    <% } %>
+
     <% if (wo.parts && wo.parts.length > 0) { %>
     <div class="mb-4">
         <label class="form-label">Associated Parts for Replacement</label>
@@ -94,6 +118,75 @@
         </div>
     </div>
     <% } %>
+
+    <div class="mb-4">
+        <div class="flex justify-between items-center mb-2">
+            <label class="form-label" style="margin: 0;"><i class="fas fa-boxes" style="color: #6366f1;"></i> Spareparts / Materials Used</label>
+        </div>
+        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 4px; padding: 0.5rem;">
+            <% if (wo.materials && wo.materials.length > 0) { %>
+                <table class="table table-sm mb-0">
+                    <thead style="background: #f8fafc;">
+                        <tr>
+                            <th>Item Name</th>
+                            <th>Qty</th>
+                            <th>Est. Cost</th>
+                            <th>Total Cost</th>
+                            <% if ((typeof readonly === 'undefined' || !readonly) && wo.status === 'IN_PROGRESS') { %>
+                                <th>Action</th>
+                            <% } %>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% let grandTotal = 0; %>
+                        <% wo.materials.forEach(m => { grandTotal += (m.total_cost || 0); %>
+                            <tr>
+                                <td><%= m.item_name %></td>
+                                <td><%= m.quantity %></td>
+                                <td>Rp <%= (m.estimated_cost || 0).toLocaleString() %></td>
+                                <td><strong>Rp <%= (m.total_cost || 0).toLocaleString() %></strong></td>
+                                <% if ((typeof readonly === 'undefined' || !readonly) && wo.status === 'IN_PROGRESS') { %>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="removeMaterial(<%= m.id %>)"><i class="fas fa-times"></i></button>
+                                    </td>
+                                <% } %>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th colspan="3" style="text-align: right;">GRAND TOTAL:</th>
+                            <th colspan="2" style="color: #ea580c; font-size: 1.1em;">Rp <%= grandTotal.toLocaleString() %></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            <% } else { %>
+                <span class="text-secondary" style="font-size: 0.9em;">No materials recorded.</span>
+            <% } %>
+
+            <% if ((typeof readonly === 'undefined' || !readonly) && wo.status === 'IN_PROGRESS') { %>
+                <div style="margin-top: 1rem; border-top: 1px dashed #e5e7eb; padding-top: 1rem;">
+                    <form id="addMaterialForm" style="display: grid; grid-template-columns: 2fr 1fr 2fr auto; gap: 0.5rem; align-items: end;">
+                        <div>
+                            <label class="form-label" style="font-size: 0.8rem;">Item Name</label>
+                            <input type="text" id="matItemName" class="form-control form-control-sm" required placeholder="e.g. Bearing SKF 6205">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.8rem;">Qty</label>
+                            <input type="number" id="matQty" class="form-control form-control-sm" required min="1" value="1">
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size: 0.8rem;">Est. Unit Cost (Rp)</label>
+                            <input type="number" id="matCost" class="form-control form-control-sm" required min="0" placeholder="500000">
+                        </div>
+                        <div>
+                            <button type="submit" class="btn btn-sm btn-primary">Add</button>
+                        </div>
+                    </form>
+                </div>
+            <% } %>
+        </div>
+    </div>
 
     <% if (wo.attachments && wo.attachments.length> 0) { %>
         <div class="mb-4">
@@ -185,6 +278,32 @@
                                                     <textarea id="actionTaken" class="form-control" rows="3"
                                                         placeholder="Describe what was done..."></textarea>
                                                 </div>
+                                                
+                                                <% if (wo.type === 'Breakdown' || wo.type === 'Corrective') { %>
+                                                <div style="background: #fff; padding: 1rem; border: 1px solid #fed7aa; border-left: 4px solid #f97316; border-radius: 4px; margin-bottom: 1rem;">
+                                                    <h6 style="color: #c2410c; margin-top: 0;"><i class="fas fa-search-location"></i> Root Cause Analysis (RCA) Required</h6>
+                                                    <div class="form-group">
+                                                        <label class="form-label">Downtime Duration (Hours)</label>
+                                                        <input type="number" id="downtimeHours" class="form-control" step="0.1" min="0" placeholder="e.g. 2.5">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label class="form-label">RCA Category</label>
+                                                        <select id="rcaCategory" class="form-control">
+                                                            <option value="">-- Select Root Cause Category --</option>
+                                                            <option value="Wear & Tear">Wear & Tear (Usia Pakai)</option>
+                                                            <option value="Operator Error">Operator Error (Kesalahan Operasi)</option>
+                                                            <option value="Lubrication Failure">Lubrication Failure (Kurang Pelumasan)</option>
+                                                            <option value="Material Defect">Material Defect (Cacat Bawaan Material)</option>
+                                                            <option value="External Factor">External Factor (Faktor Eksternal/Cuaca)</option>
+                                                            <option value="Other">Other (Lain-lain)</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="form-group mb-0">
+                                                        <label class="form-label">RCA Notes (5-Why Analysis)</label>
+                                                        <textarea id="rcaNotes" class="form-control" rows="2" placeholder="Why did it fail? What is the permanent solution?"></textarea>
+                                                    </div>
+                                                </div>
+                                                <% } %>
                                                 <div class="form-group">
                                                     <label class="form-label">Upload Repair Photo (Optional)</label>
                                                     <input type="file" id="completionImage" class="form-control">
@@ -330,6 +449,42 @@
         await updateStatus('ASSIGNED', { assignee_id: uid });
     }
 
+    const addMatForm = document.getElementById('addMaterialForm');
+    if (addMatForm) {
+        addMatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const itemName = document.getElementById('matItemName').value;
+            const qty = document.getElementById('matQty').value;
+            const cost = document.getElementById('matCost').value;
+
+            try {
+                const res = await fetch('/api/work-orders/' + woId + '/materials', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ item_name: itemName, quantity: qty, estimated_cost: cost })
+                });
+                if (res.ok) window.location.reload();
+                else {
+                    const err = await res.json();
+                    alert(err.error || 'Gagal menambahkan material');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    }
+
+    async function removeMaterial(id) {
+        if (!confirm('Hapus material ini?')) return;
+        try {
+            const res = await fetch('/api/work-orders/' + woId + '/materials/' + id, { method: 'DELETE' });
+            if (res.ok) window.location.reload();
+            else alert('Gagal menghapus material');
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     async function completeWo() {
         const action = document.getElementById('actionTaken').value;
         if (!action) return alert('Please describe action taken');
@@ -359,9 +514,24 @@
             commentText = `PARTS REPLACED: ${replacedNames.length > 0 ? replacedNames.join(', ') : 'None'}\n\n` + commentText;
         }
 
-        await updateStatus('COMPLETED', { 
+        const payload = {
             comment: commentText,
             replaced_part_ids: checkboxes.length > 0 ? replacedPartIds : undefined
-        });
+        };
+
+        const dtInput = document.getElementById('downtimeHours');
+        if (dtInput) {
+            const downtime = dtInput.value;
+            const rcaCat = document.getElementById('rcaCategory').value;
+            const rcaNote = document.getElementById('rcaNotes').value;
+            if (!downtime || !rcaCat) {
+                return alert('Please fill in Downtime Duration and RCA Category for this Breakdown!');
+            }
+            payload.downtime_hours = downtime;
+            payload.rca_category = rcaCat;
+            payload.rca_notes = rcaNote;
+        }
+
+        await updateStatus('COMPLETED', payload);
     }
 </script>

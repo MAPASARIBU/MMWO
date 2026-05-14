@@ -132,6 +132,7 @@ const detailWorkOrderPage = async (req, res) => {
                 assignee: true,
                 reporter: true,
                 attachments: true,
+                materials: true,
                 comments: { include: { user: true }, orderBy: { created_at: 'asc' } },
                 audit_logs: { include: { user: true }, orderBy: { created_at: 'desc' } }
             }

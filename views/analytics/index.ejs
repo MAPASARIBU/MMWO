@@ -1,0 +1,234 @@
+<div class="card" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="font-size: 1.5rem; color: #1e293b;"><i class="fas fa-chart-line"></i> Analytics & Reliability (KPI)</h2>
+        
+        <% if (user.role === 'SENIOR_MANAGER' || user.role === 'ADMIN') { %>
+        <form style="display: flex; align-items: center;" method="GET" action="/analytics">
+            <select name="mill_id" class="form-control" style="width: 200px;" onchange="this.form.submit()">
+                <option value="">-- All Mills --</option>
+                <% mills.forEach(m => { %>
+                    <option value="<%= m.id %>" <%= selectedMillId === m.id ? 'selected' : '' %>><%= m.name %></option>
+                <% }); %>
+            </select>
+        </form>
+        <% } %>
+    </div>
+
+    <!-- Core KPIs -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        
+        <!-- MTTR -->
+        <div style="background: #fff; border-radius: 0.5rem; padding: 1.5rem; border: 1px solid #e5e7eb; border-left: 4px solid #ef4444; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h5 style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Mean Time To Repair (MTTR)</h5>
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-tools fa-3x" style="color: #ef4444; margin-right: 1.5rem;"></i>
+                <div>
+                    <h2 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">
+                        <%= mttrHours %> <span style="font-size: 0.875rem; color: #64748b; font-weight: 400;">Hours</span>
+                    </h2>
+                    <small style="color: #94a3b8;">Avg time to fix breakdowns</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- MTBF -->
+        <div style="background: #fff; border-radius: 0.5rem; padding: 1.5rem; border: 1px solid #e5e7eb; border-left: 4px solid #10b981; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h5 style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Mean Time Between Failures (MTBF)</h5>
+            <div style="display: flex; align-items: center;">
+                <i class="fas fa-heartbeat fa-3x" style="color: #10b981; margin-right: 1.5rem;"></i>
+                <div>
+                    <h2 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">
+                        <%= mtbfHours %> <span style="font-size: 0.875rem; color: #64748b; font-weight: 400;">Hours</span>
+                    </h2>
+                    <small style="color: #94a3b8;">Avg time between breakdowns</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- PM Compliance -->
+        <div style="background: #fff; border-radius: 0.5rem; padding: 1.5rem; border: 1px solid #e5e7eb; border-left: 4px solid #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h5 style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">PM Compliance</h5>
+            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                <i class="fas fa-calendar-check fa-3x" style="color: #3b82f6; margin-right: 1.5rem;"></i>
+                <div>
+                    <h2 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">
+                        <%= pmComplianceRate %>%
+                    </h2>
+                    <small style="color: #94a3b8;">Preventive WO completed on time</small>
+                </div>
+            </div>
+            <div style="height: 8px; background: #e2e8f0; border-radius: 4px; width: 100%; overflow: hidden;">
+                <div style="height: 100%; width: <%= Math.min(100, pmComplianceRate) %>%; background-color: #3b82f6; border-radius: 4px;"></div>
+            </div>
+        </div>
+
+        <!-- Total Downtime -->
+        <div style="background: #fff; border-radius: 0.5rem; padding: 1.5rem; border: 1px solid #e5e7eb; border-left: 4px solid #f59e0b; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h5 style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Total Plant Downtime</h5>
+            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                <i class="fas fa-industry fa-3x" style="color: #f59e0b; margin-right: 1.5rem;"></i>
+                <div>
+                    <h2 style="font-size: 2rem; font-weight: 700; color: #1e293b; margin: 0;">
+                        <%= typeof totalDowntimeHours !== 'undefined' ? totalDowntimeHours : '0.00' %> <span style="font-size: 0.875rem; color: #64748b; font-weight: 400;">Hours</span>
+                    </h2>
+                    <small style="color: #94a3b8;">Cumulative hours of machine stops</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Maintenance Cost -->
+        <div style="background: #fff; border-radius: 0.5rem; padding: 1.5rem; border: 1px solid #e5e7eb; border-left: 4px solid #8b5cf6; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <h5 style="color: #64748b; font-size: 0.875rem; margin-bottom: 1rem;">Total Maintenance Cost</h5>
+            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                <i class="fas fa-coins fa-3x" style="color: #8b5cf6; margin-right: 1.5rem;"></i>
+                <div>
+                    <h2 style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0;">
+                        Rp <%= typeof totalMaintenanceCost !== 'undefined' ? totalMaintenanceCost.toLocaleString() : '0' %>
+                    </h2>
+                    <small style="color: #94a3b8;">Est. historical sparepart costs</small>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Phase 2: RCA and Root Cause Distribution -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+        
+        <!-- RCA Distribution Table -->
+        <div style="background: #fff; border-radius: 0.5rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1); grid-column: span 2;">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                <h5 style="margin: 0; color: #1e293b; font-weight: 600;">
+                    <i class="fas fa-search-location" style="color: #8b5cf6;"></i> Root Cause Analysis (RCA) Distribution
+                </h5>
+            </div>
+            <div style="padding: 1.5rem;">
+                <% if (typeof rcaDistribution !== 'undefined' && Object.keys(rcaDistribution).length > 0) { %>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <% Object.keys(rcaDistribution).forEach(category => { %>
+                            <div style="border: 1px solid #e5e7eb; border-radius: 4px; padding: 1rem; text-align: center;">
+                                <h3 style="font-size: 2rem; margin: 0; color: #8b5cf6;"><%= rcaDistribution[category] %></h3>
+                                <span style="color: #64748b; font-size: 0.875rem;"><%= category %></span>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div style="text-align: center; color: #94a3b8; padding: 2rem 0;">
+                        <i class="fas fa-chart-pie fa-3x" style="opacity: 0.2; margin-bottom: 1rem;"></i>
+                        <p>No RCA data available yet. Please complete breakdown work orders with RCA details.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Secondary Metrics & Breakdown -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+        
+        <!-- Equipment Criticality Status -->
+        <div style="background: #fff; border-radius: 0.5rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                <h5 style="margin: 0; color: #1e293b; font-weight: 600;">
+                    <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i> Active WOs by Equipment Criticality
+                </h5>
+            </div>
+            <div style="padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-around; text-align: center; margin-top: 1rem;">
+                    <div>
+                        <h3 style="font-size: 2rem; margin: 0; color: #ef4444;"><%= criticalityStats.High %></h3>
+                        <span class="badge badge-red">Critical (A)</span>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 2rem; margin: 0; color: #f59e0b;"><%= criticalityStats.Medium %></h3>
+                        <span class="badge badge-yellow">Medium (B)</span>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 2rem; margin: 0; color: #10b981;"><%= criticalityStats.Low %></h3>
+                        <span class="badge badge-green">Low (C)</span>
+                    </div>
+                </div>
+                <p style="color: #64748b; font-size: 0.875rem; text-align: center; margin-top: 1.5rem; margin-bottom: 0;">
+                    Displays pending/active work orders grouped by equipment importance.
+                </p>
+            </div>
+        </div>
+
+        <!-- Volume Overview -->
+        <div style="background: #fff; border-radius: 0.5rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb;">
+                <h5 style="margin: 0; color: #1e293b; font-weight: 600;">
+                    <i class="fas fa-clipboard-list" style="color: #64748b;"></i> Reliability Volume Overview
+                </h5>
+            </div>
+            <div style="padding: 0;">
+                <ul style="list-style: none; margin: 0; padding: 0;">
+                    <li style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #475569;">Total Breakdowns Analyzed (MTTR/MTBF)</span>
+                        <span class="badge badge-blue" style="font-size: 1rem; padding: 0.25rem 0.75rem;"><%= totalBreakdowns %></span>
+                    </li>
+                    <li style="padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="color: #475569;">Total Preventive PMs Analyzed</span>
+                        <span class="badge badge-blue" style="font-size: 1rem; padding: 0.25rem 0.75rem;"><%= totalPMs %></span>
+                    </li>
+                </ul>
+                <div style="padding: 1rem 1.5rem; background: #f8fafc; border-bottom-left-radius: 0.5rem; border-bottom-right-radius: 0.5rem;">
+                    <p style="color: #64748b; font-size: 0.875rem; margin: 0;">
+                        Data includes completed WOs historically. In future phases, you can filter this by specific month or year.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- Phase 3: Predictive Maintenance Forecasting -->
+    <div style="margin-top: 2rem;">
+        <div style="background: #fff; border-radius: 0.5rem; border: 1px solid #e5e7eb; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="padding: 1rem 1.5rem; border-bottom: 1px solid #e5e7eb; background: #fff1f2;">
+                <h5 style="margin: 0; color: #be123c; font-weight: 600;">
+                    <i class="fas fa-crystal-ball" style="color: #be123c;"></i> Predictive Replacement Warning (Next 30 Days)
+                </h5>
+            </div>
+            <div style="padding: 0;">
+                <% if (typeof predictedFailures !== 'undefined' && predictedFailures.length > 0) { %>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background: #f8fafc;">
+                                <tr>
+                                    <th style="padding: 1rem 1.5rem;">Part / Component Name</th>
+                                    <th>Equipment / Station</th>
+                                    <th>Current HM</th>
+                                    <th>Lifetime HM</th>
+                                    <th>Est. Days Left</th>
+                                    <th>Predicted Failure Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% predictedFailures.forEach(pf => { %>
+                                    <tr>
+                                        <td style="padding: 1rem 1.5rem;"><strong><%= pf.partName %></strong></td>
+                                        <td><%= pf.equipmentName %> <small class="text-secondary">(<%= pf.stationName %>)</small></td>
+                                        <td><%= pf.currentHm.toFixed(0) %></td>
+                                        <td><%= pf.lifetimeHm %></td>
+                                        <td>
+                                            <span class="badge <%= pf.daysLeft <= 7 ? 'badge-red' : 'badge-yellow' %>" style="font-size: 0.9em;">
+                                                <%= pf.daysLeft %> Days
+                                            </span>
+                                        </td>
+                                        <td><strong><%= pf.failDate.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) %></strong></td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } else { %>
+                    <div style="text-align: center; color: #94a3b8; padding: 3rem 0;">
+                        <i class="fas fa-check-circle fa-4x" style="color: #10b981; opacity: 0.5; margin-bottom: 1rem;"></i>
+                        <h4 style="color: #64748b;">No Critical Warnings</h4>
+                        <p>Based on our AI prediction and recent HM inputs, no parts are predicted to fail within the next 30 days.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>

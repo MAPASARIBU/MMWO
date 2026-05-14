@@ -14,6 +14,7 @@ const weeklyPlanRoutes = require('./routes/weeklyPlan');
 const userRoutes = require('./routes/users');
 const equipmentPartsRoutes = require('./routes/equipmentParts');
 const processingPlanRoutes = require('./routes/processingPlanRoutes');
+const analyticsRoutes = require('./routes/analytics');
 const { startPMCron } = require('./cron/pmCron');
 const { startProcessingCron } = require('./cron/processingCron');
 const { startHMCron } = require('./cron/hmCron');
@@ -106,6 +107,7 @@ app.use('/api/weekly-plan', weeklyPlanRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/processing-plans', processingPlanRoutes);
+app.use('/analytics', analyticsRoutes);
 
 // Admin Pages
 app.get('/admin/employees', ensureRole(['ADMIN']), adminController.getEmployeesPage);

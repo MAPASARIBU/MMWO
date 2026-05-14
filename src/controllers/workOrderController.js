@@ -166,6 +166,8 @@ const getWorkOrderById = async (req, res) => {
                 reporter: { select: { name: true } },
                 attachments: true,
                 comments: { include: { user: { select: { name: true } } } },
+                materials: true,
+                pics: true,
                 audit_logs: { include: { user: { select: { name: true } } }, orderBy: { created_at: 'desc' } }
             }
         });
@@ -214,6 +216,17 @@ const updateStatus = async (req, res) => {
             updateData.parts = {
                 set: req.body.replaced_part_ids.map(id => ({ id: parseInt(id) }))
             };
+        }
+
+        // RCA and Downtime Data
+        if (req.body.downtime_hours !== undefined && req.body.downtime_hours !== '') {
+            updateData.downtime_hours = parseFloat(req.body.downtime_hours);
+        }
+        if (req.body.rca_category !== undefined) {
+            updateData.rca_category = req.body.rca_category;
+        }
+        if (req.body.rca_notes !== undefined) {
+            updateData.rca_notes = req.body.rca_notes;
         }
 
         // Logic for transitions
@@ -593,6 +606,68 @@ const assignPics = async (req, res) => {
     }
 };
 
+const addMaterial = async (req, res) => {
+    try {
+        const woId = parseInt(req.params.id);
+        const { item_name, quantity, estimated_cost } = req.body;
+        
+        if (!item_name || !quantity) {
+            return res.status(400).json({ error: 'Item name and quantity are required' });
+        }
+
+        const total_cost = (parseFloat(estimated_cost) || 0) * parseInt(quantity);
+
+        const material = await prisma.workOrderMaterial.create({
+            data: {
+                wo_id: woId,
+                item_name,
+                quantity: parseInt(quantity),
+                estimated_cost: parseFloat(estimated_cost) || 0,
+                total_cost
+            }
+        });
+
+        // Add audit log
+        await prisma.auditLog.create({
+            data: {
+                wo_id: woId,
+                action: 'ADDED_MATERIAL',
+                user_id: req.session.user.id,
+                new_value: `Added ${quantity}x ${item_name} (Cost: ${total_cost})`
+            }
+        });
+
+        res.json({ success: true, material });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
+const removeMaterial = async (req, res) => {
+    try {
+        const materialId = parseInt(req.params.materialId);
+        
+        const material = await prisma.workOrderMaterial.delete({
+            where: { id: materialId }
+        });
+
+        await prisma.auditLog.create({
+            data: {
+                wo_id: material.wo_id,
+                action: 'REMOVED_MATERIAL',
+                user_id: req.session.user.id,
+                new_value: `Removed ${material.item_name}`
+            }
+        });
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     createWorkOrder,
     getWorkOrders,
@@ -604,5 +679,7 @@ module.exports = {
     bulkCreateFromPMs,
     deleteWorkOrder,
     assignPics,
+    addMaterial,
+    removeMaterial,
     generateWONumber
 };
