@@ -1,0 +1,133 @@
+<div class="card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Jadwal Target vs Actual WO</h2>
+        <div class="d-flex gap-2">
+            <% 
+                const currentStart = new Date(startDateStr);
+                const prevStart = new Date(currentStart);
+                prevStart.setDate(currentStart.getDate() - 7);
+                const nextStart = new Date(currentStart);
+                nextStart.setDate(currentStart.getDate() + 7);
+                
+                const todayStart = new Date();
+                todayStart.setDate(todayStart.getDate() - 3);
+            %>
+            <a href="?startDate=<%= prevStart.toISOString().split('T')[0] %>" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Prev 7 Hari
+            </a>
+            <a href="?startDate=<%= todayStart.toISOString().split('T')[0] %>" class="btn btn-outline-secondary btn-sm">
+                Hari Ini
+            </a>
+            <a href="?startDate=<%= nextStart.toISOString().split('T')[0] %>" class="btn btn-outline-secondary btn-sm">
+                Next 7 Hari <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered text-center align-middle" style="min-width: 1200px; font-size: 0.85rem;">
+            <thead class="table-light">
+                <tr>
+                    <th rowspan="2" style="width: 50px;">NO</th>
+                    <th rowspan="2" style="width: 250px; text-align: left;">JUDUL PROGRAM</th>
+                    <th rowspan="2" style="width: 100px;">STASIUN</th>
+                    <th rowspan="2" style="width: 120px;">PIC</th>
+                    <th rowspan="2" style="width: 80px;">STATUS</th>
+                    <% dates.forEach(d => { %>
+                        <th style="width: 40px; padding: 4px; color: #4f46e5;">
+                            <div style="font-size: 1.1rem; font-weight: bold;"><%= d.dayStr %></div>
+                            <div style="font-size: 0.7rem;"><%= d.monthStr %></div>
+                        </th>
+                    <% }); %>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (wos && wos.length > 0) { %>
+                    <% wos.forEach((wo, index) => { %>
+                        <% 
+                            // Determine Target range (created_at to target_finish, or just created_at)
+                            const targetStart = new Date(wo.created_at);
+                            targetStart.setHours(0,0,0,0);
+                            const targetFinish = wo.target_finish ? new Date(wo.target_finish) : new Date(targetStart);
+                            targetFinish.setHours(23,59,59,999);
+
+                            // Determine Actual range (started_at to completed_at/closed_at, or today if ongoing)
+                            let actualStart = null;
+                            let actualFinish = null;
+                            if (wo.started_at) {
+                                actualStart = new Date(wo.started_at);
+                                actualStart.setHours(0,0,0,0);
+                                if (wo.completed_at) {
+                                    actualFinish = new Date(wo.completed_at);
+                                } else if (wo.closed_at) {
+                                    actualFinish = new Date(wo.closed_at);
+                                } else if (wo.status !== 'CLOSED' && wo.status !== 'COMPLETED') {
+                                    // Ongoing
+                                    actualFinish = new Date(); 
+                                } else {
+                                    actualFinish = new Date(actualStart);
+                                }
+                                actualFinish.setHours(23,59,59,999);
+                            }
+                        %>
+                        <!-- Target Row -->
+                        <tr>
+                            <td rowspan="2"><%= index + 1 %></td>
+                            <td rowspan="2" class="text-start">
+                                <strong><%= wo.wo_no %></strong><br>
+                                <span class="text-muted"><%= wo.description %></span>
+                            </td>
+                            <td rowspan="2"><%= wo.station ? wo.station.name : '-' %></td>
+                            <td rowspan="2">
+                                <% if (wo.assignee) { %>
+                                    <%= wo.assignee.name %>
+                                <% } else if (wo.pics && wo.pics.length > 0) { %>
+                                    <%= wo.pics.map(p => p.name).join(', ') %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td>
+                                <span class="badge" style="background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a;">TARGET</span>
+                            </td>
+                            <% dates.forEach(d => { 
+                                const currentDay = new Date(d.date);
+                                currentDay.setHours(12,0,0,0);
+                                let isTarget = (currentDay >= targetStart && currentDay <= targetFinish);
+                            %>
+                                <td style="padding: 0;">
+                                    <% if (isTarget) { %>
+                                        <div style="background-color: #fcd34d; width: 100%; height: 35px; border-radius: 2px;"></div>
+                                    <% } %>
+                                </td>
+                            <% }); %>
+                        </tr>
+                        <!-- Actual Row -->
+                        <tr>
+                            <td style="border-bottom-width: 2px;">
+                                <span class="badge" style="background-color: #d1fae5; color: #059669; border: 1px solid #a7f3d0;">ACTUAL</span>
+                            </td>
+                            <% dates.forEach(d => { 
+                                const currentDay = new Date(d.date);
+                                currentDay.setHours(12,0,0,0);
+                                let isActual = actualStart && actualFinish && (currentDay >= actualStart && currentDay <= actualFinish);
+                            %>
+                                <td style="padding: 0; border-bottom-width: 2px;">
+                                    <% if (isActual) { %>
+                                        <div style="background-color: #6ee7b7; width: 100%; height: 35px; border-radius: 2px;"></div>
+                                    <% } %>
+                                </td>
+                            <% }); %>
+                        </tr>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="<%= 5 + dates.length %>" class="text-center py-4 text-muted">
+                            Tidak ada data Work Order pada rentang waktu ini.
+                        </td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>

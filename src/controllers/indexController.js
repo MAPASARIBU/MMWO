@@ -87,7 +87,7 @@ const getDashboard = async (req, res) => {
         let queryOptions = {
             where: filterWhere,
             orderBy: { created_at: 'desc' },
-            include: { station: true }
+            include: { station: true, assignee: true, pics: true }
         };
 
         // If no filters, limit to 5 (original behavior), otherwise show all matching

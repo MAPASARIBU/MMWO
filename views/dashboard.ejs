@@ -655,10 +655,11 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>WO No</th>
-                            <th>Description</th>
+                            <th>WO No & Desc</th>
                             <th>Station</th>
-                            <th>Priority</th>
+                            <th>PIC Role</th>
+                            <th>Tgl Permintaan</th>
+                            <th>Actual Complete</th>
                             <th>Status</th>
                             <% if (user.role === 'ADMIN') { %>
                             <th>Actions</th>
@@ -669,18 +670,34 @@
                         <% if (typeof recentWos !=='undefined' && recentWos.length> 0) { %>
                             <% recentWos.forEach(wo=> { %>
                                 <tr>
-                                    <td><a href="/work-orders/<%= wo.id %>?readonly=true" style="color: var(--primary-color); font-weight: 500; text-decoration: none;">
-                                            <%= wo.wo_no %>
-                                        </a></td>
                                     <td>
-                                        <%= wo.description %>
+                                        <a href="/work-orders/<%= wo.id %>?readonly=true" style="color: var(--primary-color); font-weight: 600; text-decoration: none;">
+                                            <%= wo.wo_no %>
+                                        </a>
+                                        <div style="font-size: 0.85em; color: #64748b; margin-top: 2px;"><%= wo.description %></div>
                                     </td>
                                     <td>
                                         <%= wo.station.name %>
                                     </td>
-                                    <td><span class="status-<%= wo.priority %>">
-                                            <%= wo.priority %>
-                                        </span></td>
+                                    <td>
+                                        <% if (wo.pics && wo.pics.length > 0) { %>
+                                            <%= wo.pics.map(p => p.name).join(', ') %>
+                                        <% } else if (wo.assignee) { %>
+                                            <%= wo.assignee.name %> <span style="font-size: 0.8em; color: #64748b;">(<%= wo.assignee.role %>)</span>
+                                        <% } else { %>
+                                            <span class="text-secondary">-</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <%= new Date(wo.created_at).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'}) %>
+                                    </td>
+                                    <td>
+                                        <% if (wo.closed_at || wo.completed_at) { %>
+                                            <%= new Date(wo.closed_at || wo.completed_at).toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'}) %>
+                                        <% } else { %>
+                                            <span class="text-secondary">-</span>
+                                        <% } %>
+                                    </td>
                                     <td><span class="badge status-<%= wo.status %>">
                                             <%= wo.status %>
                                         </span></td>
@@ -699,7 +716,7 @@
                                 <% }); %>
                                     <% } else { %>
                                         <tr>
-                                            <td colspan="5">No recent work orders found.</td>
+                                            <td colspan="7" class="text-center">No recent work orders found.</td>
                                         </tr>
                                         <% } %>
                     </tbody>

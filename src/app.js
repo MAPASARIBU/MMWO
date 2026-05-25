@@ -13,6 +13,7 @@ const woRoutes = require('./routes/workOrders');
 const weeklyPlanRoutes = require('./routes/weeklyPlan');
 const userRoutes = require('./routes/users');
 const equipmentPartsRoutes = require('./routes/equipmentParts');
+const monitoringRoutes = require('./routes/monitoring');
 const processingPlanRoutes = require('./routes/processingPlanRoutes');
 const analyticsRoutes = require('./routes/analytics');
 const { startPMCron } = require('./cron/pmCron');
@@ -105,7 +106,8 @@ app.use('/api/equipment', equipmentPartsRoutes); // Equipment parts & HM
 app.use('/api/work-orders', woRoutes);
 app.use('/api/weekly-plan', weeklyPlanRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/employees', employeeRoutes);
+app.use('/monitoring', monitoringRoutes);
+app.use('/employees', employeeRoutes);
 app.use('/processing-plans', processingPlanRoutes);
 app.use('/analytics', analyticsRoutes);
 
