@@ -35,7 +35,10 @@ async function main() {
         'Kernel Bin Storage',
         'CPO Storage',
         'CPO Washing Plant',
-        'VEHICLE'
+        'VEHICLE',
+        'Housing',
+        'Godown',
+        'Laboratorium'
     ];
 
     let firstMill = null;
