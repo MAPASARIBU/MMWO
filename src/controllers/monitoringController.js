@@ -6,6 +6,7 @@ const getMonitoringPage = async (req, res) => {
     try {
         const user = req.session.user || req.user;
         let { startDate } = req.query;
+        const type = req.params.type || 'MAINTENANCE'; // Default to MAINTENANCE
 
         // Default to 3 days ago if no startDate provided
         let start = new Date();
@@ -47,6 +48,9 @@ const getMonitoringPage = async (req, res) => {
             { closed_at: { gte: windowStart } }
         ];
 
+        // Filter by WO type
+        where.type = type.toUpperCase();
+
         const wos = await prisma.workOrder.findMany({
             where,
             include: {
@@ -69,16 +73,19 @@ const getMonitoringPage = async (req, res) => {
             };
         });
 
+        const title = type.toUpperCase() === 'PROCESSING' ? 'Monitoring Realisasi Processing' : 'Monitoring Realisasi Maintenance';
+
         res.render('layout', {
-            title: 'Monitoring Realisasi WO',
+            title: title,
             body: await renderView('monitoring/index', { 
                 wos, 
                 dates: formattedDates, 
                 startDateStr: windowStart.toISOString().split('T')[0],
-                user 
+                user,
+                type: type.toUpperCase()
             }),
             user,
-            path: '/monitoring'
+            path: `/monitoring/${type.toLowerCase()}`
         });
     } catch (error) {
         console.error('Error fetching monitoring page:', error);

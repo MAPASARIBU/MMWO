@@ -1,6 +1,6 @@
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="mb-0">Jadwal Target vs Actual WO</h2>
+        <h2 class="mb-0">Jadwal Target vs Actual <%= typeof type !== 'undefined' ? type : 'WO' %></h2>
         <div class="d-flex gap-2">
             <% 
                 const currentStart = new Date(startDateStr);
