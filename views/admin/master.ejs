@@ -94,8 +94,10 @@
                 <% }); %>
         </div>
     </div>
+    <% } %>
 
     <!-- Processing Plans Section -->
+    <% if (['ADMIN', 'MANAGER', 'SENIOR_MANAGER', 'SPV', 'PROC'].includes(user.role)) { %>
     <hr class="my-4">
     <div class="flex justify-between items-center mb-3">
         <h3>Processing Plan Schedules</h3>
@@ -152,6 +154,7 @@
     <% } %>
 
     <!-- Office Plans Section -->
+    <% if (['ADMIN', 'MANAGER', 'SENIOR_MANAGER', 'OAA'].includes(user.role)) { %>
     <hr class="my-4">
     <div class="flex justify-between items-center mb-3">
         <h3>Office Plan Schedules</h3>
@@ -205,6 +208,7 @@
             </tbody>
         </table>
     </div>
+    <% } %>
 
 </div>
 
