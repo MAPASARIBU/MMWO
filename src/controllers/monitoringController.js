@@ -68,6 +68,39 @@ const getMonitoringPage = async (req, res) => {
             ]
         });
 
+        // Filter WOs to only those that have a visible block (Target or Actual) in this 14-day window
+        const filteredWos = wos.filter(wo => {
+            // Determine Target range
+            const targetStart = new Date(wo.created_at);
+            targetStart.setHours(0,0,0,0);
+            const targetFinish = wo.target_finish ? new Date(wo.target_finish) : new Date(targetStart);
+            targetFinish.setHours(23,59,59,999);
+
+            const hasTarget = targetStart <= windowEnd && targetFinish >= windowStart;
+
+            // Determine Actual range
+            let hasActual = false;
+            if (wo.started_at) {
+                const actualStart = new Date(wo.started_at);
+                actualStart.setHours(0,0,0,0);
+                let actualFinish = new Date();
+                if (wo.completed_at) {
+                    actualFinish = new Date(wo.completed_at);
+                } else if (wo.closed_at) {
+                    actualFinish = new Date(wo.closed_at);
+                } else if (wo.status !== 'CLOSED' && wo.status !== 'COMPLETED') {
+                    actualFinish = new Date(); // Ongoing
+                } else {
+                    actualFinish = new Date(actualStart);
+                }
+                actualFinish.setHours(23,59,59,999);
+
+                hasActual = actualStart <= windowEnd && actualFinish >= windowStart;
+            }
+
+            return hasTarget || hasActual;
+        });
+
         // Format dates for the view
         const formattedDates = dates.map(d => {
             return {
@@ -82,7 +115,7 @@ const getMonitoringPage = async (req, res) => {
         res.render('layout', {
             title: title,
             body: await renderView('monitoring/index', { 
-                wos, 
+                wos: filteredWos, 
                 dates: formattedDates, 
                 startDateStr: windowStart.toISOString().split('T')[0],
                 user,
