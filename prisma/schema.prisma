@@ -38,6 +38,7 @@ model Mill {
   wos        WorkOrder[]
   employees  WorkshopEmployee[]
   processing_plans ProcessingPlan[]
+  office_plans     OfficePlan[]
 
   @@map("mills")
 }
@@ -52,6 +53,7 @@ model Station {
   mill        Mill        @relation(fields: [mill_id], references: [id])
   wos         WorkOrder[]
   processing_plans ProcessingPlan[]
+  office_plans     OfficePlan[]
 
   @@map("stations")
 }
@@ -277,6 +279,24 @@ model ProcessingPlan {
   mill            Mill      @relation(fields: [mill_id], references: [id])
 
   @@map("processing_plans")
+}
+
+model OfficePlan {
+  id              Int       @id @default(autoincrement())
+  mill_id         Int
+  station_id      Int
+  name            String
+  interval_type   String    // 'Week', 'Month', 'Quarter', 'Semester', 'Year'
+  interval_value  Int       @default(1)
+  last_generated  DateTime?
+  next_due_date   DateTime
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+
+  station         Station   @relation(fields: [station_id], references: [id])
+  mill            Mill      @relation(fields: [mill_id], references: [id])
+
+  @@map("office_plans")
 }
 
 model WhatsAppSession {

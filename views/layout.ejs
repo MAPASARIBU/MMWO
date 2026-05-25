@@ -158,13 +158,25 @@
                     <i class="fas fa-chart-gantt" style="margin-right: 8px;"></i> Monitoring Processing
                 </a>
             </li>
+            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'OAA'].includes(user.role)) { %>
+            <li class="nav-item">
+                <a href="/weekly-plan/office" style="display: block; color: #fff; padding: 15px;">
+                    Office Weekly Plan
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/monitoring/office" style="display: block; color: #fff; padding: 15px;">
+                    <i class="fas fa-chart-gantt" style="margin-right: 8px;"></i> Monitoring Office
+                </a>
+            </li>
+            <% } %>
             <li class="nav-item">
                 <a href="/analytics" style="display: block; color: #38bdf8; padding: 15px; font-weight: bold;">
                     <i class="fas fa-chart-line"></i> Analytics & KPI
                 </a>
             </li>
             <% } %>
-            <% if (user && (user.role==='ADMIN' || user.role==='SPV') ) { %>
+            <% if (user && ['ADMIN', 'SPV', 'MANAGER', 'SENIOR_MANAGER', 'OAA'].includes(user.role)) { %>
                 <li class="nav-item">
                     <a href="/admin/master" style="display: block; color: #fff; padding: 15px;">
                         Master Data

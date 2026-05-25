@@ -15,9 +15,11 @@ const userRoutes = require('./routes/users');
 const equipmentPartsRoutes = require('./routes/equipmentParts');
 const monitoringRoutes = require('./routes/monitoring');
 const processingPlanRoutes = require('./routes/processingPlanRoutes');
-const analyticsRoutes = require('./routes/analytics');
+const officePlanRoutes = require('./routes/officePlanRoutes');
+const periodicPMRoutes = require('./routes/periodicPMRoutes');
 const { startPMCron } = require('./cron/pmCron');
 const { startProcessingCron } = require('./cron/processingCron');
+const { startOfficeCron } = require('./cron/officeCron');
 const { startHMCron } = require('./cron/hmCron');
 const whatsappService = require('./services/whatsappService');
 
@@ -87,6 +89,8 @@ app.get('/weekly-plan/processing', ensureAuthenticated, weeklyPlanPageController
 app.get('/weekly-plan/processing/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
 app.get('/weekly-plan/civil', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPage);
 app.get('/weekly-plan/civil/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
+app.get('/weekly-plan/office', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPage);
+app.get('/weekly-plan/office/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
 
 const monthlyPlanController = require('./controllers/monthlyPlanController');
 app.get('/monthly-plan', ensureAuthenticated, monthlyPlanController.getMonthlyPlanPage);
@@ -109,6 +113,8 @@ app.use('/api/users', userRoutes);
 app.use('/monitoring', monitoringRoutes);
 app.use('/employees', employeeRoutes);
 app.use('/processing-plans', processingPlanRoutes);
+app.use('/office-plans', officePlanRoutes);
+app.use('/periodic-pm', periodicPMRoutes);
 app.use('/analytics', analyticsRoutes);
 
 // Admin Pages
@@ -148,7 +154,7 @@ app.listen(PORT, () => {
     // Start background cron jobs
     startPMCron();
     startProcessingCron();
-    const { startHMCron } = require('./cron/hmCron');
+    startOfficeCron();
     startHMCron();
     // Start WhatsApp Service
     whatsappService.initialize();

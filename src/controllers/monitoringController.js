@@ -51,8 +51,10 @@ const getMonitoringPage = async (req, res) => {
         // Filter by WO type
         if (type.toUpperCase() === 'PROCESSING') {
             where.type = 'Processing';
+        } else if (type.toUpperCase() === 'OFFICE') {
+            where.type = 'Office';
         } else {
-            where.type = { not: 'Processing' };
+            where.type = { notIn: ['Processing', 'Office'] };
         }
 
         const wos = await prisma.workOrder.findMany({
@@ -110,7 +112,12 @@ const getMonitoringPage = async (req, res) => {
             };
         });
 
-        const title = type.toUpperCase() === 'PROCESSING' ? 'Monitoring Realisasi Processing' : 'Monitoring Realisasi Maintenance';
+        let title = 'Monitoring Realisasi Maintenance';
+        if (type.toUpperCase() === 'PROCESSING') {
+            title = 'Monitoring Realisasi Processing';
+        } else if (type.toUpperCase() === 'OFFICE') {
+            title = 'Monitoring Realisasi Office';
+        }
 
         res.render('layout', {
             title: title,

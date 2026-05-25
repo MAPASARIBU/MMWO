@@ -15,17 +15,20 @@ const getWeeklyPlanPage = async (req, res) => {
         let categoryFilter;
         const isProcessing = req.path.includes('/processing');
         const isCivil = req.path.includes('/civil');
+        const isOffice = req.path.includes('/office');
         
         if (isProcessing) {
             categoryFilter = 'Processing';
         } else if (isCivil) {
             categoryFilter = 'Civil';
+        } else if (isOffice) {
+            categoryFilter = 'Office';
         } else {
-            categoryFilter = { notIn: ['Processing', 'Civil'] };
+            categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
         }
 
         let woFilter = { category: categoryFilter };
-        if (isProcessing || isCivil) {
+        if (isProcessing || isCivil || isOffice) {
             woFilter.status = { notIn: ['CLOSED', 'COMPLETED'] };
         }
         
@@ -144,7 +147,7 @@ const getWeeklyPlanPage = async (req, res) => {
         });
 
         res.render('layout', {
-            title: isProcessing ? 'Processing Weekly Plan' : (isCivil ? 'Civil Weekly Plan' : 'Maintenance Weekly Plan'),
+            title: isProcessing ? 'Processing Weekly Plan' : (isCivil ? 'Civil Weekly Plan' : (isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan')),
             body: await renderView('weeklyPlan', {
                 plans,
                 candidateWos,
@@ -154,7 +157,8 @@ const getWeeklyPlanPage = async (req, res) => {
                 stations,
                 user,
                 isProcessing,
-                isCivil
+                isCivil,
+                isOffice
             }),
             user: req.session.user,
             path: '/weekly-plan'
@@ -174,18 +178,21 @@ const getWeeklyPlanPrint = async (req, res) => {
 
         const isProcessing = req.path.includes('/processing');
         const isCivil = req.path.includes('/civil');
+        const isOffice = req.path.includes('/office');
         
         let categoryFilter;
         if (isProcessing) {
             categoryFilter = 'Processing';
         } else if (isCivil) {
             categoryFilter = 'Civil';
+        } else if (isOffice) {
+            categoryFilter = 'Office';
         } else {
-            categoryFilter = { notIn: ['Processing', 'Civil'] };
+            categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
         }
 
         let woFilter = { category: categoryFilter };
-        if (isProcessing || isCivil) {
+        if (isProcessing || isCivil || isOffice) {
             woFilter.status = { notIn: ['CLOSED', 'COMPLETED'] };
         }
 
@@ -235,7 +242,8 @@ const getWeeklyPlanPrint = async (req, res) => {
             user: req.session.user,
             today,
             isProcessing,
-            isCivil
+            isCivil,
+            isOffice
         });
     } catch (error) {
         console.error(error);

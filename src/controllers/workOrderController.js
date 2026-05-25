@@ -208,6 +208,10 @@ const updateStatus = async (req, res) => {
             return res.status(403).json({ error: 'Access Denied: Processing role is only allowed to process Processing Work Orders.' });
         }
 
+        if (user.role === 'OAA' && wo.category !== 'Office') {
+            return res.status(403).json({ error: 'Access Denied: Office Assistant role is only allowed to process Office Work Orders.' });
+        }
+
         const updateData = { status };
         let action = 'STATUS_CHANGE';
 
@@ -232,7 +236,7 @@ const updateStatus = async (req, res) => {
         // Logic for transitions
         if (status === 'ASSIGNED') {
             // AUTHORIZATION: ADMIN, SPV, MANAGER, MTC can assign
-            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER' && user.role !== 'MTC' && !(user.role === 'PROC' && wo.category === 'Processing')) {
+            if (user.role !== 'ADMIN' && user.role !== 'SPV' && user.role !== 'MANAGER' && user.role !== 'MTC' && !(user.role === 'PROC' && wo.category === 'Processing') && !(user.role === 'OAA' && wo.category === 'Office')) {
                 return res.status(403).json({ error: 'Access Denied: You cannot assign Work Orders.' });
             }
 
@@ -241,13 +245,17 @@ const updateStatus = async (req, res) => {
             action = 'ASSIGNED';
         }
         else if (status === 'IN_PROGRESS') {
-            // AUTHORIZATION: Only MTC, ADMIN, PROC (for processing), or SPV (for civil) can start work
-            if (user.role !== 'MTC' && user.role !== 'ADMIN' && !(user.role === 'PROC' && wo.category === 'Processing') && !(user.role === 'SPV' && wo.category === 'Civil')) {
-                return res.status(403).json({ error: 'Only Maintenance, Processing, or Supervisor (Civil) can start work.' });
+            // AUTHORIZATION: Only MTC, ADMIN, PROC (for processing), SPV (for civil), or OAA (for office) can start work
+            if (user.role !== 'MTC' && user.role !== 'ADMIN' && !(user.role === 'PROC' && wo.category === 'Processing') && !(user.role === 'SPV' && wo.category === 'Civil') && !(user.role === 'OAA' && wo.category === 'Office')) {
+                return res.status(403).json({ error: 'Only Maintenance, Processing, Office Assistant (Office), or Supervisor (Civil) can start work.' });
             }
             updateData.started_at = new Date();
         }
         else if (status === 'COMPLETED') {
+            // AUTHORIZATION: Office WOs can only be completed by OAA or ADMIN
+            if (wo.category === 'Office' && user.role !== 'OAA' && user.role !== 'ADMIN') {
+                return res.status(403).json({ error: 'Access Denied: Only Office Assistant (OAA) or ADMIN can complete Office Work Orders.' });
+            }
             updateData.completed_at = new Date();
         }
         else if (status === 'VERIFIED') {

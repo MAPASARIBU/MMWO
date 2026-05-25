@@ -122,7 +122,7 @@
     </div>
 
     <div class="header" style="position: relative;">
-        <h2><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : 'Maintenance Weekly Plan') %></h2>
+        <h2><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan')) %></h2>
         <div class="meta">
             Mill: <strong>BUNGA TANJUNG MILL</strong> |
             Week: <strong><%= query.week || 'ALL' %></strong> |

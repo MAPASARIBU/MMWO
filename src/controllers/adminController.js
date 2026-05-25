@@ -44,9 +44,14 @@ const getMasterDataPage = async (req, res) => {
             orderBy: { created_at: 'desc' }
         });
 
+        const officePlans = await prisma.officePlan.findMany({
+            include: { mill: true, station: true },
+            orderBy: { created_at: 'desc' }
+        });
+
         res.render('layout', {
             title: 'Master Data',
-            body: await renderView('admin/master', { mills, processingPlans, user: req.session.user }),
+            body: await renderView('admin/master', { mills, processingPlans, officePlans, user: req.session.user }),
             user: req.session.user,
             path: '/admin/master'
         });
