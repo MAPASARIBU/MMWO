@@ -197,7 +197,7 @@
                 </a>
             </li>
             <% } %>
-            <% if (user && ['ADMIN', 'SPV', 'MANAGER', 'SENIOR_MANAGER', 'OAA', 'MTC', 'PROC'].includes(user.role)) { %>
+            <% if (user && ['ADMIN', 'OAA', 'MTC', 'PROC'].includes(user.role)) { %>
                 <li class="nav-item">
                     <a href="/admin/master" style="display: block; color: #fff; padding: 15px;">
                         Master Data
