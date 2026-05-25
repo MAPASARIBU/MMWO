@@ -44,20 +44,20 @@
     <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
         <table class="table table-bordered table-sm text-center align-middle" style="min-width: 1200px; font-size: 0.8rem;">
             <thead style="position: sticky; top: 0; z-index: 10;">
-                <tr style="background-color: #1e293b; color: #ffffff;">
-                    <th rowspan="2" style="width: 40px; min-width: 40px; max-width: 40px; padding-left: 5px; padding-right: 5px; position: sticky; left: 0; z-index: 11; background-color: #1e293b; color: #ffffff; box-shadow: 1px 0 0 #334155; border-color: #334155; vertical-align: middle;">NO</th>
-                    <th rowspan="2" style="width: 260px; text-align: left; position: sticky; left: 40px; z-index: 11; background-color: #1e293b; color: #ffffff; box-shadow: 1px 0 0 #334155; border-color: #334155; vertical-align: middle;">JUDUL PROGRAM</th>
-                    <th rowspan="2" style="width: 100px; background-color: #1e293b; color: #ffffff; border-color: #334155; vertical-align: middle;">STASIUN</th>
-                    <th rowspan="2" style="width: 120px; background-color: #1e293b; color: #ffffff; border-color: #334155; vertical-align: middle;">PIC</th>
-                    <th rowspan="2" style="width: 80px; background-color: #1e293b; color: #ffffff; border-color: #334155; vertical-align: middle;">STATUS</th>
+                <tr style="background-color: #3b82f6; background-image: linear-gradient(90deg, #1e40af 0%, #3b82f6 100%); color: #ffffff; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">
+                    <th rowspan="2" style="width: 40px; min-width: 40px; max-width: 40px; padding: 12px 5px; position: sticky; left: 0; z-index: 11; background-color: #1e40af; color: #ffffff; box-shadow: 1px 0 0 #1e3a8a; border: none; border-bottom: 3px solid #1e3a8a; vertical-align: middle;">NO</th>
+                    <th rowspan="2" style="width: 350px; min-width: 350px; text-align: left; padding: 12px 10px; position: sticky; left: 40px; z-index: 11; background-color: #1e40af; color: #ffffff; box-shadow: 1px 0 0 #1e3a8a; border: none; border-bottom: 3px solid #1e3a8a; vertical-align: middle;">JUDUL PROGRAM</th>
+                    <th rowspan="2" style="width: 100px; padding: 12px 8px; border: none; border-bottom: 3px solid #1e3a8a; border-right: 1px solid rgba(255,255,255,0.1); vertical-align: middle;">STASIUN</th>
+                    <th rowspan="2" style="width: 120px; padding: 12px 8px; border: none; border-bottom: 3px solid #1e3a8a; border-right: 1px solid rgba(255,255,255,0.1); vertical-align: middle;">PIC</th>
+                    <th rowspan="2" style="width: 80px; padding: 12px 8px; border: none; border-bottom: 3px solid #1e3a8a; border-right: 1px solid rgba(255,255,255,0.1); vertical-align: middle;">STATUS</th>
                     <% dates.forEach(d => { 
                         // Determine if it's weekend
                         const isWeekend = d.date.getDay() === 0 || d.date.getDay() === 6;
-                        const bgColor = isWeekend ? '#334155' : '#1e293b';
+                        const bgColor = isWeekend ? 'rgba(0,0,0,0.15)' : 'transparent';
                     %>
-                        <th style="width: 40px; padding: 6px 2px; background-color: <%= bgColor %>; color: #ffffff; border-color: #334155; vertical-align: middle;">
-                            <div style="font-size: 1.05rem; font-weight: bold;"><%= d.dayStr %></div>
-                            <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;"><%= d.monthStr %></div>
+                        <th style="width: 40px; padding: 8px 2px; background-color: <%= bgColor %>; color: #ffffff; border: none; border-bottom: 3px solid #1e3a8a; border-right: 1px solid rgba(255,255,255,0.1); vertical-align: middle;">
+                            <div style="font-size: 1.1rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.2);"><%= d.dayStr %></div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;"><%= d.monthStr %></div>
                         </th>
                     <% }); %>
                 </tr>
