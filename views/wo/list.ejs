@@ -42,7 +42,7 @@
             <tbody>
                 <% if (wos.length> 0) { %>
                     <% wos.forEach(wo=> { %>
-                        <tr onclick="window.location='/work-orders/<%= wo.id %>'" style="cursor: pointer;"
+                        <tr onclick="window.location='/work-orders/<%= wo.id %>?readonly=true'" style="cursor: pointer;"
                             class="hover:bg-gray-50">
                             <td><span style="color: var(--primary-color); font-weight: 500;">
                                     <%= wo.wo_no %>
