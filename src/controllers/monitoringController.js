@@ -49,7 +49,11 @@ const getMonitoringPage = async (req, res) => {
         ];
 
         // Filter by WO type
-        where.type = type.toUpperCase();
+        if (type.toUpperCase() === 'PROCESSING') {
+            where.type = 'Processing';
+        } else {
+            where.type = { not: 'Processing' };
+        }
 
         const wos = await prisma.workOrder.findMany({
             where,
