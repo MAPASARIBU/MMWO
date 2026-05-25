@@ -19,9 +19,9 @@ const getMonitoringPage = async (req, res) => {
         // Reset time to start of day
         start.setHours(0, 0, 0, 0);
 
-        // Generate 14 days array
+        // Generate 30 days array
         const dates = [];
-        for (let i = 0; i < 14; i++) {
+        for (let i = 0; i < 30; i++) {
             const d = new Date(start);
             d.setDate(d.getDate() + i);
             dates.push(d);

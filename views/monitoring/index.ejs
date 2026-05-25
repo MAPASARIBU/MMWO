@@ -1,3 +1,17 @@
+<style>
+@media print {
+    body { background: white; margin: 0; padding: 0; font-size: 8pt; }
+    .sidebar, .navbar, .topbar, .btn, .d-flex.gap-2, header, footer { display: none !important; }
+    .page-content, .main-content { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    .card { border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; }
+    .table-responsive { max-height: none !important; overflow: visible !important; }
+    table { width: 100% !important; min-width: 100% !important; font-size: 7pt !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    @page { size: landscape; margin: 5mm; }
+    /* Force sticky columns to act normally on print to avoid rendering bugs */
+    th, td { position: static !important; }
+}
+</style>
 <div class="card">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Jadwal Target vs Actual <%= typeof type !== 'undefined' ? type : 'WO' %></h2>
@@ -21,20 +35,23 @@
             <a href="?startDate=<%= nextStart.toISOString().split('T')[0] %>" class="btn btn-outline-secondary btn-sm">
                 Next 7 Hari <i class="fas fa-arrow-right"></i>
             </a>
+            <button onclick="window.print()" class="btn btn-primary btn-sm ms-2">
+                <i class="fas fa-print"></i> Print
+            </button>
         </div>
     </div>
 
     <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
         <table class="table table-bordered table-sm text-center align-middle" style="min-width: 1200px; font-size: 0.8rem;">
-            <thead class="table-light" style="position: sticky; top: 0; z-index: 10; background-color: #f8f9fa;">
+            <thead class="text-white" style="position: sticky; top: 0; z-index: 10; background-color: #4f46e5;">
                 <tr>
-                    <th rowspan="2" style="width: 40px; min-width: 40px; max-width: 40px; padding-left: 5px; padding-right: 5px; position: sticky; left: 0; z-index: 11; background-color: #f8f9fa; box-shadow: 1px 0 0 #dee2e6;">NO</th>
-                    <th rowspan="2" style="width: 260px; text-align: left; position: sticky; left: 40px; z-index: 11; background-color: #f8f9fa; box-shadow: 1px 0 0 #dee2e6;">JUDUL PROGRAM</th>
-                    <th rowspan="2" style="width: 100px;">STASIUN</th>
-                    <th rowspan="2" style="width: 120px;">PIC</th>
-                    <th rowspan="2" style="width: 80px;">STATUS</th>
+                    <th rowspan="2" style="width: 40px; min-width: 40px; max-width: 40px; padding-left: 5px; padding-right: 5px; position: sticky; left: 0; z-index: 11; background-color: #4f46e5; box-shadow: 1px 0 0 #3730a3; border-color: #3730a3;">NO</th>
+                    <th rowspan="2" style="width: 260px; text-align: left; position: sticky; left: 40px; z-index: 11; background-color: #4f46e5; box-shadow: 1px 0 0 #3730a3; border-color: #3730a3;">JUDUL PROGRAM</th>
+                    <th rowspan="2" style="width: 100px; border-color: #3730a3;">STASIUN</th>
+                    <th rowspan="2" style="width: 120px; border-color: #3730a3;">PIC</th>
+                    <th rowspan="2" style="width: 80px; border-color: #3730a3;">STATUS</th>
                     <% dates.forEach(d => { %>
-                        <th style="width: 40px; padding: 4px; color: #4f46e5;">
+                        <th style="width: 40px; padding: 4px; color: #ffffff; border-color: #3730a3;">
                             <div style="font-size: 1.1rem; font-weight: bold;"><%= d.dayStr %></div>
                             <div style="font-size: 0.7rem;"><%= d.monthStr %></div>
                         </th>
