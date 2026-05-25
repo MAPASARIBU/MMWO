@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const monitoringController = require('../controllers/monitoringController');
-const { requireAuth } = require('../middleware/auth');
+const { ensureAuthenticated } = require('../middleware/authMiddleware');
 
-router.get('/', requireAuth, monitoringController.getMonitoringPage);
+router.get('/', ensureAuthenticated, monitoringController.getMonitoringPage);
 
 module.exports = router;
