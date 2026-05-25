@@ -251,13 +251,15 @@
                                             <% mtcUsers.forEach(function(u) { %>
                                                 <% if (wo.category === 'Processing' && (u.role === 'PROC' || u.role === 'SPV')) { %>
                                                     <option value="<%= u.id %>"><%= u.name %></option>
+                                                <% } else if (wo.category === 'Office' && u.role === 'OAA') { %>
+                                                    <option value="<%= u.id %>"><%= u.name %></option>
                                                 <% } else if (wo.category === 'Civil' && (u.role === 'MTC' || u.role === 'SPV' || u.role === 'ASST')) { %>
                                                     <option value="<%= u.id %>"><%= u.name %></option>
-                                                <% } else if (wo.category !== 'Processing' && wo.category !== 'Civil' && u.role === 'MTC') { %>
+                                                <% } else if (wo.category !== 'Processing' && wo.category !== 'Civil' && wo.category !== 'Office' && u.role === 'MTC') { %>
                                                     <option value="<%= u.id %>"><%= u.name %></option>
                                                 <% } %>
                                             <% }); %>
-                                                    <% } %>
+                                        <% } %>
                                     </select>
                                     <button class="btn btn-primary" onclick="assignUser()">Assign</button>
                                 </div>

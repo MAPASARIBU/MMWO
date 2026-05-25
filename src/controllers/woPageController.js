@@ -148,7 +148,7 @@ const detailWorkOrderPage = async (req, res) => {
 
         const users = await prisma.user.findMany({ 
             where: { 
-                role: { in: ['MTC', 'PROC', 'SPV'] }, 
+                role: { in: ['MTC', 'PROC', 'SPV', 'OAA'] }, 
                 is_active: true,
                 OR: [{ mill_id: wo.mill_id }, { mill_id: null }]
             }, 
