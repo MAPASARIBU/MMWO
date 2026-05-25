@@ -1,4 +1,5 @@
 <div class="card">
+    <% if (user.role !== 'OAA') { %>
     <div class="flex justify-between items-center mb-4">
         <h3>Master Data Management</h3>
     </div>
@@ -148,6 +149,7 @@
             </tbody>
         </table>
     </div>
+    <% } %>
 
     <!-- Office Plans Section -->
     <hr class="my-4">
