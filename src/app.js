@@ -16,7 +16,7 @@ const equipmentPartsRoutes = require('./routes/equipmentParts');
 const monitoringRoutes = require('./routes/monitoring');
 const processingPlanRoutes = require('./routes/processingPlanRoutes');
 const officePlanRoutes = require('./routes/officePlanRoutes');
-const periodicPMRoutes = require('./routes/periodicPMRoutes');
+const analyticsRoutes = require('./routes/analytics');
 const { startPMCron } = require('./cron/pmCron');
 const { startProcessingCron } = require('./cron/processingCron');
 const { startOfficeCron } = require('./cron/officeCron');
@@ -101,7 +101,7 @@ app.patch('/api/monthly-plan/:id/materials/:material_id/toggle', ensureAuthentic
 
 const adminController = require('./controllers/adminController');
 app.get('/admin/users', ensureRole(['ADMIN']), adminController.getUsersPage);
-app.get('/admin/master', ensureRole(['ADMIN', 'SPV']), adminController.getMasterDataPage);
+app.get('/admin/master', ensureRole(['ADMIN', 'SPV', 'OAA', 'MANAGER', 'SENIOR_MANAGER']), adminController.getMasterDataPage);
 
 const employeeRoutes = require('./routes/employees');
 app.use('/auth', authRoutes);
@@ -114,7 +114,7 @@ app.use('/monitoring', monitoringRoutes);
 app.use('/employees', employeeRoutes);
 app.use('/processing-plans', processingPlanRoutes);
 app.use('/office-plans', officePlanRoutes);
-app.use('/periodic-pm', periodicPMRoutes);
+
 app.use('/analytics', analyticsRoutes);
 
 // Admin Pages
