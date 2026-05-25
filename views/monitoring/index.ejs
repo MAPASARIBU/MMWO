@@ -43,17 +43,21 @@
 
     <div class="table-responsive" style="max-height: 70vh; overflow-y: auto;">
         <table class="table table-bordered table-sm text-center align-middle" style="min-width: 1200px; font-size: 0.8rem;">
-            <thead class="text-white" style="position: sticky; top: 0; z-index: 10; background-color: #4f46e5;">
-                <tr>
-                    <th rowspan="2" style="width: 40px; min-width: 40px; max-width: 40px; padding-left: 5px; padding-right: 5px; position: sticky; left: 0; z-index: 11; background-color: #4f46e5; box-shadow: 1px 0 0 #3730a3; border-color: #3730a3;">NO</th>
-                    <th rowspan="2" style="width: 260px; text-align: left; position: sticky; left: 40px; z-index: 11; background-color: #4f46e5; box-shadow: 1px 0 0 #3730a3; border-color: #3730a3;">JUDUL PROGRAM</th>
-                    <th rowspan="2" style="width: 100px; border-color: #3730a3;">STASIUN</th>
-                    <th rowspan="2" style="width: 120px; border-color: #3730a3;">PIC</th>
-                    <th rowspan="2" style="width: 80px; border-color: #3730a3;">STATUS</th>
-                    <% dates.forEach(d => { %>
-                        <th style="width: 40px; padding: 4px; color: #ffffff; border-color: #3730a3;">
-                            <div style="font-size: 1.1rem; font-weight: bold;"><%= d.dayStr %></div>
-                            <div style="font-size: 0.7rem;"><%= d.monthStr %></div>
+            <thead style="position: sticky; top: 0; z-index: 10;">
+                <tr style="background-color: #1e293b; color: #ffffff;">
+                    <th rowspan="2" style="width: 40px; min-width: 40px; max-width: 40px; padding-left: 5px; padding-right: 5px; position: sticky; left: 0; z-index: 11; background-color: #1e293b; color: #ffffff; box-shadow: 1px 0 0 #334155; border-color: #334155; vertical-align: middle;">NO</th>
+                    <th rowspan="2" style="width: 260px; text-align: left; position: sticky; left: 40px; z-index: 11; background-color: #1e293b; color: #ffffff; box-shadow: 1px 0 0 #334155; border-color: #334155; vertical-align: middle;">JUDUL PROGRAM</th>
+                    <th rowspan="2" style="width: 100px; background-color: #1e293b; color: #ffffff; border-color: #334155; vertical-align: middle;">STASIUN</th>
+                    <th rowspan="2" style="width: 120px; background-color: #1e293b; color: #ffffff; border-color: #334155; vertical-align: middle;">PIC</th>
+                    <th rowspan="2" style="width: 80px; background-color: #1e293b; color: #ffffff; border-color: #334155; vertical-align: middle;">STATUS</th>
+                    <% dates.forEach(d => { 
+                        // Determine if it's weekend
+                        const isWeekend = d.date.getDay() === 0 || d.date.getDay() === 6;
+                        const bgColor = isWeekend ? '#334155' : '#1e293b';
+                    %>
+                        <th style="width: 40px; padding: 6px 2px; background-color: <%= bgColor %>; color: #ffffff; border-color: #334155; vertical-align: middle;">
+                            <div style="font-size: 1.05rem; font-weight: bold;"><%= d.dayStr %></div>
+                            <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px;"><%= d.monthStr %></div>
                         </th>
                     <% }); %>
                 </tr>
