@@ -101,7 +101,7 @@ app.patch('/api/monthly-plan/:id/materials/:material_id/toggle', ensureAuthentic
 
 const adminController = require('./controllers/adminController');
 app.get('/admin/users', ensureRole(['ADMIN']), adminController.getUsersPage);
-app.get('/admin/master', ensureRole(['ADMIN', 'SPV', 'OAA', 'MANAGER', 'SENIOR_MANAGER']), adminController.getMasterDataPage);
+app.get('/admin/master', ensureRole(['ADMIN', 'SPV', 'OAA', 'MANAGER', 'SENIOR_MANAGER', 'MTC', 'PROC']), adminController.getMasterDataPage);
 
 const employeeRoutes = require('./routes/employees');
 app.use('/auth', authRoutes);
