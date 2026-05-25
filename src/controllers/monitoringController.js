@@ -5,7 +5,7 @@ const { renderView } = require('./indexController');
 const getMonitoringPage = async (req, res) => {
     try {
         const user = req.session.user || req.user;
-        let { startDate } = req.query;
+        let { startDate, endDate, autoPrint } = req.query;
         const type = req.params.type || 'MAINTENANCE'; // Default to MAINTENANCE
 
         // Default to 3 days ago if no startDate provided
@@ -19,12 +19,26 @@ const getMonitoringPage = async (req, res) => {
         // Reset time to start of day
         start.setHours(0, 0, 0, 0);
 
-        // Generate 30 days array
+        let end = new Date(start);
+        if (endDate) {
+            end = new Date(endDate);
+            end.setHours(0, 0, 0, 0);
+            // Limit to max 90 days to prevent browser crash
+            const diffDays = Math.round(Math.abs((end - start) / (1000 * 60 * 60 * 24)));
+            if (diffDays > 90) {
+                end = new Date(start);
+                end.setDate(end.getDate() + 90);
+            }
+        } else {
+            end.setDate(end.getDate() + 29); // default 30 days total
+        }
+
+        // Generate days array
         const dates = [];
-        for (let i = 0; i < 30; i++) {
-            const d = new Date(start);
-            d.setDate(d.getDate() + i);
-            dates.push(d);
+        let current = new Date(start);
+        while (current <= end) {
+            dates.push(new Date(current));
+            current.setDate(current.getDate() + 1);
         }
 
         const windowStart = dates[0];
@@ -125,6 +139,8 @@ const getMonitoringPage = async (req, res) => {
                 wos: filteredWos, 
                 dates: formattedDates, 
                 startDateStr: windowStart.toISOString().split('T')[0],
+                endDateStr: windowEnd.toISOString().split('T')[0],
+                autoPrint: autoPrint === 'true' || autoPrint === true,
                 user,
                 type: type.toUpperCase()
             }),

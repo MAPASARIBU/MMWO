@@ -35,7 +35,7 @@
             <a href="?startDate=<%= nextStart.toISOString().split('T')[0] %>" class="btn btn-outline-secondary btn-sm">
                 Next 7 Hari <i class="fas fa-arrow-right"></i>
             </a>
-            <button onclick="window.print()" class="btn btn-primary btn-sm ms-2">
+            <button onclick="openPrintModal()" class="btn btn-primary btn-sm ms-2">
                 <i class="fas fa-print"></i> Print
             </button>
         </div>
@@ -152,3 +152,46 @@
         </table>
     </div>
 </div>
+
+<!-- Print Filter Modal -->
+<div id="printModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 1050; align-items:center; justify-content:center;">
+    <div class="card" style="width: 400px; max-width: 90%; background: white; padding: 20px; border-radius: 8px;">
+        <h4 class="mb-4">Print Filters</h4>
+        <form id="printForm" onsubmit="submitPrint(event)">
+            <div class="mb-3">
+                <label class="form-label" style="font-weight: bold;">Date Range</label>
+                <div class="d-flex gap-2 align-items-center">
+                    <input type="date" id="printStartDate" class="form-control" value="<%= typeof startDateStr !== 'undefined' ? startDateStr : '' %>" required>
+                    <span>-</span>
+                    <input type="date" id="printEndDate" class="form-control" value="<%= typeof endDateStr !== 'undefined' ? endDateStr : '' %>" required>
+                </div>
+            </div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('printModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-print"></i> Print</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openPrintModal() {
+    document.getElementById('printModal').style.display = 'flex';
+}
+
+function submitPrint(e) {
+    e.preventDefault();
+    const start = document.getElementById('printStartDate').value;
+    const end = document.getElementById('printEndDate').value;
+    window.location.href = `?startDate=${start}&endDate=${end}&autoPrint=true`;
+}
+
+// Auto print if requested
+<% if (typeof autoPrint !== 'undefined' && autoPrint) { %>
+    window.onload = function() {
+        setTimeout(() => {
+            window.print();
+        }, 500);
+    };
+<% } %>
+</script>
