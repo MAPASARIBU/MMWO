@@ -285,6 +285,82 @@
 </div>
 
 
+<!-- Modal Create / Edit Office Plan -->
+<div id="officePlanModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 1000;">
+    <div class="card" style="margin: 50px auto; max-width: 500px; position:relative;">
+        <h3 id="officeModalTitle">Add Office Plan</h3>
+        <form id="officePlanForm">
+            <input type="hidden" id="officePlanId" name="id">
+            
+            <% if (user.role === 'ADMIN') { %>
+                <div class="form-group">
+                    <label class="form-label">Mill *</label>
+                    <select name="mill_id" id="officeMillId" class="form-control" required onchange="filterOfficeStations(this.value)">
+                        <option value="">-- Select Mill --</option>
+                        <% mills.forEach(m => { %>
+                            <option value="<%= m.id %>"><%= m.name %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            <% } else { %>
+                <input type="hidden" name="mill_id" id="officeMillId" value="<%= user.mill_id %>">
+            <% } %>
+
+            <div class="form-group">
+                <label class="form-label">Station *</label>
+                <select name="station_id" id="officeStationId" class="form-control" required>
+                    <option value="">-- Select Station --</option>
+                    <% mills.forEach(m => { %>
+                        <% m.stations.forEach(s => { %>
+                            <option value="<%= s.id %>" data-mill="<%= s.mill_id %>"><%= s.name %></option>
+                        <% }) %>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Name / Description *</label>
+                <input type="text" name="name" id="officePlanName" class="form-control" required placeholder="e.g. Office Weekly Cleaning">
+            </div>
+
+            <div class="flex gap-4">
+                <div class="form-group flex-grow">
+                    <label class="form-label">Interval Value *</label>
+                    <input type="number" name="interval_value" id="officeIntervalValue" class="form-control" required min="1" value="1">
+                </div>
+                <div class="form-group flex-grow">
+                    <label class="form-label">Interval Type *</label>
+                    <select name="interval_type" id="officeIntervalType" class="form-control" required>
+                        <option value="Weekly">Weekly</option>
+                        <option value="Monthly">Monthly</option>
+                        <option value="Quarterly">Quarterly</option>
+                        <option value="Semesterly">Semesterly</option>
+                        <option value="Annually">Annually</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">First / Next Due Date *</label>
+                <input type="date" name="next_due_date" id="officeNextDueDate" class="form-control" required>
+            </div>
+
+            <div class="form-group" id="officeStatusGroup" style="display: none;">
+                <label class="form-label">Status</label>
+                <select name="is_active" id="officeIsActive" class="form-control">
+                    <option value="true">Active</option>
+                    <option value="false">Inactive</option>
+                </select>
+            </div>
+
+            <div class="flex justify-between mt-4">
+                <button type="button" class="btn btn-secondary" onclick="closeOfficePlanModal()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="saveOfficePlanBtn">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function showMillStations(millId) {
         // Hide all
