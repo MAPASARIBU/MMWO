@@ -17,7 +17,7 @@ const getISOWeekString = (date) => {
 
 const startOfficeCron = () => {
     // Run daily at midnight (00:00)
-    cron.schedule('0 0 * * *', async () => {
+    cron.schedule('0 * * * *', async () => {
         console.log('[CRON] Running Office Plan checks...');
         try {
             // Find an ADMIN to act as reporter/planner for auto-generated WOs

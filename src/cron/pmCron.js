@@ -21,7 +21,7 @@ function calculateNextDueDate(currentDate, intervalType, intervalValue) {
 
 const startPMCron = () => {
     // Run daily at midnight (00:00)
-    cron.schedule('0 0 * * *', async () => {
+    cron.schedule('0 * * * *', async () => {
         console.log('[CRON] Running Periodic PM checks...');
         try {
             // Find an ADMIN to act as reporter for auto-generated WOs

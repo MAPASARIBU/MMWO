@@ -91,7 +91,7 @@ const runHMChecks = async () => {
 };
 
 const startHMCron = () => {
-    cron.schedule('0 0 * * *', runHMChecks);
+    cron.schedule('0 * * * *', runHMChecks);
 };
 
 module.exports = { startHMCron, runHMChecks };
