@@ -19,6 +19,8 @@ const sendNewWONotification = async (woId) => {
         let targetRoles = [];
         if (wo.category === 'Processing') {
             targetRoles = ['PROC', 'SPV', 'MANAGER'];
+        } else if (wo.category === 'Office') {
+            targetRoles = ['OAA', 'SPV', 'MANAGER'];
         } else {
             targetRoles = ['MTC', 'SPV', 'MANAGER'];
         }
