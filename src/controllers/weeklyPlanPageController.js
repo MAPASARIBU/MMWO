@@ -27,10 +27,10 @@ const getWeeklyPlanPage = async (req, res) => {
             categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
         }
 
-        let woFilter = { category: categoryFilter };
-        if (isProcessing || isCivil || isOffice) {
-            woFilter.status = { notIn: ['CLOSED', 'COMPLETED'] };
-        }
+        let woFilter = { 
+            category: categoryFilter,
+            status: { notIn: ['CLOSED', 'COMPLETED'] }
+        };
         
         // Mill Isolation for Plans and Candidates
         if (user.role === 'SENIOR_MANAGER') {
@@ -191,10 +191,10 @@ const getWeeklyPlanPrint = async (req, res) => {
             categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
         }
 
-        let woFilter = { category: categoryFilter };
-        if (isProcessing || isCivil || isOffice) {
-            woFilter.status = { notIn: ['CLOSED', 'COMPLETED'] };
-        }
+        let woFilter = { 
+            category: categoryFilter,
+            status: { notIn: ['CLOSED', 'COMPLETED'] }
+        };
 
         const plans = await prisma.weeklyPlan.findMany({
             where: {
