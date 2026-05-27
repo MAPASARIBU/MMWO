@@ -4,7 +4,7 @@ const { renderView } = require('./indexController');
 
 const listWorkOrders = async (req, res) => {
     try {
-        const { status, priority, category, date } = req.query;
+        const { status, priority, category, startDate, endDate, station_id } = req.query;
         const user = req.session.user;
 
         // Determine Mill Context
@@ -27,15 +27,22 @@ const listWorkOrders = async (req, res) => {
         if (priority) where.priority = priority;
         if (category) where.category = category;
 
-        // Date Filter (Daily)
-        if (date) {
-            const startDate = new Date(date);
-            const endDate = new Date(date);
-            endDate.setHours(23, 59, 59, 999);
-            where.created_at = {
-                gte: startDate,
-                lte: endDate
-            };
+        // Date Filter (Range)
+        if (startDate || endDate) {
+            where.created_at = {};
+            if (startDate) {
+                where.created_at.gte = new Date(startDate);
+            }
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                where.created_at.lte = end;
+            }
+        }
+
+        // Station filter
+        if (station_id) {
+            where.station_id = parseInt(station_id);
         }
 
         // Apply Mill Filter
@@ -58,9 +65,21 @@ const listWorkOrders = async (req, res) => {
             orderBy: { created_at: 'desc' }
         });
 
+        // Fetch stations for the filter dropdown
+        let stationWhere = {};
+        if (targetMillId) {
+            stationWhere.mill_id = targetMillId;
+        } else if (user.role === 'SENIOR_MANAGER') {
+            stationWhere.mill_id = { in: user.accessible_mills || [] };
+        }
+        const stations = await prisma.station.findMany({
+            where: stationWhere,
+            orderBy: { name: 'asc' }
+        });
+
         res.render('layout', {
             title: 'Work Orders',
-            body: await renderView('wo/list', { wos, query: req.query, user }),
+            body: await renderView('wo/list', { wos, query: req.query, user, stations }),
             user: req.session.user,
             path: '/work-orders'
         });
