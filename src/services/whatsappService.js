@@ -10,6 +10,8 @@ class WhatsAppService {
         this.qrDataURL = null;
         this.status = 'DISCONNECTED';
         this.lastError = null;
+        this.messageQueue = [];
+        this.isProcessingQueue = false;
     }
 
     async initialize(retries = 3) {
@@ -116,34 +118,49 @@ class WhatsAppService {
         };
     }
 
+    async processQueue() {
+        if (this.isProcessingQueue) return;
+        this.isProcessingQueue = true;
+
+        while (this.messageQueue.length > 0) {
+            const { to, message, resolve } = this.messageQueue.shift();
+
+            if (this.status !== 'CONNECTED') {
+                console.warn('Cannot send WhatsApp message: Client is not connected.');
+                resolve(false);
+                continue;
+            }
+
+            try {
+                let formattedNumber = to.replace(/\D/g, '');
+                if (formattedNumber.startsWith('0')) {
+                    formattedNumber = '62' + formattedNumber.substring(1);
+                }
+                const chatId = `${formattedNumber}@c.us`;
+                await this.client.sendMessage(chatId, message);
+                resolve(true);
+            } catch (error) {
+                console.error(`Failed to send WhatsApp message to ${to}:`, error);
+                resolve(false);
+            }
+
+            // Delay between messages to prevent rate limit (1.5 seconds)
+            await new Promise(res => setTimeout(res, 1500));
+        }
+
+        this.isProcessingQueue = false;
+    }
+
     /**
      * Send a WhatsApp message
      * @param {string} to - The phone number (e.g., '628123456789')
      * @param {string} message - The text message
      */
     async sendMessage(to, message) {
-        if (this.status !== 'CONNECTED') {
-            console.warn('Cannot send WhatsApp message: Client is not connected.');
-            return false;
-        }
-
-        try {
-            // Format number to WhatsApp format (append @c.us)
-            // Ensure number only contains digits
-            let formattedNumber = to.replace(/\D/g, '');
-            
-            // If it starts with 0, replace with 62 (Indonesian code as default assumption)
-            if (formattedNumber.startsWith('0')) {
-                formattedNumber = '62' + formattedNumber.substring(1);
-            }
-
-            const chatId = `${formattedNumber}@c.us`;
-            await this.client.sendMessage(chatId, message);
-            return true;
-        } catch (error) {
-            console.error(`Failed to send WhatsApp message to ${to}:`, error);
-            return false;
-        }
+        return new Promise((resolve) => {
+            this.messageQueue.push({ to, message, resolve });
+            this.processQueue();
+        });
     }
 
     async logout() {

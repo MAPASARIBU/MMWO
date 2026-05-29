@@ -54,7 +54,13 @@ const sendNewWONotification = async (woId) => {
 
             for (const targetUser of targetUsers) {
                 if (targetUser.phone) {
-                    whatsappService.sendMessage(targetUser.phone, message);
+                    try {
+                        await whatsappService.sendMessage(targetUser.phone, message);
+                        // Add 1.5 second delay between messages to avoid WhatsApp rate limiting
+                        await new Promise(resolve => setTimeout(resolve, 1500));
+                    } catch (err) {
+                        console.error(`Failed to send WA to ${targetUser.phone}:`, err);
+                    }
                 }
             }
         }
