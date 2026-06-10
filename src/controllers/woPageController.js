@@ -6,6 +6,8 @@ const listWorkOrders = async (req, res) => {
     try {
         const { status, priority, category, startDate, endDate, station_id } = req.query;
         const user = req.session.user;
+        const queryToView = { ...req.query };
+        const isInitialLoad = Object.keys(req.query).length === 0;
 
         // Determine Mill Context
         let targetMillId = null;
@@ -19,8 +21,8 @@ const listWorkOrders = async (req, res) => {
         if (status) {
             where.status = status;
         } else {
-            // Hide CLOSED work orders by default unless explicitly filtered
-            where.status = { not: 'CLOSED' };
+            // Hide CLOSED and COMPLETED work orders by default unless explicitly filtered
+            where.status = { notIn: ['CLOSED', 'COMPLETED'] };
         }
         
         where.category = { not: 'Processing' };
@@ -28,13 +30,24 @@ const listWorkOrders = async (req, res) => {
         if (category) where.category = category;
 
         // Date Filter (Range)
-        if (startDate || endDate) {
+        let actualStartDate = startDate;
+        let actualEndDate = endDate;
+
+        if (isInitialLoad) {
+            // Default to 1 month ago
+            const oneMonthAgo = new Date();
+            oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+            actualStartDate = oneMonthAgo.toISOString().split('T')[0];
+            queryToView.startDate = actualStartDate;
+        }
+
+        if (actualStartDate || actualEndDate) {
             where.created_at = {};
-            if (startDate) {
-                where.created_at.gte = new Date(startDate);
+            if (actualStartDate) {
+                where.created_at.gte = new Date(actualStartDate);
             }
-            if (endDate) {
-                const end = new Date(endDate);
+            if (actualEndDate) {
+                const end = new Date(actualEndDate);
                 end.setHours(23, 59, 59, 999);
                 where.created_at.lte = end;
             }
@@ -79,7 +92,7 @@ const listWorkOrders = async (req, res) => {
 
         res.render('layout', {
             title: 'Work Orders',
-            body: await renderView('wo/list', { wos, query: req.query, user, stations }),
+            body: await renderView('wo/list', { wos, query: queryToView, user, stations }),
             user: req.session.user,
             path: '/work-orders'
         });
