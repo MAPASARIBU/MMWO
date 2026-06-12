@@ -332,27 +332,7 @@
                 <label class="form-label">Description *</label>
                 <textarea name="description" class="form-control" rows="3" required placeholder="Jelaskan detail pekerjaan..."></textarea>
             </div>
-            <% if (!(typeof isProcessing !== 'undefined' && isProcessing)) { %>
-                <div class="flex gap-4">
-                    <div class="form-group flex-grow">
-                        <label class="form-label">Target Week *</label>
-                        <input type="text" name="planned_week" class="form-control" required value="<%= typeof currentWeek !== 'undefined' ? currentWeek : (query.week || '') %>">
-                    </div>
-                    <div class="form-group flex-grow">
-                        <label class="form-label">Target Day *</label>
-                        <select name="planned_day" class="form-control" required>
-                            <option value="">-- Select Day --</option>
-                            <option value="Monday">Monday</option>
-                            <option value="Tuesday">Tuesday</option>
-                            <option value="Wednesday">Wednesday</option>
-                            <option value="Thursday">Thursday</option>
-                            <option value="Friday">Friday</option>
-                            <option value="Saturday">Saturday</option>
-                            <option value="Sunday">Sunday</option>
-                        </select>
-                    </div>
-                </div>
-            <% } %>
+
             <% if (!(typeof isProcessing !== 'undefined' && isProcessing)) { %>
                 <div class="form-group">
                     <label class="form-label">Assign Mechanics (Max 4)</label>
