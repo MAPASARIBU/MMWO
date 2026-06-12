@@ -295,20 +295,28 @@
 <!-- Add Non-WO Job Modal -->
 <div id="nonWoModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 10000;">
     <div class="card" style="margin: 30px auto; max-width: 600px; position: relative; max-height: 90vh; overflow-y: auto;">
-        <h3>Add Non-WO / Fabrication Job</h3>
+        <% if (typeof isProcessing !== 'undefined' && isProcessing) { %>
+            <h3>Add Non-WO / Processing Job</h3>
+        <% } else { %>
+            <h3>Add Non-WO / Fabrication Job</h3>
+        <% } %>
         <form id="nonWoForm">
-            <div class="form-group">
-                <label class="form-label">Category *</label>
-                <select name="category" class="form-control" required>
-                    <option value="">-- Select Category --</option>
-                    <option value="Mechanical">Mechanical</option>
-                    <option value="Electrical">Electrical</option>
-                    <option value="Fabrication">Fabrication</option>
-                    <option value="Civil">Civil</option>
-                    <option value="Instrument">Instrument</option>
-                    <option value="Others">Others</option>
-                </select>
-            </div>
+            <% if (typeof isProcessing !== 'undefined' && isProcessing) { %>
+                <input type="hidden" name="category" value="Processing">
+            <% } else { %>
+                <div class="form-group">
+                    <label class="form-label">Category *</label>
+                    <select name="category" class="form-control" required>
+                        <option value="">-- Select Category --</option>
+                        <option value="Mechanical">Mechanical</option>
+                        <option value="Electrical">Electrical</option>
+                        <option value="Fabrication">Fabrication</option>
+                        <option value="Civil">Civil</option>
+                        <option value="Instrument">Instrument</option>
+                        <option value="Others">Others</option>
+                    </select>
+                </div>
+            <% } %>
             <div class="form-group">
                 <label class="form-label">Station *</label>
                 <select name="station_id" class="form-control" required>
@@ -324,40 +332,44 @@
                 <label class="form-label">Description *</label>
                 <textarea name="description" class="form-control" rows="3" required placeholder="Jelaskan detail pekerjaan..."></textarea>
             </div>
-            <div class="flex gap-4">
-                <div class="form-group flex-grow">
-                    <label class="form-label">Target Week *</label>
-                    <input type="text" name="planned_week" class="form-control" required value="<%= typeof currentWeek !== 'undefined' ? currentWeek : (query.week || '') %>">
+            <% if (!(typeof isProcessing !== 'undefined' && isProcessing)) { %>
+                <div class="flex gap-4">
+                    <div class="form-group flex-grow">
+                        <label class="form-label">Target Week *</label>
+                        <input type="text" name="planned_week" class="form-control" required value="<%= typeof currentWeek !== 'undefined' ? currentWeek : (query.week || '') %>">
+                    </div>
+                    <div class="form-group flex-grow">
+                        <label class="form-label">Target Day *</label>
+                        <select name="planned_day" class="form-control" required>
+                            <option value="">-- Select Day --</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="form-group flex-grow">
-                    <label class="form-label">Target Day *</label>
-                    <select name="planned_day" class="form-control" required>
-                        <option value="">-- Select Day --</option>
-                        <option value="Monday">Monday</option>
-                        <option value="Tuesday">Tuesday</option>
-                        <option value="Wednesday">Wednesday</option>
-                        <option value="Thursday">Thursday</option>
-                        <option value="Friday">Friday</option>
-                        <option value="Saturday">Saturday</option>
-                        <option value="Sunday">Sunday</option>
-                    </select>
+            <% } %>
+            <% if (!(typeof isProcessing !== 'undefined' && isProcessing)) { %>
+                <div class="form-group">
+                    <label class="form-label">Assign Mechanics (Max 4)</label>
+                    <div style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
+                        <% if(typeof workshopEmployees !== 'undefined' && workshopEmployees.length > 0) { %>
+                            <% workshopEmployees.forEach(emp => { %>
+                                <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                                    <input type="checkbox" name="pic_ids" value="<%= emp.id %>" class="nonwo-pic-checkbox" onchange="checkNonWoMaxPics()">
+                                    <%= emp.name %> <small class="text-secondary">(<%= emp.position || 'Mechanic' %>)</small>
+                                </label>
+                            <% }); %>
+                        <% } else { %>
+                            <div class="text-secondary text-center">No active workshop employees found.</div>
+                        <% } %>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Assign Mechanics (Max 4)</label>
-                <div style="max-height: 150px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
-                    <% if(typeof workshopEmployees !== 'undefined' && workshopEmployees.length > 0) { %>
-                        <% workshopEmployees.forEach(emp => { %>
-                            <label style="display: block; margin-bottom: 8px; cursor: pointer;">
-                                <input type="checkbox" name="pic_ids" value="<%= emp.id %>" class="nonwo-pic-checkbox" onchange="checkNonWoMaxPics()">
-                                <%= emp.name %> <small class="text-secondary">(<%= emp.position || 'Mechanic' %>)</small>
-                            </label>
-                        <% }); %>
-                    <% } else { %>
-                        <div class="text-secondary text-center">No active workshop employees found.</div>
-                    <% } %>
-                </div>
-            </div>
+            <% } %>
             
             <div class="flex justify-between mt-4">
                 <button type="button" onclick="closeNonWoModal()" class="btn btn-secondary">Cancel</button>

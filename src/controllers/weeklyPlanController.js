@@ -175,15 +175,17 @@ const addNonWoJob = async (req, res) => {
             });
         }
 
-        // Add to WeeklyPlan
-        await prisma.weeklyPlan.create({
-            data: {
-                wo_id: wo.id,
-                planned_week,
-                planned_day,
-                planned_by: planner_id
-            }
-        });
+        // Add to WeeklyPlan if planned_week is provided
+        if (planned_week) {
+            await prisma.weeklyPlan.create({
+                data: {
+                    wo_id: wo.id,
+                    planned_week,
+                    planned_day,
+                    planned_by: planner_id
+                }
+            });
+        }
 
         res.json({ success: true, wo });
     } catch (error) {
