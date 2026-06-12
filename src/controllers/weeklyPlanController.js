@@ -96,7 +96,6 @@ const bulkPlan = async (req, res) => {
         }
 
         // Redirect back to the page the user came from (Civil, Processing, or Maintenance)
-        const referer = req.get('Referer');
         if (referer) {
             res.redirect(referer);
         } else {
