@@ -130,9 +130,7 @@
             </div>
             <button type="submit" class="btn btn-secondary">Filter</button>
             <% } %>
-            <button type="button" class="btn btn-primary" onclick="printPlan()">
-                <i class="fas fa-print"></i> Print Plan
-            </button>
+
         </form>
     </div>
 
@@ -176,11 +174,11 @@
                     });
                 %>
                 <% if (dates.length > 0) { %>
-                    <thead>
-                        <tr style="background-color: #f8fafc;">
-                            <th width="50">NO</th>
-                            <th width="100">BULAN</th>
-                            <th>KETERANGAN</th>
+                    <thead style="position: sticky; top: 0; background-color: #f8fafc; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                        <tr>
+                            <th width="50" style="background-color: inherit;">NO</th>
+                            <th width="100" style="background-color: inherit;">BULAN</th>
+                            <th style="background-color: inherit;">KETERANGAN</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -223,14 +221,14 @@
                     </tbody>
                 <% } %>
             <% } else { %>
-            <thead>
+            <thead style="position: sticky; top: 0; background-color: #f8fafc; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                 <tr>
-                    <th>Week</th>
-                    <th>Day</th>
-                    <th>WO No</th>
-                    <th>Station</th>
-                    <th>Description</th>
-                    <th>Planner</th>
+                    <th style="background-color: inherit;">Week</th>
+                    <th style="background-color: inherit;">Day</th>
+                    <th style="background-color: inherit;">WO No</th>
+                    <th style="background-color: inherit;">Station</th>
+                    <th style="background-color: inherit;">Description</th>
+                    <th style="background-color: inherit;">Planner</th>
                 </tr>
             </thead>
             <tbody>
