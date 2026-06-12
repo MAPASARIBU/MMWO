@@ -8,31 +8,22 @@
 
     <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isOffice === 'undefined' || !isOffice)) { %>
     <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
-        <h4>Find Unfinished Work</h4>
-        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : (typeof isCivil !== 'undefined' && isCivil ? '/weekly-plan/civil' : (typeof isOffice !== 'undefined' && isOffice ? '/weekly-plan/office' : '/weekly-plan')) %>" method="GET" class="flex gap-4 items-end mb-4">
-            <!-- Persist current week filter if any -->
-            <input type="hidden" name="week" value="<%= query.week || '' %>">
-
-            <div class="form-group mb-0">
-                <label class="text-sm text-gray-600">Station</label>
-                <select name="candidateStation" class="form-control">
-                    <option value="">All Stations</option>
-                    <% if(typeof stations !== 'undefined') { %>
-                        <% stations.forEach(s => { %>
-                            <option value="<%= s.id %>" <%= query.candidateStation == s.id ? 'selected' : '' %>><%= s.name %></option>
-                        <% }); %>
-                    <% } %>
-                </select>
-            </div>
-            <div class="form-group mb-0">
-                <label class="text-sm text-gray-600">Month</label>
-                <input type="month" name="candidateMonth" class="form-control" value="<%= query.candidateMonth || '' %>">
-            </div>
-            <button type="submit" class="btn btn-info text-white">Find Candidates</button>
-            <% if (query.candidateStation || query.candidateMonth) { %>
-                <a href="/weekly-plan?week=<%= query.week || '' %>" class="btn btn-secondary">Clear</a>
+        <div class="flex justify-between items-center mb-2">
+            <h4 style="margin: 0;">Find Unfinished Work</h4>
+            <div class="flex gap-2">
+                <button type="button" class="btn btn-info text-white" onclick="openFilterModal()"><i class="fas fa-search"></i> Search / Filter WO</button>
+                <% if (query.candidateStartDate || query.candidateStations) { %>
+                    <a href="/weekly-plan?week=<%= query.week || '' %>" class="btn btn-secondary">Clear Filter</a>
                 <% } %>
-        </form>
+            </div>
+        </div>
+        
+        <% if (query.candidateStartDate && query.candidateEndDate) { %>
+            <div class="text-sm text-secondary">
+                <strong>Active Filter:</strong> Date <%= query.candidateStartDate %> to <%= query.candidateEndDate %>, 
+                Stations: <%= query.candidateStations ? (Array.isArray(query.candidateStations) ? query.candidateStations.length + ' stations' : '1 station') : 'All' %>
+            </div>
+        <% } %>
 
         <% if (typeof candidateWos !=='undefined' && candidateWos.length> 0) { %>
             <hr class="my-3">
@@ -594,6 +585,66 @@
         form.appendChild(plannedDayInput);
 
         form.submit();
+    }
+</script>
+<!-- Filter Modal -->
+<div id="filterModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 10000;">
+    <div class="card" style="margin: 50px auto; max-width: 500px; position: relative;">
+        <h3>Search & Filter WO</h3>
+        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : (typeof isCivil !== 'undefined' && isCivil ? '/weekly-plan/civil' : (typeof isOffice !== 'undefined' && isOffice ? '/weekly-plan/office' : '/weekly-plan')) %>" method="GET">
+            <input type="hidden" name="week" value="<%= query.week || '' %>">
+            
+            <div class="form-group">
+                <label>Date Range (WO Created Date)</label>
+                <div class="flex gap-2 items-center">
+                    <input type="date" name="candidateStartDate" class="form-control" value="<%= query.candidateStartDate || '' %>" required>
+                    <span>to</span>
+                    <input type="date" name="candidateEndDate" class="form-control" value="<%= query.candidateEndDate || '' %>" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Stations</label>
+                <div style="max-height: 250px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; border-radius: 4px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                        <input type="checkbox" id="selectAllStations" onclick="toggleAllStations(this)"> Pilih Semua Stasiun
+                    </label>
+                    <% if(typeof stations !== 'undefined') { %>
+                        <% stations.forEach(s => { 
+                            let isChecked = false;
+                            if (query.candidateStations) {
+                                if (Array.isArray(query.candidateStations)) {
+                                    isChecked = query.candidateStations.includes(s.id.toString());
+                                } else {
+                                    isChecked = query.candidateStations === s.id.toString();
+                                }
+                            }
+                        %>
+                            <label style="display: block; margin-bottom: 5px; cursor: pointer;">
+                                <input type="checkbox" name="candidateStations" value="<%= s.id %>" class="station-checkbox" <%= isChecked ? 'checked' : '' %>>
+                                <%= s.name %>
+                            </label>
+                        <% }); %>
+                    <% } %>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2 mt-4">
+                <button type="button" class="btn btn-secondary" onclick="closeFilterModal()">Batal / No</button>
+                <button type="submit" class="btn btn-primary">OK</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openFilterModal() { document.getElementById('filterModal').style.display = 'block'; }
+    function closeFilterModal() { document.getElementById('filterModal').style.display = 'none'; }
+    function toggleAllStations(source) {
+        let checkboxes = document.querySelectorAll('.station-checkbox');
+        for(let i=0, n=checkboxes.length; i<n; i++) {
+            checkboxes[i].checked = source.checked;
+        }
     }
 </script>
 </div>

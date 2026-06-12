@@ -66,26 +66,25 @@ const getWeeklyPlanPage = async (req, res) => {
                 category: categoryFilter
             };
             
-            if (candidateStation) {
-                candidateWhere.station_id = parseInt(candidateStation);
+            if (req.query.candidateStations) {
+                let st = req.query.candidateStations;
+                if (!Array.isArray(st)) st = [st];
+                const stationIds = st.map(s => parseInt(s)).filter(s => !isNaN(s));
+                if (stationIds.length > 0) {
+                    candidateWhere.station_id = { in: stationIds };
+                }
             }
             
-            if (candidateMonth) {
-                const [year, month] = candidateMonth.split('-');
-                const start = new Date(year, month - 1, 1);
-                const end = new Date(year, month, 0, 23, 59, 59, 999);
+            if (req.query.candidateStartDate && req.query.candidateEndDate) {
+                const start = new Date(req.query.candidateStartDate);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(req.query.candidateEndDate);
+                end.setHours(23, 59, 59, 999);
                 
-                candidateWhere.OR = [
-                    {
-                        created_at: {
-                            gte: start,
-                            lte: end
-                        }
-                    },
-                    {
-                        monthly_plan_status: 'MONTHLY_DONE'
-                    }
-                ];
+                candidateWhere.created_at = {
+                    gte: start,
+                    lte: end
+                };
             }
 
             if (user.role === 'SENIOR_MANAGER') {
