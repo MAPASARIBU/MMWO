@@ -176,11 +176,17 @@
                                 monthStr = `${m}-${y}`;
                             }
                         %>
+                        <%
+                            let printBasePath = "/weekly-plan/print";
+                            if (typeof isProcessing !== 'undefined' && isProcessing) printBasePath = "/weekly-plan/processing/print";
+                            else if (typeof isCivil !== 'undefined' && isCivil) printBasePath = "/weekly-plan/civil/print";
+                            else if (typeof isOffice !== 'undefined' && isOffice) printBasePath = "/weekly-plan/office/print";
+                        %>
                         <tr>
                             <td><%= index + 1 %></td>
                             <td><%= monthStr %></td>
                             <td>
-                                <a href="/weekly-plan/print?day=<%= date %>" target="_blank" style="text-decoration: none; color: #1e293b; font-weight: 500;" class="hover:text-blue-600">
+                                <a href="<%= printBasePath %>?day=<%= date %>" target="_blank" style="text-decoration: none; color: #1e293b; font-weight: 500;" class="hover:text-blue-600">
                                     <% 
                                         let deptName = "Maintenance";
                                         if (typeof isProcessing !== 'undefined' && isProcessing) deptName = "Process";
