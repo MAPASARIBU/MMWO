@@ -1,5 +1,5 @@
 <div class="card" style="padding: 10px 20px;">
-    <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isOffice === 'undefined' || !isOffice)) { %>
+    <% if (user && user.role !== 'SENIOR_MANAGER') { %>
     <div class="card mb-3" style="border-left: 4px solid #17a2b8; padding: 10px 15px;">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -10,9 +10,7 @@
                 <% } %>
             </div>
             <div>
-                <% if (typeof isCivil === 'undefined' || !isCivil) { %>
                     <button type="button" class="btn btn-sm btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
-                <% } %>
             </div>
         </div>
         
@@ -113,27 +111,7 @@
     <% } %>
 
     <div class="flex justify-between items-center mb-4">
-        <h4><%= (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isCivil === 'undefined' || !isCivil) && (typeof isOffice === 'undefined' || !isOffice) ? 'Record Program kerja' : (typeof title !== 'undefined' ? title : 'Weekly Plan') %></h4>
-        <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : (typeof isCivil !== 'undefined' && isCivil ? '/weekly-plan/civil' : (typeof isOffice !== 'undefined' && isOffice ? '/weekly-plan/office' : '/weekly-plan')) %>" method="GET" class="flex gap-2 items-center" id="filterForm">
-            <% if ((typeof isProcessing !== 'undefined' && isProcessing) || (typeof isCivil !== 'undefined' && isCivil) || (typeof isOffice !== 'undefined' && isOffice)) { %>
-            <div class="form-group mb-0">
-                <input type="text" name="week" class="form-control" placeholder="Week (e.g. 2026-W06)"
-                    value="<%= query.week || '' %>">
-            </div>
-            <div class="form-group mb-0">
-                <select name="day" class="form-control">
-                    <option value="">All Days</option>
-                    <% ['Monday', 'Tuesday' , 'Wednesday' , 'Thursday' , 'Friday' , 'Saturday' , 'Sunday' ].forEach(d=>
-                        { %>
-                        <option value="<%= d %>" <%=query.day===d ? 'selected' : '' %>><%= d %>
-                        </option>
-                        <% }) %>
-                </select>
-            </div>
-            <button type="submit" class="btn btn-secondary">Filter</button>
-            <% } %>
-
-        </form>
+        <h4>Record Program kerja</h4>
     </div>
 
     <script>
@@ -149,7 +127,6 @@
 
     <div class="table-responsive">
         <table class="table">
-            <% if ((typeof isProcessing === 'undefined' || !isProcessing) && (typeof isCivil === 'undefined' || !isCivil) && (typeof isOffice === 'undefined' || !isOffice)) { %>
                 <% 
                     let groupedPlans = {};
                     plans.forEach(plan => {
@@ -222,48 +199,6 @@
                         </tr>
                     </tbody>
                 <% } %>
-            <% } else { %>
-            <thead style="position: sticky; top: 0; background-color: #f8fafc; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                <tr>
-                    <th style="background-color: inherit;">Week</th>
-                    <th style="background-color: inherit;">Day</th>
-                    <th style="background-color: inherit;">WO No</th>
-                    <th style="background-color: inherit;">Station</th>
-                    <th style="background-color: inherit;">Description</th>
-                    <th style="background-color: inherit;">Planner</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (plans.length> 0) { %>
-                    <% plans.forEach(plan=> { %>
-                        <tr>
-                            <td>
-                                <%= plan.planned_week %>
-                            </td>
-                            <td>
-                                <%= plan.planned_day || '-' %>
-                            </td>
-                            <td><a href="/work-orders/<%= plan.wo.id %>">
-                                    <%= plan.wo.wo_no %>
-                                </a></td>
-                            <td>
-                                <%= plan.wo.station.name %>
-                            </td>
-                            <td>
-                                <%= plan.wo.description %>
-                            </td>
-                            <td>
-                                <%= plan.planner.name %>
-                            </td>
-                        </tr>
-                        <% }); %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="text-center py-4">No planned work found.</td>
-                                </tr>
-                                <% } %>
-            </tbody>
-            <% } %>
         </table>
     </div>
 
