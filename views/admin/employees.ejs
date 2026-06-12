@@ -137,7 +137,7 @@
         if (!confirm(`Are you sure you want to ${isActive ? 'activate' : 'deactivate'} this employee?`)) return;
 
         try {
-            const res = await fetch(`/api/employees/${id}`, {
+            const res = await fetch(`/employees/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ is_active: isActive })
@@ -151,7 +151,7 @@
         if (!confirm('Are you absolutely sure you want to delete this employee? Data might be lost if linked to WOs.')) return;
 
         try {
-            const res = await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+            const res = await fetch(`/employees/${id}`, { method: 'DELETE' });
             if (res.ok) window.location.reload();
             else {
                 const data = await res.json();
@@ -170,7 +170,7 @@
         const data = Object.fromEntries(formData.entries());
 
         try {
-            const res = await fetch('/api/employees', {
+            const res = await fetch('/employees', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
