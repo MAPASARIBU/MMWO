@@ -100,14 +100,7 @@ const getWeeklyPlanPage = async (req, res) => {
                     equipment: true,
                     weekly_plan: true
                 },
-                orderBy: { priority: 'asc' }
-            });
-
-            // Prioritize MONTHLY_DONE WOs to the very top
-            candidateWos.sort((a, b) => {
-                if (a.monthly_plan_status === 'MONTHLY_DONE' && b.monthly_plan_status !== 'MONTHLY_DONE') return -1;
-                if (b.monthly_plan_status === 'MONTHLY_DONE' && a.monthly_plan_status !== 'MONTHLY_DONE') return 1;
-                return 0;
+                orderBy: { created_at: 'desc' }
             });
         }
 
