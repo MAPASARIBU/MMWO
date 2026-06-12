@@ -225,11 +225,27 @@ const getWeeklyPlanPrint = async (req, res) => {
             groupedPlans[category].push(plan);
         });
 
-        // Sort each category's plans by station name
+        const processingStationOrder = [
+            "FFB Reception", "Sterilizer", "Threshing", "Pressing",
+            "Nut & Kernel", "Clarification", "Power Plant", "Steam Plant",
+            "Kernel Bin Storage", "Water Treatment Plant", "CPO Washing Plant", "Effluent Pond"
+        ].map(s => s.toLowerCase());
+
+        // Sort each category's plans by station name (custom order for Processing, alphabetical for others)
         for (const cat in groupedPlans) {
             groupedPlans[cat].sort((a, b) => {
                 const statA = a.wo.station ? a.wo.station.name : 'Z';
                 const statB = b.wo.station ? b.wo.station.name : 'Z';
+                
+                if (isProcessing) {
+                    const indexA = processingStationOrder.indexOf(statA.toLowerCase());
+                    const indexB = processingStationOrder.indexOf(statB.toLowerCase());
+                    
+                    if (indexA !== -1 && indexB !== -1) return indexA - indexB;
+                    if (indexA !== -1) return -1;
+                    if (indexB !== -1) return 1;
+                }
+                
                 return statA.localeCompare(statB);
             });
         }
