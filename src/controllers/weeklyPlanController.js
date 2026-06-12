@@ -54,12 +54,7 @@ const bulkPlan = async (req, res) => {
         } else if (referer.includes('/office')) {
             categoryWhere = { category: 'Office' };
         } else {
-            categoryWhere = {
-                OR: [
-                    { category: { notIn: ['Processing', 'Civil', 'Office'] } },
-                    { category: null }
-                ]
-            };
+            categoryWhere = { category: { notIn: ['Processing', 'Civil', 'Office'] } };
         }
 
         if (planned_day && millIdToDelete) {
