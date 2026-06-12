@@ -188,7 +188,7 @@
                     <% dates.forEach(date => { %>
                         <thead>
                             <tr style="background-color: #f1f5f9;">
-                                <th colspan="5" style="font-size: 1.1rem; padding: 12px 16px;">
+                                <th colspan="4" style="font-size: 1.1rem; padding: 12px 16px;">
                                     <% if (date !== 'Unassigned Date' && date.includes('-')) { %>
                                         <% 
                                             const dt = new Date(date);
@@ -209,7 +209,6 @@
                                 <th>WO No</th>
                                 <th>Station</th>
                                 <th>Description</th>
-                                <th>Planner</th>
                                 <th>PIC</th>
                             </tr>
                         </thead>
@@ -219,7 +218,6 @@
                                     <td><a href="/work-orders/<%= plan.wo.id %>"><%= plan.wo.wo_no %></a></td>
                                     <td><%= plan.wo.station.name %></td>
                                     <td><%= plan.wo.description %></td>
-                                    <td><%= plan.planner.name %></td>
                                     <td>
                                         <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
                                             <%= plan.wo.pics.map(p => p.name).join(', ') %>
@@ -239,7 +237,7 @@
                 <% } else { %>
                     <tbody>
                         <tr>
-                            <td colspan="5" class="text-center py-4">No planned work found.</td>
+                            <td colspan="4" class="text-center py-4">No planned work found.</td>
                         </tr>
                     </tbody>
                 <% } %>
