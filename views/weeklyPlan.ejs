@@ -181,10 +181,16 @@
                             <td><%= monthStr %></td>
                             <td>
                                 <a href="/weekly-plan/print?day=<%= date %>" target="_blank" style="text-decoration: none; color: #1e293b; font-weight: 500;" class="hover:text-blue-600">
+                                    <% 
+                                        let deptName = "Maintenance";
+                                        if (typeof isProcessing !== 'undefined' && isProcessing) deptName = "Process";
+                                        else if (typeof isCivil !== 'undefined' && isCivil) deptName = "Civil";
+                                        else if (typeof isOffice !== 'undefined' && isOffice) deptName = "Office";
+                                    %>
                                     <% if (date !== 'Unassigned Date' && date.includes('-')) { %>
-                                        Program kerja Maintenance tanggal <%= formattedDate %>
+                                        Program Kerja Harian <%= deptName %> tanggal <%= formattedDate %>
                                     <% } else { %>
-                                        Program kerja Maintenance - <%= date %>
+                                        Program Kerja Harian <%= deptName %> - <%= date %>
                                     <% } %>
                                     <i class="fas fa-print" style="margin-left: 8px; color: #3b82f6; font-size: 0.9em;"></i>
                                 </a>
