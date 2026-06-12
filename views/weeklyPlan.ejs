@@ -35,16 +35,14 @@
 
                 <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
                     <table class="table table-sm">
-                        <thead>
+                        <thead style="position: sticky; top: 0; background-color: #f8fafc; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                             <tr>
-                                <th width="40"><input type="checkbox" onclick="toggleAll(this)"></th>
-                                <th>WO No</th>
-                                <th>Date</th>
-                                <th>Priority</th>
-                                <th>Current Plan</th>
-                                <th>Status</th>
-                                <th>Description</th>
-                                <th>PIC</th>
+                                <th width="40" style="background-color: inherit;"><input type="checkbox" onclick="toggleAll(this)"></th>
+                                <th style="background-color: inherit;">Date</th>
+                                <th style="background-color: inherit;">WO No</th>
+                                <th style="background-color: inherit;">Station</th>
+                                <th style="background-color: inherit;">Description</th>
+                                <th style="background-color: inherit;">PIC</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -54,31 +52,19 @@
                                         <input type="checkbox" name="wo_ids[]" value="<%= wo.id %>">
                                     </td>
                                     <td>
+                                        <%= new Date(wo.created_at).toLocaleDateString() %>
+                                    </td>
+                                    <td>
                                         <%= wo.wo_no %>
                                         <% if (wo.monthly_plan_status === 'MONTHLY_DONE') { %>
                                             <span class="badge" style="background: #10b981; color: white; font-size: 0.6rem; margin-left: 5px;">Material Ready</span>
                                         <% } %>
                                     </td>
                                     <td>
-                                        <%= new Date(wo.created_at).toLocaleDateString() %>
-                                    </td>
-                                    <td><span class="badge badge-<%= wo.priority === 'P1' ? 'danger' : 'secondary' %>">
-                                            <%= wo.priority %>
-                                        </span></td>
-                                    <td>
-                                        <% if (wo.weekly_plan) { %>
-                                            <%= wo.weekly_plan.planned_week %> (<%= wo.weekly_plan.planned_day || '-' %>)
-                                        <% } else { %>
-                                            <span class="text-muted italic text-sm">Unplanned</span>
-                                        <% } %>
+                                        <%= wo.station ? wo.station.name : '-' %>
                                     </td>
                                     <td>
-                                        <span class="badge badge-<%= wo.status === 'OPEN' ? 'warning' : (wo.status === 'IN PROGRESS' ? 'info' : 'secondary') %>">
-                                            <%= wo.status %>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <%= wo.description.substring(0, 50) %>...
+                                        <%= wo.description.length > 50 ? wo.description.substring(0, 50) + '...' : wo.description %>
                                     </td>
                                     <td>
                                         <% if (wo.pics && wo.pics.length > 0) { %>
