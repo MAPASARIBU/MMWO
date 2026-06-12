@@ -137,14 +137,44 @@ const getPlans = async (req, res) => {
 
 const addNonWoJob = async (req, res) => {
     try {
-        const { category, station_id, equipment_id, description, planned_week, planned_day, pic_ids } = req.body;
+        const { jobs, category, station_id, equipment_id, description, planned_week, planned_day, pic_ids } = req.body;
         const planner_id = req.session.user.id;
         const mill_id = req.session.user.mill_id || 1; // Assuming default if admin
-
-        // Generate a pseudo-WO number
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+
+        if (jobs && Array.isArray(jobs)) {
+            const createdWos = [];
+            for (let i = 0; i < jobs.length; i++) {
+                const job = jobs[i];
+                if (!job.description || job.description.trim() === '') continue;
+                
+                const randomNum = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+                const seq = String(i + 1).padStart(3, '0');
+                const prefix = job.category === 'Processing' ? 'PRC' : 'FAB';
+                const wo_no = `${prefix}-${dateStr}-${randomNum}${seq}`;
+
+                const wo = await prisma.workOrder.create({
+                    data: {
+                        wo_no,
+                        mill_id,
+                        station_id: parseInt(job.station_id),
+                        category: job.category || 'Processing',
+                        type: 'NON-WO',
+                        priority: 'NORMAL',
+                        description: job.description,
+                        status: 'PLANNED',
+                        reporter_id: planner_id,
+                    }
+                });
+                createdWos.push(wo);
+            }
+            return res.json({ success: true, count: createdWos.length });
+        }
+
+        // Single insert
+        const prefix = category === 'Processing' ? 'PRC' : 'FAB';
         const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-        const wo_no = `FAB-${dateStr}-${randomNum}`;
+        const wo_no = `${prefix}-${dateStr}-${randomNum}`;
 
         // Create the WorkOrder
         const wo = await prisma.workOrder.create({

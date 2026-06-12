@@ -314,7 +314,40 @@
         <% } %>
         <form id="nonWoForm">
             <% if (typeof isProcessing !== 'undefined' && isProcessing) { %>
-                <input type="hidden" name="category" value="Processing">
+                <input type="hidden" id="is_bulk_processing" value="true">
+                <% 
+                   const processingStations = [
+                       "FFB Reception", "Sterilizer", "Threshing", "Pressing", 
+                       "Nut & Kernel", "Clarification", "Power Plant", "Steam Plant", 
+                       "Kernel Bin Storage", "Water Treatment Plant", "CPO Washing Plant", "Effluent Pond"
+                   ];
+                %>
+                <div style="max-height: 60vh; overflow-y: auto; margin-bottom: 15px;">
+                    <table class="table" style="width: 100%; border-collapse: collapse;">
+                        <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 1;">
+                            <tr>
+                                <th style="width: 35%; padding: 8px; border: 1px solid #ddd;">Stasiun</th>
+                                <th style="width: 65%; padding: 8px; border: 1px solid #ddd;">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% processingStations.forEach((stName) => { 
+                                const matchedStation = typeof stations !== 'undefined' ? stations.find(s => s.name.toLowerCase() === stName.toLowerCase()) : null;
+                                const stId = matchedStation ? matchedStation.id : '';
+                            %>
+                                <tr>
+                                    <td style="padding: 8px; border: 1px solid #ddd; font-weight: 500;">
+                                        <%= stName %>
+                                        <input type="hidden" class="bulk-station-id" value="<%= stId %>">
+                                    </td>
+                                    <td style="padding: 8px; border: 1px solid #ddd;">
+                                        <input type="text" class="bulk-description form-control" placeholder="Isi deskripsi...">
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
             <% } else { %>
                 <div class="form-group">
                     <label class="form-label">Category *</label>
@@ -328,22 +361,22 @@
                         <option value="Others">Others</option>
                     </select>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Station *</label>
+                    <select name="station_id" class="form-control" required>
+                        <option value="">-- Select Station --</option>
+                        <% if(typeof stations !== 'undefined') { %>
+                            <% stations.forEach(s => { %>
+                                <option value="<%= s.id %>"><%= s.name %></option>
+                            <% }); %>
+                        <% } %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description *</label>
+                    <textarea name="description" class="form-control" rows="3" required placeholder="Jelaskan detail pekerjaan..."></textarea>
+                </div>
             <% } %>
-            <div class="form-group">
-                <label class="form-label">Station *</label>
-                <select name="station_id" class="form-control" required>
-                    <option value="">-- Select Station --</option>
-                    <% if(typeof stations !== 'undefined') { %>
-                        <% stations.forEach(s => { %>
-                            <option value="<%= s.id %>"><%= s.name %></option>
-                        <% }); %>
-                    <% } %>
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Description *</label>
-                <textarea name="description" class="form-control" rows="3" required placeholder="Jelaskan detail pekerjaan..."></textarea>
-            </div>
 
             <% if (!(typeof isProcessing !== 'undefined' && isProcessing)) { %>
                 <div class="form-group">
@@ -396,18 +429,45 @@
 
     document.getElementById('nonWoForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const formData = new FormData(e.target);
         
-        // Convert to JSON
-        const data = {};
-        formData.forEach((value, key) => {
-            if (key === 'pic_ids') {
-                if (!data[key]) data[key] = [];
-                data[key].push(value);
-            } else {
-                data[key] = value;
+        let data = {};
+        const isBulk = document.getElementById('is_bulk_processing');
+        
+        if (isBulk) {
+            data.jobs = [];
+            const stIds = document.querySelectorAll('.bulk-station-id');
+            const descs = document.querySelectorAll('.bulk-description');
+            
+            for (let i = 0; i < stIds.length; i++) {
+                const desc = descs[i].value.trim();
+                const stId = stIds[i].value;
+                if (desc !== "") {
+                    if (!stId) {
+                        alert("Stasiun tidak valid di database.");
+                        return;
+                    }
+                    data.jobs.push({
+                        category: "Processing",
+                        station_id: stId,
+                        description: desc
+                    });
+                }
             }
-        });
+            if (data.jobs.length === 0) {
+                alert("Harap isi setidaknya satu deskripsi pekerjaan.");
+                return;
+            }
+        } else {
+            const formData = new FormData(e.target);
+            formData.forEach((value, key) => {
+                if (key === 'pic_ids') {
+                    if (!data[key]) data[key] = [];
+                    data[key].push(value);
+                } else {
+                    data[key] = value;
+                }
+            });
+        }
 
         document.getElementById('saveNonWoBtn').disabled = true;
         document.getElementById('saveNonWoBtn').innerText = "Saving...";
