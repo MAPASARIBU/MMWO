@@ -14,17 +14,22 @@
             <input type="hidden" name="week" value="<%= query.week || '' %>">
 
             <div class="form-group mb-0">
-                <label class="text-sm text-gray-600">From</label>
-                <input type="date" name="candidateStart" class="form-control" value="<%= query.candidateStart || '' %>"
-                    required>
+                <label class="text-sm text-gray-600">Station</label>
+                <select name="candidateStation" class="form-control">
+                    <option value="">All Stations</option>
+                    <% if(typeof stations !== 'undefined') { %>
+                        <% stations.forEach(s => { %>
+                            <option value="<%= s.id %>" <%= query.candidateStation == s.id ? 'selected' : '' %>><%= s.name %></option>
+                        <% }); %>
+                    <% } %>
+                </select>
             </div>
             <div class="form-group mb-0">
-                <label class="text-sm text-gray-600">To</label>
-                <input type="date" name="candidateEnd" class="form-control" value="<%= query.candidateEnd || '' %>"
-                    required>
+                <label class="text-sm text-gray-600">Month</label>
+                <input type="month" name="candidateMonth" class="form-control" value="<%= query.candidateMonth || '' %>">
             </div>
             <button type="submit" class="btn btn-info text-white">Find Candidates</button>
-            <% if (query.candidateStart) { %>
+            <% if (query.candidateStation || query.candidateMonth) { %>
                 <a href="/weekly-plan?week=<%= query.week || '' %>" class="btn btn-secondary">Clear</a>
                 <% } %>
         </form>
@@ -33,29 +38,8 @@
             <hr class="my-3">
             <h5 class="mb-3">Select WOs to Plan</h5>
             <form action="/api/weekly-plan/bulk" method="POST">
-                <div class="flex gap-4 mb-3 p-3 bg-gray-50 rounded">
-                    <div class="form-group mb-0 flex-grow">
-                        <label class="text-sm font-bold">Target Week * (This Week)</label>
-                        <input type="text" name="planned_week" class="form-control"
-                            style="background-color: #e9ecef; cursor: not-allowed;" readonly
-                            value="<%= typeof currentWeek !== 'undefined' ? currentWeek : (query.week || '') %>">
-                    </div>
-                    <div class="form-group mb-0 flex-grow">
-                        <label class="text-sm font-bold">Target Day</label>
-                        <select name="planned_day" class="form-control">
-                            <option value="">-- Select Day --</option>
-                            <option value="Monday">Monday</option>
-                            <option value="Tuesday">Tuesday</option>
-                            <option value="Wednesday">Wednesday</option>
-                            <option value="Thursday">Thursday</option>
-                            <option value="Friday">Friday</option>
-                            <option value="Saturday">Saturday</option>
-                            <option value="Sunday">Sunday</option>
-                        </select>
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="btn btn-success">Add to Plan</button>
-                    </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" onclick="openSortirModal()">Sortir</button>
                 </div>
 
                 <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
@@ -69,6 +53,7 @@
                                 <th>Current Plan</th>
                                 <th>Status</th>
                                 <th>Description</th>
+                                <th>PIC</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -104,6 +89,18 @@
                                     <td>
                                         <%= wo.description.substring(0, 50) %>...
                                     </td>
+                                    <td>
+                                        <% if (wo.pics && wo.pics.length > 0) { %>
+                                            <%= wo.pics.map(p => p.name).join(', ') %>
+                                        <% } else { %>
+                                            <span class="text-muted italic text-sm">Belum ada</span>
+                                        <% } %>
+                                        <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER') { %>
+                                            <div class="mt-2 no-print">
+                                                <button type="button" class="btn btn-sm" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.75rem; font-weight: 600;" onclick="openGlobalPicModal(<%= wo.id %>, <%= JSON.stringify((wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
+                                            </div>
+                                        <% } %>
+                                    </td>
                                 </tr>
                                 <% }) %>
                         </tbody>
@@ -118,8 +115,8 @@
                     }
                 }
             </script>
-            <% } else if (query.candidateStart) { %>
-                <p class="text-muted italic">No unfinished work orders found in this range.</p>
+            <% } else { %>
+                <p class="text-muted italic">No unfinished work orders found.</p>
                 <% } %>
     </div>
     <% } %>
@@ -137,7 +134,7 @@
     </div>
 
     <div class="flex justify-between items-center mb-4">
-        <h4><%= typeof title !== 'undefined' ? title : (typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan'))) %></h4>
+        <h4><%= (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isCivil === 'undefined' || !isCivil) && (typeof isOffice === 'undefined' || !isOffice) ? 'Record Program kerja' : (typeof title !== 'undefined' ? title : 'Weekly Plan') %></h4>
         <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : (typeof isCivil !== 'undefined' && isCivil ? '/weekly-plan/civil' : (typeof isOffice !== 'undefined' && isOffice ? '/weekly-plan/office' : '/weekly-plan')) %>" method="GET" class="flex gap-2 items-center" id="filterForm">
             <div class="form-group mb-0">
                 <input type="text" name="week" class="form-control" placeholder="Week (e.g. 2026-W06)"
@@ -173,6 +170,72 @@
 
     <div class="table-responsive">
         <table class="table">
+            <% if ((typeof isProcessing === 'undefined' || !isProcessing) && (typeof isCivil === 'undefined' || !isCivil) && (typeof isOffice === 'undefined' || !isOffice)) { %>
+                <% 
+                    let groupedPlans = {};
+                    plans.forEach(plan => {
+                        let pd = plan.planned_day || 'Unassigned Date';
+                        if (!groupedPlans[pd]) groupedPlans[pd] = [];
+                        groupedPlans[pd].push(plan);
+                    });
+                    const dates = Object.keys(groupedPlans).sort().reverse();
+                %>
+                <% if (dates.length > 0) { %>
+                    <% dates.forEach(date => { %>
+                        <thead>
+                            <tr style="background-color: #f1f5f9;">
+                                <th colspan="5" style="font-size: 1.1rem; padding: 12px 16px;">
+                                    <% if (date !== 'Unassigned Date' && date.includes('-')) { %>
+                                        <% 
+                                            const dt = new Date(date);
+                                            const options = { day: 'numeric', month: 'long', year: 'numeric' };
+                                            const formattedDate = dt.toLocaleDateString('id-ID', options);
+                                        %>
+                                        Program kerja Maintenance tanggal <%= formattedDate %>
+                                    <% } else { %>
+                                        Program kerja Maintenance - <%= date %>
+                                    <% } %>
+                                </th>
+                            </tr>
+                            <tr>
+                                <th>WO No</th>
+                                <th>Station</th>
+                                <th>Description</th>
+                                <th>Planner</th>
+                                <th>PIC</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% groupedPlans[date].forEach(plan => { %>
+                                <tr>
+                                    <td><a href="/work-orders/<%= plan.wo.id %>"><%= plan.wo.wo_no %></a></td>
+                                    <td><%= plan.wo.station.name %></td>
+                                    <td><%= plan.wo.description %></td>
+                                    <td><%= plan.planner.name %></td>
+                                    <td>
+                                        <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
+                                            <%= plan.wo.pics.map(p => p.name).join(', ') %>
+                                        <% } else { %>
+                                            <span class="text-muted italic text-sm">Belum ada</span>
+                                        <% } %>
+                                        <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER') { %>
+                                            <div class="mt-2 no-print">
+                                                <button type="button" class="btn btn-sm" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.75rem; font-weight: 600;" onclick="openGlobalPicModal(<%= plan.wo.id %>, <%= JSON.stringify((plan.wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
+                                            </div>
+                                        <% } %>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    <% }); %>
+                <% } else { %>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="text-center py-4">No planned work found.</td>
+                        </tr>
+                    </tbody>
+                <% } %>
+            <% } else { %>
             <thead>
                 <tr>
                     <th>Week</th>
@@ -181,9 +244,6 @@
                     <th>Station</th>
                     <th>Description</th>
                     <th>Planner</th>
-                    <% if (typeof isProcessing === 'undefined' || !isProcessing) { %>
-                    <th>PIC</th>
-                    <% } %>
                 </tr>
             </thead>
             <tbody>
@@ -208,28 +268,15 @@
                             <td>
                                 <%= plan.planner.name %>
                             </td>
-                            <% if (typeof isProcessing === 'undefined' || !isProcessing) { %>
-                            <td>
-                                <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
-                                    <%= plan.wo.pics.map(p => p.name).join(', ') %>
-                                <% } else { %>
-                                    <span class="text-muted italic text-sm">Belum ada</span>
-                                <% } %>
-                                <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER') { %>
-                                    <div class="mt-2 no-print">
-                                        <button type="button" class="btn btn-sm" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.75rem; font-weight: 600;" onclick="openGlobalPicModal(<%= plan.wo.id %>, <%= JSON.stringify((plan.wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
-                                    </div>
-                                <% } %>
-                            </td>
-                            <% } %>
                         </tr>
                         <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="7" class="text-center py-4">No planned work found.</td>
+                                    <td colspan="6" class="text-center py-4">No planned work found.</td>
                                 </tr>
                                 <% } %>
             </tbody>
+            <% } %>
         </table>
     </div>
 
@@ -461,5 +508,80 @@
             document.getElementById('saveNonWoBtn').innerText = "Add to Plan";
         }
     });
+</script>
+<!-- Sortir Modal -->
+<div id="sortirModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 10000;">
+    <div class="card" style="margin: 50px auto; max-width: 400px; position: relative;">
+        <h3>Program kerja harian</h3>
+        <p class="text-secondary mb-3">Pilih tanggal untuk program kerja ini.</p>
+        <div class="form-group">
+            <label class="form-label">Tanggal Program *</label>
+            <input type="date" id="sortirDate" class="form-control" required>
+        </div>
+        <div class="flex justify-between mt-4">
+            <button type="button" onclick="closeSortirModal()" class="btn btn-secondary">Batal</button>
+            <button type="button" class="btn btn-primary" onclick="submitSortir()">OK</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openSortirModal() {
+        // Validate at least one WO is checked
+        const checkboxes = document.querySelectorAll('input[name="wo_ids[]"]:checked');
+        if (checkboxes.length === 0) {
+            alert("Pilih minimal satu Work Order untuk disortir.");
+            return;
+        }
+        document.getElementById('sortirDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('sortirModal').style.display = 'block';
+    }
+    
+    function closeSortirModal() {
+        document.getElementById('sortirModal').style.display = 'none';
+    }
+
+    function submitSortir() {
+        const dateVal = document.getElementById('sortirDate').value;
+        if (!dateVal) {
+            alert("Tanggal Program harus diisi.");
+            return;
+        }
+
+        // We need to submit the form but include the selected date as planned_week and planned_day.
+        // Or we can dynamically append hidden inputs to the main form and submit it.
+        const form = document.querySelector('form[action="/api/weekly-plan/bulk"]');
+        
+        // Remove existing planned_week and planned_day if they exist
+        const oldWeek = form.querySelector('input[name="planned_week"]');
+        if (oldWeek) oldWeek.remove();
+        const oldDay = form.querySelector('input[name="planned_day"]');
+        if (oldDay) oldDay.remove();
+
+        const getISOWeekString = (dStr) => {
+            const date = new Date(dStr);
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const year = d.getUTCFullYear();
+            const weekNo = Math.ceil((((d - new Date(Date.UTC(year, 0, 1))) / 86400000) + 1) / 7);
+            return `${year}-W${String(weekNo).padStart(2, '0')}`;
+        };
+
+        const plannedWeekInput = document.createElement('input');
+        plannedWeekInput.type = 'hidden';
+        plannedWeekInput.name = 'planned_week';
+        plannedWeekInput.value = getISOWeekString(dateVal); // Store ISO week
+
+        const plannedDayInput = document.createElement('input');
+        plannedDayInput.type = 'hidden';
+        plannedDayInput.name = 'planned_day';
+        plannedDayInput.value = dateVal; // Store the exact Date
+
+        form.appendChild(plannedWeekInput);
+        form.appendChild(plannedDayInput);
+
+        form.submit();
+    }
 </script>
 </div>

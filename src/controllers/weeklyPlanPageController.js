@@ -4,7 +4,7 @@ const { renderView } = require('./indexController');
 
 const getWeeklyPlanPage = async (req, res) => {
     try {
-        const { week, day, candidateStart, candidateEnd } = req.query;
+        const { week, day, candidateStation, candidateMonth } = req.query;
         const user = req.session.user;
         // Default to current week logic if needed, or just let user filter
 
@@ -55,20 +55,27 @@ const getWeeklyPlanPage = async (req, res) => {
                 },
                 planner: { select: { name: true } }
             },
-            orderBy: { created_at: 'desc' }
+            orderBy: { planned_day: 'desc' }
         });
 
         // Candidate WOs Query
         let candidateWos = [];
-        if (candidateStart && candidateEnd) {
-            const start = new Date(candidateStart);
-            const end = new Date(candidateEnd);
-            end.setHours(23, 59, 59, 999);
-
+        if (!isProcessing && !isCivil && !isOffice) {
             let candidateWhere = {
                 status: { notIn: ['CLOSED', 'COMPLETED'] },
-                category: categoryFilter,
-                OR: [
+                category: categoryFilter
+            };
+            
+            if (candidateStation) {
+                candidateWhere.station_id = parseInt(candidateStation);
+            }
+            
+            if (candidateMonth) {
+                const [year, month] = candidateMonth.split('-');
+                const start = new Date(year, month - 1, 1);
+                const end = new Date(year, month, 0, 23, 59, 59, 999);
+                
+                candidateWhere.OR = [
                     {
                         created_at: {
                             gte: start,
@@ -78,8 +85,9 @@ const getWeeklyPlanPage = async (req, res) => {
                     {
                         monthly_plan_status: 'MONTHLY_DONE'
                     }
-                ]
-            };
+                ];
+            }
+
             if (user.role === 'SENIOR_MANAGER') {
                 candidateWhere.mill_id = { in: user.accessible_mills || [] };
             } else if (user.role !== 'ADMIN') {
