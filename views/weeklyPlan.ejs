@@ -195,9 +195,13 @@
                                             const options = { day: 'numeric', month: 'long', year: 'numeric' };
                                             const formattedDate = dt.toLocaleDateString('id-ID', options);
                                         %>
-                                        Program kerja Maintenance tanggal <%= formattedDate %>
+                                        <a href="/weekly-plan/print?day=<%= date %>" target="_blank" style="text-decoration: none; color: #1e293b;" class="hover:text-blue-600">
+                                            Program kerja Maintenance tanggal <%= formattedDate %> <i class="fas fa-print" style="margin-left: 8px; color: #3b82f6; font-size: 0.9em;"></i>
+                                        </a>
                                     <% } else { %>
-                                        Program kerja Maintenance - <%= date %>
+                                        <a href="/weekly-plan/print?day=<%= date %>" target="_blank" style="text-decoration: none; color: #1e293b;" class="hover:text-blue-600">
+                                            Program kerja Maintenance - <%= date %> <i class="fas fa-print" style="margin-left: 8px; color: #3b82f6; font-size: 0.9em;"></i>
+                                        </a>
                                     <% } %>
                                 </th>
                             </tr>
