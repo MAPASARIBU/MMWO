@@ -3,14 +3,16 @@ const prisma = new PrismaClient();
 
 const createEmployee = async (req, res) => {
     try {
-        const { mill_id, name, position } = req.body;
+        const { mill_id, name, position, department, station } = req.body;
         if (!name) return res.status(400).json({ error: 'Name is required' });
 
         const employee = await prisma.workshopEmployee.create({
             data: {
                 mill_id: mill_id ? parseInt(mill_id) : null,
                 name,
-                position
+                position,
+                department: department || 'Workshop Employees',
+                station: station || null
             }
         });
         res.status(201).json(employee);
@@ -23,16 +25,21 @@ const createEmployee = async (req, res) => {
 const updateEmployee = async (req, res) => {
     try {
         const { id } = req.params;
-        const { mill_id, name, position, is_active } = req.body;
+        const { mill_id, name, position, is_active, department, station } = req.body;
         
+        let data = {
+            mill_id: mill_id ? parseInt(mill_id) : null,
+            name,
+            position,
+            is_active: is_active === undefined ? undefined : String(is_active) === 'true'
+        };
+        
+        if (department !== undefined) data.department = department;
+        if (station !== undefined) data.station = station || null;
+
         const employee = await prisma.workshopEmployee.update({
             where: { id: parseInt(id) },
-            data: {
-                mill_id: mill_id ? parseInt(mill_id) : null,
-                name,
-                position,
-                is_active: is_active === undefined ? undefined : String(is_active) === 'true'
-            }
+            data
         });
         res.json(employee);
     } catch (error) {

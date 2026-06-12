@@ -237,6 +237,8 @@ model WorkshopEmployee {
   mill_id    Int?        // Null = global, Int = scoped to a mill
   name       String
   position   String?
+  department String      @default("Workshop Employees")
+  station    String?
   is_active  Boolean     @default(true)
   created_at DateTime    @default(now())
   

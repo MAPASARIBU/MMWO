@@ -127,6 +127,12 @@ const getWeeklyPlanPage = async (req, res) => {
             ];
         }
         
+        if (isProcessing) {
+            empWhere.department = { in: ['Processing Employees I', 'Processing Employees II'] };
+        } else {
+            empWhere.department = 'Workshop Employees';
+        }
+
         const workshopEmployees = await prisma.workshopEmployee.findMany({
             where: empWhere,
             orderBy: { name: 'asc' }

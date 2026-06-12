@@ -68,10 +68,11 @@ const getEmployeesPage = async (req, res) => {
             orderBy: [{ mill_id: 'asc' }, { name: 'asc' }]
         });
         const mills = await prisma.mill.findMany();
+        const stations = await prisma.station.findMany({ orderBy: { name: 'asc' } });
 
         res.render('layout', {
-            title: 'Workshop Employees',
-            body: await renderView('admin/employees', { employees, mills }),
+            title: 'Master Employees',
+            body: await renderView('admin/employees', { employees, mills, stations }),
             user: req.session.user,
             path: '/admin/employees'
         });

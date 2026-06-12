@@ -186,8 +186,15 @@ const detailWorkOrderPage = async (req, res) => {
             }, 
             orderBy: { name: 'asc' } 
         });
+        let empWhere = { is_active: true, OR: [{ mill_id: wo.mill_id }, { mill_id: null }] };
+        if (wo.category === 'Processing') {
+            empWhere.department = { in: ['Processing Employees I', 'Processing Employees II'] };
+        } else {
+            empWhere.department = 'Workshop Employees';
+        }
+
         const workshopEmployees = await prisma.workshopEmployee.findMany({
-            where: { is_active: true, OR: [{ mill_id: wo.mill_id }, { mill_id: null }] },
+            where: empWhere,
             orderBy: { name: 'asc' }
         });
 

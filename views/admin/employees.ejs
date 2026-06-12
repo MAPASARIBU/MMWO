@@ -1,89 +1,137 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
-        <h3>Workshop Employees</h3>
-        <button onclick="openModal('createEmployeeModal')" class="btn btn-primary">+ Add New Employee</button>
+        <h3>Master Employees</h3>
     </div>
 
-    <div class="table-responsive">
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Position / Skill</th>
-                    <th>Mill</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% employees.forEach(emp => { %>
-                    <tr>
-                        <td>
-                            <strong><%= emp.name %></strong>
-                        </td>
-                        <td>
-                            <%= emp.position || '-' %>
-                        </td>
-                        <td>
-                            <%= emp.mill ? emp.mill.name : 'Global' %>
-                        </td>
-                        <td>
-                            <span class="badge <%= emp.is_active ? 'badge-green' : 'badge-red' %>">
-                                <%= emp.is_active ? 'Active' : 'Inactive' %>
-                            </span>
-                        </td>
-                        <td>
-                            <button onclick="toggleActive(<%= emp.id %>, <%= !emp.is_active %>)"
-                                class="btn btn-sm btn-secondary">
-                                <%= emp.is_active ? 'Deactivate' : 'Activate' %>
-                            </button>
-                            <button onclick="deleteEmployee(<%= emp.id %>)" class="btn btn-sm btn-outline-danger" style="margin-left: 5px;">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </td>
-                    </tr>
-                <% }); %>
-            </tbody>
-        </table>
+    <% const departments = ["Workshop Employees", "Processing Employees I", "Processing Employees II"]; %>
+
+    <!-- Tabs Navigation -->
+    <div style="border-bottom: 1px solid #ddd; margin-bottom: 20px; display: flex; gap: 20px;">
+        <% departments.forEach((dept, i) => { %>
+            <button onclick="switchTab('<%= i %>')" id="tab-btn-<%= i %>" style="padding: 10px 15px; border: none; background: none; font-size: 16px; font-weight: 500; cursor: pointer; border-bottom: 3px solid <%= i === 0 ? '#2563eb' : 'transparent' %>; color: <%= i === 0 ? '#2563eb' : '#64748b' %>;">
+                <%= dept %>
+            </button>
+        <% }); %>
     </div>
+
+    <!-- Tab Contents -->
+    <% departments.forEach((dept, i) => { %>
+        <div id="tab-content-<%= i %>" class="emp-tab-content" style="display: <%= i === 0 ? 'block' : 'none' %>;">
+            <div class="flex justify-end mb-4">
+                <button onclick="openEmployeeModal('<%= dept %>')" class="btn btn-primary">+ Add <%= dept %></button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Nama Pekerja</th>
+                            <th>Stasiun</th>
+                            <th>Jabatan</th>
+                            <th>Mill</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% const deptEmployees = employees.filter(e => (e.department || 'Workshop Employees') === dept); %>
+                        <% if (deptEmployees.length === 0) { %>
+                            <tr><td colspan="6" class="text-center text-secondary py-4">No employees found in this group.</td></tr>
+                        <% } %>
+                        <% deptEmployees.forEach(emp => { %>
+                            <tr>
+                                <td><strong><%= emp.name %></strong></td>
+                                <td><%= emp.station || '-' %></td>
+                                <td><%= emp.position || '-' %></td>
+                                <td><%= emp.mill ? emp.mill.name : 'Global' %></td>
+                                <td>
+                                    <span class="badge <%= emp.is_active ? 'badge-green' : 'badge-red' %>">
+                                        <%= emp.is_active ? 'Active' : 'Inactive' %>
+                                    </span>
+                                </td>
+                                <td>
+                                    <button onclick="toggleActive(<%= emp.id %>, <%= !emp.is_active %>)"
+                                        class="btn btn-sm btn-secondary">
+                                        <%= emp.is_active ? 'Deactivate' : 'Activate' %>
+                                    </button>
+                                    <button onclick="deleteEmployee(<%= emp.id %>)" class="btn btn-sm btn-outline-danger" style="margin-left: 5px;">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    <% }); %>
 </div>
 
 <!-- Create Employee Modal -->
 <div id="createEmployeeModal"
     style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
     <div class="card" style="margin: 50px auto; max-width: 500px;">
-        <h3>Add New Employee</h3>
+        <h3 id="modalTitle">Add Employee</h3>
         <form id="createEmployeeForm">
+            <input type="hidden" name="department" id="empDepartment">
+            
             <div class="form-group">
-                <label class="form-label">Full Name</label>
-                <input type="text" name="name" class="form-control" required placeholder="Ex: Budi Santoso">
+                <label class="form-label">Nama Pekerja *</label>
+                <input type="text" name="name" class="form-control" required placeholder="Contoh: Budi Santoso">
             </div>
+            
             <div class="form-group">
-                <label class="form-label">Position / Skill</label>
-                <input type="text" name="position" class="form-control" placeholder="Ex: Senior Mechanic, Welder, etc.">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Assigned Mill</label>
-                <select name="mill_id" class="form-control">
-                    <option value="">-- Global / All Mills --</option>
-                    <% mills.forEach(m => { %>
-                        <option value="<%= m.id %>"><%= m.name %></option>
-                    <% }); %>
+                <label class="form-label">Stasiun</label>
+                <select name="station" class="form-control">
+                    <option value="">-- Pilih Stasiun --</option>
+                    <% if(typeof stations !== 'undefined') { %>
+                        <% stations.forEach(s => { %>
+                            <option value="<%= s.name %>"><%= s.name %></option>
+                        <% }); %>
+                    <% } %>
+                    <option value="Vehicle">Vehicle</option>
                 </select>
-                <small class="text-secondary mt-1 block">Usually you assign an employee to a specific mill.</small>
             </div>
 
+            <div class="form-group">
+                <label class="form-label">Jabatan</label>
+                <input type="text" name="position" class="form-control" placeholder="Contoh: Mechanic, Helper, dll.">
+            </div>
+
+            <!-- Hidden Mill Assignment since it defaults to Global for simplicity unless needed -->
+            <input type="hidden" name="mill_id" value="">
+
             <div class="flex justify-between mt-4">
-                <button type="button" onclick="closeModal('createEmployeeModal')" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Employee</button>
+                <button type="submit" class="btn btn-primary" id="saveBtn">Tambah</button>
+                <button type="button" onclick="closeEmployeeModal()" class="btn btn-secondary">No</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
-    function openModal(id) { document.getElementById(id).style.display = 'block'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    function switchTab(index) {
+        const totalTabs = 3;
+        for (let i = 0; i < totalTabs; i++) {
+            document.getElementById('tab-content-' + i).style.display = 'none';
+            document.getElementById('tab-btn-' + i).style.borderBottom = '3px solid transparent';
+            document.getElementById('tab-btn-' + i).style.color = '#64748b';
+        }
+        document.getElementById('tab-content-' + index).style.display = 'block';
+        document.getElementById('tab-btn-' + index).style.borderBottom = '3px solid #2563eb';
+        document.getElementById('tab-btn-' + index).style.color = '#2563eb';
+    }
+
+    function openEmployeeModal(department) {
+        document.getElementById('empDepartment').value = department;
+        document.getElementById('modalTitle').innerText = 'Add ' + department;
+        document.getElementById('createEmployeeModal').style.display = 'block';
+    }
+
+    function closeEmployeeModal() {
+        // Refresh page to show newly added employees
+        window.location.reload();
+    }
 
     async function toggleActive(id, isActive) {
         if (!confirm(`Are you sure you want to ${isActive ? 'activate' : 'deactivate'} this employee?`)) return;
@@ -114,6 +162,10 @@
 
     document.getElementById('createEmployeeForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Menyimpan...";
+
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
 
@@ -124,14 +176,33 @@
                 body: JSON.stringify(data)
             });
 
-            if (res.ok) window.location.reload();
-            else {
+            if (res.ok) {
+                // Success! Clear form fields but keep department
+                e.target.reset();
+                document.getElementById('empDepartment').value = data.department;
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Tambah";
+                
+                // Show a brief temporary success feedback
+                const origText = document.getElementById('modalTitle').innerText;
+                document.getElementById('modalTitle').innerText = 'Berhasil Ditambahkan!';
+                document.getElementById('modalTitle').style.color = '#16a34a';
+                setTimeout(() => {
+                    document.getElementById('modalTitle').innerText = origText;
+                    document.getElementById('modalTitle').style.color = '';
+                }, 1500);
+
+            } else {
                 const err = await res.json();
                 alert('Error processing: ' + err.error);
+                saveBtn.disabled = false;
+                saveBtn.innerText = "Tambah";
             }
         } catch (error) {
             console.error(error);
             alert('Error creating employee');
+            saveBtn.disabled = false;
+            saveBtn.innerText = "Tambah";
         }
     });
 </script>
