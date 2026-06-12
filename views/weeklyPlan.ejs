@@ -53,7 +53,9 @@
                                         <%= new Date(wo.created_at).toLocaleDateString() %>
                                     </td>
                                     <td>
-                                        <%= wo.wo_no %>
+                                        <a href="/work-orders/<%= wo.id %>" style="text-decoration: none; font-weight: 500; color: #2563eb;" class="hover:underline">
+                                            <%= wo.wo_no %>
+                                        </a>
                                         <% if (wo.monthly_plan_status === 'MONTHLY_DONE') { %>
                                             <span class="badge" style="background: #10b981; color: white; font-size: 0.6rem; margin-left: 5px;">Material Ready</span>
                                         <% } %>
