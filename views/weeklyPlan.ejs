@@ -1,19 +1,17 @@
-<div class="card">
-    <div class="flex justify-between items-center mb-4">
-        <h3><%= typeof title !== 'undefined' ? title : (typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Weekly Plan' : 'Weekly Plan'))) %></h3>
-        <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isCivil === 'undefined' || !isCivil) && (typeof isOffice === 'undefined' || !isOffice) && (typeof isOffice === 'undefined' || !isOffice)) { %>
-            <button type="button" class="btn btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
-        <% } %>
-    </div>
-
+<div class="card" style="padding-top: 15px;">
     <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isOffice === 'undefined' || !isOffice)) { %>
-    <div class="card mb-4" style="border-left: 4px solid #17a2b8;">
-        <div class="flex justify-between items-center mb-2">
-            <h4 style="margin: 0;">Find Unfinished Work</h4>
-            <div class="flex gap-2">
-                <button type="button" class="btn btn-info text-white" onclick="openFilterModal()"><i class="fas fa-search"></i> Search / Filter WO</button>
+    <div class="card mb-3" style="border-left: 4px solid #17a2b8; padding: 10px 15px;">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <h4 style="margin: 0; font-size: 1.1rem;">Find Unfinished Work</h4>
+                <button type="button" class="btn btn-sm btn-info text-white" onclick="openFilterModal()"><i class="fas fa-search"></i> Search / Filter WO</button>
                 <% if (query.candidateStartDate || query.candidateStations) { %>
-                    <a href="/weekly-plan?week=<%= query.week || '' %>" class="btn btn-secondary">Clear Filter</a>
+                    <a href="/weekly-plan?week=<%= query.week || '' %>" class="btn btn-sm btn-secondary">Clear</a>
+                <% } %>
+            </div>
+            <div>
+                <% if (typeof isCivil === 'undefined' || !isCivil) { %>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="openNonWoModal()">+ Add Non-WO Job</button>
                 <% } %>
             </div>
         </div>
