@@ -60,49 +60,47 @@ const getWeeklyPlanPage = async (req, res) => {
 
         // Candidate WOs Query
         let candidateWos = [];
-        if (!isProcessing && !isCivil && !isOffice) {
-            let candidateWhere = {
-                status: { notIn: ['CLOSED', 'COMPLETED'] },
-                category: categoryFilter
-            };
-            
-            if (req.query.candidateStations) {
-                let st = req.query.candidateStations;
-                if (!Array.isArray(st)) st = [st];
-                const stationIds = st.map(s => parseInt(s)).filter(s => !isNaN(s));
-                if (stationIds.length > 0) {
-                    candidateWhere.station_id = { in: stationIds };
-                }
+        let candidateWhere = {
+            status: { notIn: ['CLOSED', 'COMPLETED'] },
+            category: categoryFilter
+        };
+        
+        if (req.query.candidateStations) {
+            let st = req.query.candidateStations;
+            if (!Array.isArray(st)) st = [st];
+            const stationIds = st.map(s => parseInt(s)).filter(s => !isNaN(s));
+            if (stationIds.length > 0) {
+                candidateWhere.station_id = { in: stationIds };
             }
-            
-            if (req.query.candidateStartDate && req.query.candidateEndDate) {
-                const start = new Date(req.query.candidateStartDate);
-                start.setHours(0, 0, 0, 0);
-                const end = new Date(req.query.candidateEndDate);
-                end.setHours(23, 59, 59, 999);
-                
-                candidateWhere.created_at = {
-                    gte: start,
-                    lte: end
-                };
-            }
-
-            if (user.role === 'SENIOR_MANAGER') {
-                candidateWhere.mill_id = { in: user.accessible_mills || [] };
-            } else if (user.role !== 'ADMIN') {
-                candidateWhere.mill_id = user.mill_id;
-            }
-
-            candidateWos = await prisma.workOrder.findMany({
-                where: candidateWhere,
-                include: {
-                    station: true,
-                    equipment: true,
-                    weekly_plan: true
-                },
-                orderBy: { created_at: 'desc' }
-            });
         }
+        
+        if (req.query.candidateStartDate && req.query.candidateEndDate) {
+            const start = new Date(req.query.candidateStartDate);
+            start.setHours(0, 0, 0, 0);
+            const end = new Date(req.query.candidateEndDate);
+            end.setHours(23, 59, 59, 999);
+            
+            candidateWhere.created_at = {
+                gte: start,
+                lte: end
+            };
+        }
+
+        if (user.role === 'SENIOR_MANAGER') {
+            candidateWhere.mill_id = { in: user.accessible_mills || [] };
+        } else if (user.role !== 'ADMIN') {
+            candidateWhere.mill_id = user.mill_id;
+        }
+
+        candidateWos = await prisma.workOrder.findMany({
+            where: candidateWhere,
+            include: {
+                station: true,
+                equipment: true,
+                weekly_plan: true
+            },
+            orderBy: { created_at: 'desc' }
+        });
 
         // Helper to get current ISO Week string (YYYY-W##)
         const getISOWeekString = (date) => {
