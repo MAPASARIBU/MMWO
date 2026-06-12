@@ -98,8 +98,8 @@
                 <input type="text" name="position" class="form-control" placeholder="Contoh: Mechanic, Helper, dll.">
             </div>
 
-            <!-- Hidden Mill Assignment since it defaults to Global for simplicity unless needed -->
-            <input type="hidden" name="mill_id" value="">
+            <!-- Hidden Mill Assignment bounds to the currently active mill of the user -->
+            <input type="hidden" name="mill_id" value="<%= user ? (user.current_mill_id || user.mill_id || '') : '' %>">
 
             <div class="flex justify-between mt-4">
                 <button type="submit" class="btn btn-primary" id="saveBtn">Tambah</button>

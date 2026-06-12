@@ -72,7 +72,7 @@ const getEmployeesPage = async (req, res) => {
 
         res.render('layout', {
             title: 'Master Employees',
-            body: await renderView('admin/employees', { employees, mills, stations }),
+            body: await renderView('admin/employees', { employees, mills, stations, user: req.session.user }),
             user: req.session.user,
             path: '/admin/employees'
         });
