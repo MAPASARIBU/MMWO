@@ -9,17 +9,18 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: #333;
-            line-height: 1.6;
+            line-height: 1.4;
             max-width: 100%;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             border-bottom: 2px solid #333;
-            padding-bottom: 20px;
+            padding-bottom: 10px;
+            margin-top: 0px;
         }
 
         .header h1 {
@@ -33,7 +34,7 @@
         }
 
         .section {
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
 
         .section-title {
@@ -156,7 +157,7 @@
                 <% if (Object.keys(groupedPlans).length > 0) { %>
                     <% for (const category in groupedPlans) { %>
                         <tr style="background-color: #d1ecf1; border-top: 2px solid #333;">
-                            <td colspan="<%= (typeof isProcessing === 'undefined' || !isProcessing) ? 3 : 2 %>" style="font-weight: bold; font-size: 26px; text-transform: uppercase;">
+                            <td colspan="<%= (typeof isProcessing === 'undefined' || !isProcessing) ? 3 : 2 %>" style="font-weight: bold; font-size: 24px; text-transform: uppercase;">
                                 KATEGORI: <%= category %>
                             </td>
                         </tr>
