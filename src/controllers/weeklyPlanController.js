@@ -46,27 +46,41 @@ const bulkPlan = async (req, res) => {
         }
 
         const referer = req.get('Referer') || '';
-        let categoryFilter;
+        let categoryWhere;
         if (referer.includes('/processing')) {
-            categoryFilter = 'Processing';
+            categoryWhere = { category: 'Processing' };
         } else if (referer.includes('/civil')) {
-            categoryFilter = 'Civil';
+            categoryWhere = { category: 'Civil' };
         } else if (referer.includes('/office')) {
-            categoryFilter = 'Office';
+            categoryWhere = { category: 'Office' };
         } else {
-            categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
+            categoryWhere = {
+                OR: [
+                    { category: { notIn: ['Processing', 'Civil', 'Office'] } },
+                    { category: null }
+                ]
+            };
         }
 
         if (planned_day && millIdToDelete) {
-            await prisma.weeklyPlan.deleteMany({
+            // Find existing plans safely
+            const plansToDelete = await prisma.weeklyPlan.findMany({
                 where: {
                     planned_day,
                     wo: {
-                        category: categoryFilter,
+                        ...categoryWhere,
                         mill_id: millIdToDelete
                     }
-                }
+                },
+                select: { id: true }
             });
+
+            const planIdsToDelete = plansToDelete.map(p => p.id);
+            if (planIdsToDelete.length > 0) {
+                await prisma.weeklyPlan.deleteMany({
+                    where: { id: { in: planIdsToDelete } }
+                });
+            }
         }
 
         for (const id of wo_ids) {
