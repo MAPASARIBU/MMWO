@@ -1,4 +1,4 @@
-<div class="card" style="padding-top: 15px;">
+<div class="card" style="padding: 10px 20px;">
     <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER' && (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isOffice === 'undefined' || !isOffice)) { %>
     <div class="card mb-3" style="border-left: 4px solid #17a2b8; padding: 10px 15px;">
         <div class="flex justify-between items-center">
@@ -24,11 +24,11 @@
         <% } %>
 
         <% if (typeof candidateWos !=='undefined' && candidateWos.length> 0) { %>
-            <hr class="my-3">
-            <h5 class="mb-3">Select WOs to Plan</h5>
+            <hr class="my-2">
             <form action="/api/weekly-plan/bulk" method="POST">
-                <div class="mb-3">
-                    <button type="button" class="btn btn-primary" onclick="openSortirModal()">Sortir</button>
+                <div class="flex justify-between items-center mb-2">
+                    <h5 class="m-0" style="font-size: 1.05rem;">Select WOs to Plan</h5>
+                    <button type="button" class="btn btn-sm btn-primary" onclick="openSortirModal()">Sortir</button>
                 </div>
 
                 <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
