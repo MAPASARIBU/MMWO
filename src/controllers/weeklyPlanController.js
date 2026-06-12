@@ -38,6 +38,37 @@ const bulkPlan = async (req, res) => {
         }
 
         // Use sequential upserts to prevent overwhelming serverless DB connections
+        
+        let millIdToDelete = req.session.user.mill_id;
+        const firstWo = await prisma.workOrder.findUnique({ where: { id: parseInt(wo_ids[0]) } });
+        if (firstWo) {
+            millIdToDelete = firstWo.mill_id;
+        }
+
+        const referer = req.get('Referer') || '';
+        let categoryFilter;
+        if (referer.includes('/processing')) {
+            categoryFilter = 'Processing';
+        } else if (referer.includes('/civil')) {
+            categoryFilter = 'Civil';
+        } else if (referer.includes('/office')) {
+            categoryFilter = 'Office';
+        } else {
+            categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
+        }
+
+        if (planned_day && millIdToDelete) {
+            await prisma.weeklyPlan.deleteMany({
+                where: {
+                    planned_day,
+                    wo: {
+                        category: categoryFilter,
+                        mill_id: millIdToDelete
+                    }
+                }
+            });
+        }
+
         for (const id of wo_ids) {
             await prisma.weeklyPlan.upsert({
                 where: { wo_id: parseInt(id) },
