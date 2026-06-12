@@ -182,7 +182,23 @@
                         if (!groupedPlans[pd]) groupedPlans[pd] = [];
                         groupedPlans[pd].push(plan);
                     });
-                    const dates = Object.keys(groupedPlans).sort().reverse();
+                    const dates = Object.keys(groupedPlans).sort((a, b) => {
+                        if (a === 'Unassigned Date') return 1;
+                        if (b === 'Unassigned Date') return -1;
+                        
+                        const isDateA = a.includes('-');
+                        const isDateB = b.includes('-');
+                        
+                        if (isDateA && isDateB) {
+                            return new Date(b) - new Date(a);
+                        } else if (isDateA) {
+                            return -1;
+                        } else if (isDateB) {
+                            return 1;
+                        } else {
+                            return a.localeCompare(b);
+                        }
+                    });
                 %>
                 <% if (dates.length > 0) { %>
                     <thead>
