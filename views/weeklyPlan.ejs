@@ -121,6 +121,7 @@
     </div>
     <% } %>
 
+    <% if ((typeof isProcessing !== 'undefined' && isProcessing) || (typeof isCivil !== 'undefined' && isCivil) || (typeof isOffice !== 'undefined' && isOffice)) { %>
     <div class="print-header hidden-print-block">
         <h2 class="text-center mb-4"><%= typeof title !== 'undefined' ? title : (typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan'))) %></h2>
         <div class="flex justify-between mb-4">
@@ -132,10 +133,12 @@
             </div>
         </div>
     </div>
+    <% } %>
 
     <div class="flex justify-between items-center mb-4">
         <h4><%= (typeof isProcessing === 'undefined' || !isProcessing) && (typeof isCivil === 'undefined' || !isCivil) && (typeof isOffice === 'undefined' || !isOffice) ? 'Record Program kerja' : (typeof title !== 'undefined' ? title : 'Weekly Plan') %></h4>
         <form action="<%= typeof isProcessing !== 'undefined' && isProcessing ? '/weekly-plan/processing' : (typeof isCivil !== 'undefined' && isCivil ? '/weekly-plan/civil' : (typeof isOffice !== 'undefined' && isOffice ? '/weekly-plan/office' : '/weekly-plan')) %>" method="GET" class="flex gap-2 items-center" id="filterForm">
+            <% if ((typeof isProcessing !== 'undefined' && isProcessing) || (typeof isCivil !== 'undefined' && isCivil) || (typeof isOffice !== 'undefined' && isOffice)) { %>
             <div class="form-group mb-0">
                 <input type="text" name="week" class="form-control" placeholder="Week (e.g. 2026-W06)"
                     value="<%= query.week || '' %>">
@@ -151,6 +154,7 @@
                 </select>
             </div>
             <button type="submit" class="btn btn-secondary">Filter</button>
+            <% } %>
             <button type="button" class="btn btn-primary" onclick="printPlan()">
                 <i class="fas fa-print"></i> Print Plan
             </button>
