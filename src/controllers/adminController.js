@@ -63,15 +63,54 @@ const getMasterDataPage = async (req, res) => {
 
 const getEmployeesPage = async (req, res) => {
     try {
+        const user = req.session.user;
+        const activeMillId = user ? (user.current_mill_id || user.mill_id) : null;
+
+        let empWhere = {};
+        let stationWhere = {};
+
+        if (user.role === 'SENIOR_MANAGER') {
+            if (activeMillId) {
+                empWhere.OR = [{ mill_id: activeMillId }, { mill_id: null }];
+                stationWhere.mill_id = activeMillId;
+            } else if (user.accessible_mills && user.accessible_mills.length > 0) {
+                empWhere.OR = [
+                    { mill_id: { in: user.accessible_mills } },
+                    { mill_id: null }
+                ];
+                stationWhere.mill_id = { in: user.accessible_mills };
+            }
+        } else if (user.role !== 'ADMIN') {
+            if (activeMillId) {
+                empWhere.OR = [
+                    { mill_id: activeMillId },
+                    { mill_id: null }
+                ];
+                stationWhere.mill_id = activeMillId;
+            }
+        } else {
+            if (activeMillId) {
+                empWhere.OR = [
+                    { mill_id: activeMillId },
+                    { mill_id: null }
+                ];
+                stationWhere.mill_id = activeMillId;
+            }
+        }
+
         const employees = await prisma.workshopEmployee.findMany({
+            where: empWhere,
             include: { mill: true },
             orderBy: [{ mill_id: 'asc' }, { name: 'asc' }]
         });
-        const mills = await prisma.mill.findMany();
-        const stations = await prisma.station.findMany({ orderBy: { name: 'asc' } });
+        const mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
+        const stations = await prisma.station.findMany({
+            where: stationWhere,
+            orderBy: { name: 'asc' }
+        });
 
         res.render('layout', {
-            title: 'Master Employees',
+            title: 'Master Labour Employees',
             body: await renderView('admin/employees', { employees, mills, stations, user: req.session.user }),
             user: req.session.user,
             path: '/admin/employees'

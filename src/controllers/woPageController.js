@@ -190,7 +190,7 @@ const detailWorkOrderPage = async (req, res) => {
         if (wo.category === 'Processing') {
             empWhere.department = { in: ['Processing Employees I', 'Processing Employees II'] };
         } else {
-            empWhere.department = 'Workshop Employees';
+            empWhere.department = { in: ['Workshop Employees', 'Labour Employees', 'Other Employees'] };
         }
 
         const workshopEmployees = await prisma.workshopEmployee.findMany({

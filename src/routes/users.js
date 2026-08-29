@@ -7,5 +7,6 @@ router.get('/', ensureRole(['ADMIN']), userController.getUsers);
 router.post('/', ensureRole(['ADMIN']), userController.createUser);
 router.put('/:id', ensureRole(['ADMIN']), userController.updateUser);
 router.patch('/:id/active', ensureRole(['ADMIN']), userController.toggleActive);
+router.delete('/:id', ensureRole(['ADMIN']), userController.deleteUser);
 
 module.exports = router;

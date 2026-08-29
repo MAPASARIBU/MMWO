@@ -18,7 +18,7 @@ const loginPage = async (req, res) => {
 };
 
 const login = async (req, res) => {
-    const { millId, username, password } = req.body;
+    const { millId, username, sandi } = req.body; const password = sandi;
 
     try {
         // Validate Mill Selection

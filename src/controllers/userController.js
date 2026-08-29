@@ -102,9 +102,60 @@ const updateUser = async (req, res) => {
     }
 };
 
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = parseInt(id);
+
+        if (isNaN(userId)) {
+            return res.status(400).json({ error: 'ID User tidak valid' });
+        }
+
+        // Check if user has related records
+        const [relatedWO, relatedAudit, relatedComments, relatedPlans] = await Promise.all([
+            prisma.workOrder.count({
+                where: {
+                    OR: [
+                        { reporter_id: userId },
+                        { assignee_id: userId }
+                    ]
+                }
+            }),
+            prisma.auditLog.count({ where: { user_id: userId } }),
+            prisma.comment.count({ where: { user_id: userId } }),
+            prisma.weeklyPlan.count({ where: { planned_by: userId } })
+        ]);
+
+        if (relatedWO > 0 || relatedAudit > 0 || relatedComments > 0 || relatedPlans > 0) {
+            const details = [];
+            if (relatedWO > 0) details.push(`${relatedWO} Work Order`);
+            if (relatedPlans > 0) details.push(`${relatedPlans} Weekly Plan`);
+            if (relatedComments > 0) details.push(`${relatedComments} Komentar`);
+            if (relatedAudit > 0) details.push(`${relatedAudit} Audit Log`);
+
+            return res.status(400).json({
+                error: `User tidak dapat dihapus permanen karena memiliki riwayat data aktif di sistem (${details.join(', ')}). Silakan gunakan tombol "Deactivate" agar user tidak bisa login tanpa merusak data historis.`
+            });
+        }
+
+        await prisma.user.delete({
+            where: { id: userId }
+        });
+        res.json({ success: true });
+    } catch (error) {
+        if (error.code === 'P2003') {
+            return res.status(400).json({
+                error: 'User terikat dengan data lain di sistem. Silakan nonaktifkan (Deactivate) user tersebut.'
+            });
+        }
+        res.status(500).json({ error: error.message });
+    }
+};
+
 module.exports = {
     getUsers,
     createUser,
     toggleActive,
-    updateUser
+    updateUser,
+    deleteUser
 };

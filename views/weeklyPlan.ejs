@@ -70,7 +70,7 @@
                                         <% } else { %>
                                             <span class="text-muted italic text-sm">Belum ada</span>
                                         <% } %>
-                                        <% if (user && user.role !== 'PROC' && user.role !== 'SENIOR_MANAGER') { %>
+                                        <% if (user && (user.role !== 'PROC' || (typeof isProcessing !== 'undefined' && isProcessing)) && user.role !== 'SENIOR_MANAGER') { %>
                                             <div class="mt-2 no-print">
                                                 <button type="button" class="btn btn-sm" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.75rem; font-weight: 600;" onclick="openGlobalPicModal(<%= wo.id %>, <%= JSON.stringify((wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
                                             </div>
@@ -217,20 +217,58 @@
 <!-- Assign PIC Modal -->
 <div id="assignGlobalPicModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 10000;">
     <div class="card" style="margin: 50px auto; max-width: 500px; position: relative;">
-        <h3>Assign Mechanics (Max 4)</h3>
-        <p class="text-secondary mb-3">Please select up to 4 mechanics to work on this order.</p>
+        <h3><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Assign Processing PICs (Max 4)' : 'Assign PICs (Max 4)' %></h3>
+        <p class="text-secondary mb-3">
+            <%= typeof isProcessing !== 'undefined' && isProcessing ? 'Pilih kelompok pekerja (Shift I / II), kemudian pilih maksimal 4 pekerja untuk order ini.' : 'Pilih maksimal 4 pekerja untuk ditugaskan pada order ini.' %>
+        </p>
+
+        <% if (typeof isProcessing !== 'undefined' && isProcessing) { %>
+            <div style="background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
+                <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 6px; color: #1e293b;">Pilih Kelompok Pekerja Processing:</label>
+                <div style="display: flex; gap: 8px;">
+                    <button type="button" id="btnGroupProc1" class="btn btn-sm" onclick="filterProcPics('Processing Employees I')" style="flex: 1; border: 2px solid #2563eb; background: #2563eb; color: #fff; font-weight: 600; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
+                        Processing Employees I
+                    </button>
+                    <button type="button" id="btnGroupProc2" class="btn btn-sm" onclick="filterProcPics('Processing Employees II')" style="flex: 1; border: 2px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 600; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
+                        Processing Employees II
+                    </button>
+                </div>
+            </div>
+        <% } else { %>
+            <div style="background: #f1f5f9; padding: 8px 10px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
+                <label style="font-weight: 600; font-size: 0.82rem; display: block; margin-bottom: 6px; color: #1e293b;">Filter Kelompok Pekerja:</label>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" id="btnFilterAll" class="btn btn-sm" onclick="filterMaintPics('ALL')" style="flex: 1; border: 2px solid #2563eb; background: #2563eb; color: #fff; font-weight: 600; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+                        Semua
+                    </button>
+                    <button type="button" id="btnFilterWorkshop" class="btn btn-sm" onclick="filterMaintPics('Workshop Employees')" style="flex: 1; border: 2px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 600; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+                        Workshop
+                    </button>
+                    <button type="button" id="btnFilterOther" class="btn btn-sm" onclick="filterMaintPics('Other Employees')" style="flex: 1; border: 2px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 600; padding: 5px 8px; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">
+                        Other Employees
+                    </button>
+                </div>
+            </div>
+        <% } %>
+
         <form id="assignGlobalPicForm">
             <input type="hidden" id="activeWoId" name="wo_id" value="">
             <div style="max-height: 300px; overflow-y: auto; border: 1px solid #eee; padding: 10px; border-radius: 4px;">
                 <% if(typeof workshopEmployees !== 'undefined' && workshopEmployees.length > 0) { %>
                     <% workshopEmployees.forEach(emp => { %>
-                        <label style="display: block; margin-bottom: 8px; cursor: pointer;">
+                        <label class="global-pic-item" data-dept="<%= emp.department || 'Workshop Employees' %>" style="display: block; margin-bottom: 8px; cursor: pointer;">
                             <input type="checkbox" name="pic_ids" value="<%= emp.id %>" class="global-pic-checkbox" onchange="checkGlobalMaxPics()">
-                            <%= emp.name %> <small class="text-secondary">(<%= emp.position || 'Mechanic' %>)</small>
+                            <%= emp.name %> <small class="text-secondary">(<%= emp.position || 'Worker' %>)</small>
+                            <% if (typeof isProcessing !== 'undefined' && isProcessing) { %>
+                                <span class="badge badge-gray" style="font-size: 0.7rem; margin-left: 5px;"><%= emp.department %></span>
+                            <% } else if (emp.department === 'Other Employees') { %>
+                                <span class="badge" style="background-color: #f59e0b; color: white; font-size: 0.7rem; margin-left: 5px;">Other Employees</span>
+                            <% } %>
                         </label>
                     <% }); %>
+                    <div id="noProcEmployeesMsg" class="text-secondary text-center py-2" style="display: none;">Tidak ada pekerja terdaftar di kelompok ini.</div>
                 <% } else { %>
-                    <div class="text-secondary text-center">No active workshop employees found.</div>
+                    <div class="text-secondary text-center">No active employees found.</div>
                 <% } %>
             </div>
             <div class="flex justify-between mt-4">
@@ -242,15 +280,124 @@
 </div>
 
 <script>
+    let currentActiveProcDept = 'Processing Employees I';
+
+    function filterProcPics(dept) {
+        currentActiveProcDept = dept;
+        const btn1 = document.getElementById('btnGroupProc1');
+        const btn2 = document.getElementById('btnGroupProc2');
+        if (btn1 && btn2) {
+            if (dept === 'Processing Employees I') {
+                btn1.style.background = '#2563eb';
+                btn1.style.color = '#fff';
+                btn1.style.borderColor = '#2563eb';
+                btn2.style.background = '#ffffff';
+                btn2.style.color = '#475569';
+                btn2.style.borderColor = '#cbd5e1';
+            } else {
+                btn2.style.background = '#2563eb';
+                btn2.style.color = '#fff';
+                btn2.style.borderColor = '#2563eb';
+                btn1.style.background = '#ffffff';
+                btn1.style.color = '#475569';
+                btn1.style.borderColor = '#cbd5e1';
+            }
+        }
+
+        let visibleCount = 0;
+        const items = document.querySelectorAll('.global-pic-item');
+        items.forEach(item => {
+            const itemDept = item.getAttribute('data-dept');
+            if (itemDept === dept) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        const noMsg = document.getElementById('noProcEmployeesMsg');
+        if (noMsg) {
+            noMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+    }
+
+    function filterMaintPics(dept) {
+        const btnAll = document.getElementById('btnFilterAll');
+        const btnWs = document.getElementById('btnFilterWorkshop');
+        const btnOt = document.getElementById('btnFilterOther');
+        if (btnAll && btnWs && btnOt) {
+            [btnAll, btnWs, btnOt].forEach(b => {
+                b.style.background = '#ffffff';
+                b.style.color = '#475569';
+                b.style.borderColor = '#cbd5e1';
+            });
+            if (dept === 'ALL') {
+                btnAll.style.background = '#2563eb';
+                btnAll.style.color = '#fff';
+                btnAll.style.borderColor = '#2563eb';
+            } else if (dept === 'Workshop Employees') {
+                btnWs.style.background = '#2563eb';
+                btnWs.style.color = '#fff';
+                btnWs.style.borderColor = '#2563eb';
+            } else if (dept === 'Other Employees') {
+                btnOt.style.background = '#2563eb';
+                btnOt.style.color = '#fff';
+                btnOt.style.borderColor = '#2563eb';
+            }
+        }
+
+        let visibleCount = 0;
+        const items = document.querySelectorAll('.global-pic-item');
+        items.forEach(item => {
+            const itemDept = item.getAttribute('data-dept');
+            if (dept === 'ALL') {
+                item.style.display = 'block';
+                visibleCount++;
+            } else if (dept === 'Workshop Employees') {
+                if (itemDept === 'Workshop Employees' || itemDept === 'Labour Employees' || !itemDept) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            } else if (dept === 'Other Employees') {
+                if (itemDept === 'Other Employees') {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            }
+        });
+
+        const noMsg = document.getElementById('noProcEmployeesMsg');
+        if (noMsg) {
+            noMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+        }
+    }
+
     function openGlobalPicModal(woId, currentPicIds) {
         document.getElementById('activeWoId').value = woId;
         
         // Reset and check current
         const checkboxes = document.querySelectorAll('.global-pic-checkbox');
+        let matchedDept = null;
         checkboxes.forEach(cb => {
-            cb.checked = currentPicIds.includes(parseInt(cb.value));
+            const isChecked = currentPicIds.includes(parseInt(cb.value));
+            cb.checked = isChecked;
             cb.disabled = false;
+            if (isChecked && !matchedDept) {
+                const parent = cb.closest('.global-pic-item');
+                if (parent) matchedDept = parent.getAttribute('data-dept');
+            }
         });
+
+        <% if (typeof isProcessing !== 'undefined' && isProcessing) { %>
+            filterProcPics(matchedDept || 'Processing Employees I');
+        <% } else { %>
+            filterMaintPics('ALL');
+        <% } %>
 
         document.getElementById('assignGlobalPicModal').style.display = 'block';
         checkGlobalMaxPics();
@@ -281,7 +428,7 @@
         const woId = document.getElementById('activeWoId').value;
 
         if (picIds.length > 4) {
-            alert('Maksimal hanya 4 mekanik yang dapat dipilih.');
+            alert('Maksimal hanya 4 pekerja yang dapat dipilih.');
             return;
         }
 
@@ -390,7 +537,7 @@
                                 </label>
                             <% }); %>
                         <% } else { %>
-                            <div class="text-secondary text-center">No active workshop employees found.</div>
+                            <div class="text-secondary text-center">No active labour employees found.</div>
                         <% } %>
                     </div>
                 </div>

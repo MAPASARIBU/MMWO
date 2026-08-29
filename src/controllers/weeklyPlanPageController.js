@@ -97,7 +97,8 @@ const getWeeklyPlanPage = async (req, res) => {
             include: {
                 station: true,
                 equipment: true,
-                weekly_plan: true
+                weekly_plan: true,
+                pics: true
             },
             orderBy: { created_at: 'desc' }
         });
@@ -130,7 +131,7 @@ const getWeeklyPlanPage = async (req, res) => {
         if (isProcessing) {
             empWhere.department = { in: ['Processing Employees I', 'Processing Employees II'] };
         } else {
-            empWhere.department = 'Workshop Employees';
+            empWhere.department = { in: ['Workshop Employees', 'Labour Employees', 'Other Employees'] };
         }
 
         const workshopEmployees = await prisma.workshopEmployee.findMany({

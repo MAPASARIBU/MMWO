@@ -1,12 +1,12 @@
 <div class="card">
     <div class="flex justify-between items-center mb-4">
-        <h3>Master Employees</h3>
+        <h3>Master Labour Employees</h3>
     </div>
 
-    <% const departments = ["Workshop Employees", "Processing Employees I", "Processing Employees II"]; %>
+    <% const departments = ["Workshop Employees", "Processing Employees I", "Processing Employees II", "Other Employees"]; %>
 
     <!-- Tabs Navigation -->
-    <div style="border-bottom: 1px solid #ddd; margin-bottom: 20px; display: flex; gap: 20px;">
+    <div style="border-bottom: 1px solid #ddd; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap;">
         <% departments.forEach((dept, i) => { %>
             <button onclick="switchTab('<%= i %>')" id="tab-btn-<%= i %>" style="padding: 10px 15px; border: none; background: none; font-size: 16px; font-weight: 500; cursor: pointer; border-bottom: 3px solid <%= i === 0 ? '#2563eb' : 'transparent' %>; color: <%= i === 0 ? '#2563eb' : '#64748b' %>;">
                 <%= dept %>
@@ -24,17 +24,17 @@
             <div class="table-responsive">
                 <table class="table">
                     <thead>
-                        <tr>
-                            <th>Nama Pekerja</th>
-                            <th>Stasiun</th>
-                            <th>Jabatan</th>
-                            <th>Mill</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
+                    <tr>
+                        <th>Nama Pekerja</th>
+                        <th>Stasiun</th>
+                        <th>Jabatan</th>
+                        <th>Mill</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        <% const deptEmployees = employees.filter(e => (e.department || 'Workshop Employees') === dept); %>
+                        <% const deptEmployees = employees.filter(e => e.department === dept || (dept === 'Workshop Employees' && (!e.department || e.department === 'Labour Employees' || e.department === 'Workshop Employees'))); %>
                         <% if (deptEmployees.length === 0) { %>
                             <tr><td colspan="6" class="text-center text-secondary py-4">No employees found in this group.</td></tr>
                         <% } %>
@@ -84,9 +84,12 @@
                 <label class="form-label">Stasiun</label>
                 <select name="station" class="form-control">
                     <option value="">-- Pilih Stasiun --</option>
-                    <% if(typeof stations !== 'undefined') { %>
-                        <% stations.forEach(s => { %>
-                            <option value="<%= s.name %>"><%= s.name %></option>
+                    <% if(typeof stations !== 'undefined' && stations.length > 0) { %>
+                        <% 
+                            const uniqueStationNames = [...new Set(stations.map(s => s.name))].filter(Boolean).sort();
+                            uniqueStationNames.forEach(name => { 
+                        %>
+                            <option value="<%= name %>"><%= name %></option>
                         <% }); %>
                     <% } %>
                     <option value="Vehicle">Vehicle</option>
@@ -111,15 +114,18 @@
 
 <script>
     function switchTab(index) {
-        const totalTabs = 3;
-        for (let i = 0; i < totalTabs; i++) {
-            document.getElementById('tab-content-' + i).style.display = 'none';
-            document.getElementById('tab-btn-' + i).style.borderBottom = '3px solid transparent';
-            document.getElementById('tab-btn-' + i).style.color = '#64748b';
+        document.querySelectorAll('.emp-tab-content').forEach(el => el.style.display = 'none');
+        document.querySelectorAll('[id^="tab-btn-"]').forEach(el => {
+            el.style.borderBottom = '3px solid transparent';
+            el.style.color = '#64748b';
+        });
+        const activeTab = document.getElementById('tab-content-' + index);
+        const activeBtn = document.getElementById('tab-btn-' + index);
+        if (activeTab) activeTab.style.display = 'block';
+        if (activeBtn) {
+            activeBtn.style.borderBottom = '3px solid #2563eb';
+            activeBtn.style.color = '#2563eb';
         }
-        document.getElementById('tab-content-' + index).style.display = 'block';
-        document.getElementById('tab-btn-' + index).style.borderBottom = '3px solid #2563eb';
-        document.getElementById('tab-btn-' + index).style.color = '#2563eb';
     }
 
     function openEmployeeModal(department) {
