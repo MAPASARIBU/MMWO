@@ -37,11 +37,12 @@ app.set('view engine', 'ejs');
 // Cache bust version for static assets (refreshed on every server restart)
 app.locals.appVersion = Date.now();
 
-const compression = require('compression');
-
-// Middleware
-app.set('trust proxy', 1); // Trust first proxy (Railway)
-app.use(compression());
+try {
+    const compression = require('compression');
+    app.use(compression());
+} catch (e) {
+    // compression optional
+}
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
