@@ -1,4 +1,5 @@
-﻿const { PrismaClient } = require('@prisma/client');
+require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
 
 // Global singleton pattern to prevent multiple PrismaClient instances and connection exhaustion
 let prisma;
