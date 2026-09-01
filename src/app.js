@@ -55,7 +55,7 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: false, // Allows session cookies to work on both HTTP and HTTPS
         maxAge: 24 * 60 * 60 * 1000 // 1 day
     }
 }));
