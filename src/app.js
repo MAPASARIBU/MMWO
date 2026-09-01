@@ -28,7 +28,6 @@ const { startHMCron } = require('./cron/hmCron');
 const whatsappService = require('./services/whatsappService');
 
 const app = express();
-const prisma = require('./prisma');
 const PORT = process.env.PORT || 3000;
 
 // View engine setup
