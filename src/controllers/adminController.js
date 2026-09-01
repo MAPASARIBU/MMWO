@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const { renderView } = require('./indexController');
 
 const getUsersPage = async (req, res) => {
@@ -40,7 +39,7 @@ const getMasterDataPage = async (req, res) => {
         });
 
         const processingPlans = await prisma.processingPlan.findMany({
-            include: { mill: true, station: true },
+            include: { mill: true, station: true, equipment: true },
             orderBy: { created_at: 'desc' }
         });
 

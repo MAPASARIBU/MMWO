@@ -1,6 +1,5 @@
 const cron = require('node-cron');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const { generateWONumber } = require('../controllers/workOrderController');
 const { sendNewWONotification } = require('../services/notificationService');
 const { calculateNextDueDate } = require('./processingCron');

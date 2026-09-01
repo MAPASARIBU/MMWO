@@ -1,6 +1,5 @@
 const cron = require('node-cron');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const { generateWONumber } = require('../controllers/workOrderController');
 const { sendNewWONotification } = require('../services/notificationService');
 
@@ -79,6 +78,7 @@ const startProcessingCron = () => {
                         wo_no,
                         mill_id: plan.mill_id,
                         station_id: plan.station_id,
+                        equipment_id: plan.equipment_id || null,
                         category: 'Processing',
                         type: 'Processing',
                         priority: 'P2', // Priority for processing

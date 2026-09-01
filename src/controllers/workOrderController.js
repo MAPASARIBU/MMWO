@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const whatsappService = require('../services/whatsappService');
 const { sendNewWONotification } = require('../services/notificationService');
 
@@ -263,6 +262,8 @@ const updateStatus = async (req, res) => {
             action = 'VERIFIED';
         }
         else if (status === 'CLOSED') {
+            if (!wo.started_at) updateData.started_at = new Date();
+            if (!wo.completed_at) updateData.completed_at = new Date();
             updateData.closed_at = new Date();
             action = 'CLOSED';
 

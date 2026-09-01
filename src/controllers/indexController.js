@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 const getDashboard = async (req, res) => {
     try {
@@ -56,9 +55,12 @@ const getDashboard = async (req, res) => {
         }
 
         // Filters
-        const { startDate, endDate, status } = req.query;
-        let filterWhere = { ...baseWhere };
-        const hasFilters = startDate || endDate || status;
+        const { startDate, endDate, status, station_id } = req.query;
+        let filterWhere = { 
+            ...baseWhere,
+            wo_no: { not: { startsWith: 'PRC' } }
+        };
+        const hasFilters = startDate || endDate || status || station_id;
 
         // Date Range Filter
         if (startDate || endDate) {
@@ -74,6 +76,11 @@ const getDashboard = async (req, res) => {
             }
         }
 
+        // Station Filter
+        if (station_id) {
+            filterWhere.station_id = parseInt(station_id);
+        }
+
         // Status Filter
         if (status) {
             if (Array.isArray(status)) {
@@ -87,7 +94,7 @@ const getDashboard = async (req, res) => {
         let queryOptions = {
             where: filterWhere,
             orderBy: { created_at: 'desc' },
-            include: { station: true, assignee: true, pics: true }
+            include: { station: true, equipment: true, assignee: true, pics: true }
         };
 
         // If no filters, limit to 5 (original behavior), otherwise show all matching
@@ -95,77 +102,106 @@ const getDashboard = async (req, res) => {
             queryOptions.take = 5;
         }
 
-        // Fetch recent WOs (filtered by mill and other filters)
-        const recentWos = await prisma.workOrder.findMany(queryOptions);
-
         // Prepare filter info for display (to pre-fill inputs)
         const filterInfo = {
             startDate: startDate || null,
             endDate: endDate || null,
             status: status || null,
+            station_id: station_id || null,
         };
 
-
-
-        // Stats (Apply Filters - specifically DATE and MILL, but careful with STATUS)
-        // We want Date Range to apply to Stats, but NOT the dashboard "Status" filter 
-        // because "Pending" and "High Priority" define their own status criteria.
-        let statsWhere = { ...baseWhere };
+        // Stats where clause
+        let statsWhere = { 
+            ...baseWhere,
+            wo_no: { not: { startsWith: 'PRC' } }
+        };
         if (filterWhere.created_at) {
             statsWhere.created_at = filterWhere.created_at;
         }
 
-        const totalWOs = await prisma.workOrder.count({ where: statsWhere });
-        const completedWos = await prisma.workOrder.count({
-            where: {
-                ...statsWhere,
-                status: { in: ['COMPLETED', 'VERIFIED', 'CLOSED'] }
-            }
-        });
-        const realCompletionRate = totalWOs > 0 ? Math.round((completedWos / totalWOs) * 100) : 0;
+        let stationWhere = {};
+        if (millId) {
+            stationWhere.mill_id = millId;
+        } else if (user.role === 'SENIOR_MANAGER') {
+            stationWhere.mill_id = { in: user.accessible_mills || [] };
+        }
 
-        const stats = {
-            pending: await prisma.workOrder.count({
-                where: {
-                    ...statsWhere,
-                    status: { in: ['OPEN', 'PLANNED', 'ASSIGNED', 'IN_PROGRESS'] }
-                }
+        // Parallelize all dashboard queries in a single roundtrip!
+        const [
+            recentWos,
+            totalWOs,
+            completedWos,
+            pendingWos,
+            highPriorityWos,
+            typeStats,
+            categoryStats,
+            stationCounts,
+            statStations,
+            allWosForTables
+        ] = await Promise.all([
+            // 1. Recent WOs
+            prisma.workOrder.findMany(queryOptions),
+            // 2. Total WOs
+            prisma.workOrder.count({ where: statsWhere }),
+            // 3. Completed WOs
+            prisma.workOrder.count({
+                where: { ...statsWhere, status: { in: ['COMPLETED', 'VERIFIED', 'CLOSED'] } }
             }),
-            completionRate: realCompletionRate,
-            highPriority: await prisma.workOrder.count({
-                where: {
-                    ...statsWhere,
-                    priority: 'P1',
-                    status: { not: 'CLOSED' }
+            // 4. Pending WOs
+            prisma.workOrder.count({
+                where: { ...statsWhere, status: { in: ['OPEN', 'PLANNED', 'ASSIGNED', 'IN_PROGRESS'] } }
+            }),
+            // 5. High Priority WOs
+            prisma.workOrder.count({
+                where: { ...statsWhere, priority: 'P1', status: { not: 'CLOSED' } }
+            }),
+            // 6. Type Stats Chart
+            prisma.workOrder.groupBy({
+                by: ['type'],
+                where: filterWhere,
+                _count: { type: true }
+            }),
+            // 7. Category Stats Chart
+            prisma.workOrder.groupBy({
+                by: ['category'],
+                where: filterWhere,
+                _count: { category: true }
+            }),
+            // 8. Station Counts Chart
+            prisma.workOrder.groupBy({
+                by: ['station_id'],
+                where: filterWhere,
+                _count: { id: true }
+            }),
+            // 9. Station Names Mapping
+            prisma.station.findMany({
+                where: stationWhere,
+                select: { id: true, name: true },
+                orderBy: { name: 'asc' }
+            }),
+            // 10. Data Aggregation for Tables
+            prisma.workOrder.findMany({
+                where: filterWhere,
+                select: {
+                    id: true,
+                    status: true,
+                    category: true,
+                    description: true,
+                    created_at: true,
+                    completed_at: true,
+                    closed_at: true,
+                    parts: { select: { id: true } }
                 }
             })
+        ]);
+
+        const realCompletionRate = totalWOs > 0 ? Math.round((completedWos / totalWOs) * 100) : 0;
+        const stats = {
+            pending: pendingWos,
+            completionRate: realCompletionRate,
+            highPriority: highPriorityWos
         };
 
-        // Chart Data Aggregation
-        const typeStats = await prisma.workOrder.groupBy({
-            by: ['type'],
-            where: filterWhere, // Use filterWhere to respect date/status filters
-            _count: { type: true }
-        });
-
-        const categoryStats = await prisma.workOrder.groupBy({
-            by: ['category'],
-            where: filterWhere, // Use filterWhere to respect date/status filters
-            _count: { category: true }
-        });
-
-        // Chart Data for WO by Station
-        const stationCounts = await prisma.workOrder.groupBy({
-            by: ['station_id'],
-            where: filterWhere,
-            _count: { id: true }
-        });
-
-        // Fetch station names for mapping
-        let statStations = await prisma.station.findMany({
-            where: millId ? { mill_id: millId } : {}
-        });
-        
         const stationMap = {};
         statStations.forEach(s => {
             stationMap[s.id] = s.name;
@@ -183,22 +219,6 @@ const getDashboard = async (req, res) => {
             }
         });
 
-        // Parts that need attention (Warning > 90% or Critical >= 100%)
-        // --- DATA AGGREGATION FOR DASHBOARD TABLES ---
-        const allWosForTables = await prisma.workOrder.findMany({
-            where: filterWhere,
-            select: {
-                id: true,
-                status: true,
-                category: true,
-                description: true,
-                created_at: true,
-                completed_at: true,
-                closed_at: true,
-                parts: { select: { id: true } }
-            }
-        });
-
         const maintenanceTable = {
             hmBase: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 },
             autoPm: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 },
@@ -207,7 +227,7 @@ const getDashboard = async (req, res) => {
         };
 
         const processingTable = {
-            manualProcessing: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 }
+            autoProcessing: { total: 0, open: 0, inProgress: 0, completeClose: 0, assigned: 0, onHold: 0 }
         };
 
         const statusTableDetails = {
@@ -266,7 +286,7 @@ const getDashboard = async (req, res) => {
             }
 
             if (wo.category === 'Processing') {
-                assignedRow = processingTable.manualProcessing;
+                assignedRow = processingTable.autoProcessing;
             } else {
                 if (wo.parts && wo.parts.length > 0) {
                     assignedRow = maintenanceTable.hmBase;
@@ -352,6 +372,7 @@ const getDashboard = async (req, res) => {
                 user, // Pass user for role check
                 hasFilters,
                 filterInfo,
+                stations: statStations,
                 maintenanceTable,
                 processingTable,
                 durationTable,
@@ -396,8 +417,10 @@ const getPrintRecap = async (req, res) => {
         }
 
         // Filters
-        const { startDate, endDate, status } = req.query;
-        let whereClause = {};
+        const { startDate, endDate, status, station_id } = req.query;
+        let whereClause = {
+            wo_no: { not: { startsWith: 'PRC' } }
+        };
 
         // Apply Mill Filter
         if (millId) {
@@ -418,6 +441,11 @@ const getPrintRecap = async (req, res) => {
                 end.setHours(23, 59, 59, 999);
                 whereClause.created_at.lte = end;
             }
+        }
+
+        // Station Filter
+        if (station_id) {
+            whereClause.station_id = parseInt(station_id);
         }
 
         // Status Filter
@@ -445,11 +473,11 @@ const getPrintRecap = async (req, res) => {
         let queryOptions = {
             where: whereClause,
             orderBy: { created_at: 'desc' },
-            include: { station: true }
+            include: { station: true, equipment: true }
         };
 
         // If no filters are applied, default to recent 20 to avoid dumping everything
-        const hasFilters = startDate || endDate || status;
+        const hasFilters = startDate || endDate || status || station_id;
         if (!hasFilters) {
             queryOptions.take = 20;
         }

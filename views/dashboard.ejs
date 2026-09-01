@@ -128,22 +128,22 @@
             </thead>
             <tbody>
                 <tr>
-                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">MANUAL PROCESSING</td>
-                    <td style="padding: 8px; font-weight: 600;"><%= processingTable.manualProcessing.total %></td>
-                    <td style="padding: 8px;"><%= processingTable.manualProcessing.open %></td>
-                    <td style="padding: 8px;"><%= processingTable.manualProcessing.inProgress %></td>
-                    <td style="padding: 8px;"><%= processingTable.manualProcessing.completeClose %></td>
-                    <td style="padding: 8px;"><%= processingTable.manualProcessing.assigned %></td>
-                    <td style="padding: 8px;"><%= processingTable.manualProcessing.onHold %></td>
+                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">PROCESSING (AUTO PM / SCHEDULED)</td>
+                    <td style="padding: 8px; font-weight: 600;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.total : (processingTable.manualProcessing ? processingTable.manualProcessing.total : 0) %></td>
+                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.open : (processingTable.manualProcessing ? processingTable.manualProcessing.open : 0) %></td>
+                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.inProgress : (processingTable.manualProcessing ? processingTable.manualProcessing.inProgress : 0) %></td>
+                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.completeClose : (processingTable.manualProcessing ? processingTable.manualProcessing.completeClose : 0) %></td>
+                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.assigned : (processingTable.manualProcessing ? processingTable.manualProcessing.assigned : 0) %></td>
+                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.onHold : (processingTable.manualProcessing ? processingTable.manualProcessing.onHold : 0) %></td>
                 </tr>
                 <tr style="border-top: 2px solid #e2e8f0; background-color: #f8fafc; font-weight: bold;">
                     <td style="text-align: left; padding: 8px 12px; color: #334155;">TOTAL</td>
-                    <td style="padding: 8px;"><%= processingTable.manualProcessing.total %></td>
-                    <td style="padding: 8px; color: #3b82f6;"><%= processingTable.manualProcessing.open %></td>
-                    <td style="padding: 8px; color: #f59e0b;"><%= processingTable.manualProcessing.inProgress %></td>
-                    <td style="padding: 8px; color: #10b981;"><%= processingTable.manualProcessing.completeClose %></td>
-                    <td style="padding: 8px; color: #8b5cf6;"><%= processingTable.manualProcessing.assigned %></td>
-                    <td style="padding: 8px; color: #64748b;"><%= processingTable.manualProcessing.onHold %></td>
+                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.total : (processingTable.manualProcessing ? processingTable.manualProcessing.total : 0) %></td>
+                    <td style="padding: 8px; color: #3b82f6;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.open : (processingTable.manualProcessing ? processingTable.manualProcessing.open : 0) %></td>
+                    <td style="padding: 8px; color: #f59e0b;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.inProgress : (processingTable.manualProcessing ? processingTable.manualProcessing.inProgress : 0) %></td>
+                    <td style="padding: 8px; color: #10b981;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.completeClose : (processingTable.manualProcessing ? processingTable.manualProcessing.completeClose : 0) %></td>
+                    <td style="padding: 8px; color: #8b5cf6;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.assigned : (processingTable.manualProcessing ? processingTable.manualProcessing.assigned : 0) %></td>
+                    <td style="padding: 8px; color: #64748b;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.onHold : (processingTable.manualProcessing ? processingTable.manualProcessing.onHold : 0) %></td>
                 </tr>
             </tbody>
         </table>
@@ -594,10 +594,10 @@
                         <% } %>
 
                             <div
-                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; align-items: end;">
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; align-items: end;">
 
                                 <!-- Date Range Column -->
-                                <div style="min-width: 250px;">
+                                <div style="min-width: 230px;">
                                     <label
                                         style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: #495057;">Date
                                         Range</label>
@@ -611,12 +611,26 @@
                                     </div>
                                 </div>
 
+                                <!-- Station Filter Column -->
+                                <div style="min-width: 170px;">
+                                    <label
+                                        style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: #495057;">Station</label>
+                                    <select name="station_id" class="form-control" style="font-size: 0.9em;">
+                                        <option value="">All Stations</option>
+                                        <% if (typeof stations !== 'undefined') { %>
+                                            <% stations.forEach(st => { %>
+                                                <option value="<%= st.id %>" <%= typeof filterInfo !== 'undefined' && filterInfo.station_id == st.id ? 'selected' : '' %>><%= st.name %></option>
+                                            <% }); %>
+                                        <% } %>
+                                    </select>
+                                </div>
+
                                 <!-- Status Column -->
-                                <div style="flex-grow: 2;">
+                                <div style="flex-grow: 2; min-width: 260px;">
                                     <label
                                         style="display: block; margin-bottom: 8px; font-weight: 600; font-size: 0.9em; color: #495057;">Status</label>
                                     <div
-                                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px;">
+                                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 6px;">
                                         <% ['OPEN', 'ASSIGNED' , 'IN_PROGRESS' , 'ON_HOLD' , 'COMPLETED' , 'CLOSED'
                                             ].forEach(status=> { %>
                                             <label
@@ -657,6 +671,7 @@
                         <tr>
                             <th>WO No & Desc</th>
                             <th>Station</th>
+                            <th>Unit Mesin</th>
                             <th>PIC Role</th>
                             <th>Tgl Permintaan</th>
                             <th>Actual Complete</th>
@@ -677,7 +692,10 @@
                                         <div style="font-size: 0.85em; color: #64748b; margin-top: 2px;"><%= wo.description %></div>
                                     </td>
                                     <td>
-                                        <%= wo.station.name %>
+                                        <%= wo.station ? wo.station.name : '-' %>
+                                    </td>
+                                    <td>
+                                        <%= wo.equipment ? wo.equipment.name : '-' %>
                                     </td>
                                     <td>
                                         <% if (wo.pics && wo.pics.length > 0) { %>
@@ -716,7 +734,7 @@
                                 <% }); %>
                                     <% } else { %>
                                         <tr>
-                                            <td colspan="7" class="text-center">No recent work orders found.</td>
+                                            <td colspan="8" class="text-center">No recent work orders found.</td>
                                         </tr>
                                         <% } %>
                     </tbody>
@@ -744,6 +762,18 @@
                                     <input type="date" name="endDate" class="form-control" style="flex: 1;"
                                         value="<%= typeof filterInfo !== 'undefined' && filterInfo.endDate ? new Date(filterInfo.endDate).toISOString().split('T')[0] : '' %>">
                                 </div>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <label style="display: block; margin-bottom: 5px; font-weight: bold;">Station</label>
+                                <select name="station_id" class="form-control">
+                                    <option value="">All Stations</option>
+                                    <% if (typeof stations !== 'undefined') { %>
+                                        <% stations.forEach(st => { %>
+                                            <option value="<%= st.id %>" <%= typeof filterInfo !== 'undefined' && filterInfo.station_id == st.id ? 'selected' : '' %>><%= st.name %></option>
+                                        <% }); %>
+                                    <% } %>
+                                </select>
                             </div>
 
                             <div style="margin-bottom: 15px;">

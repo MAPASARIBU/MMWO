@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const { renderView } = require('./indexController');
 const { generateWONumber } = require('./workOrderController');
 const { sendNewWONotification } = require('../services/notificationService');
@@ -30,7 +29,8 @@ const getProcessingPlansPage = async (req, res) => {
             where,
             include: {
                 mill: true,
-                station: true
+                station: true,
+                equipment: true
             },
             orderBy: { created_at: 'desc' }
         });
@@ -62,12 +62,13 @@ const getProcessingPlansPage = async (req, res) => {
 
 const createProcessingPlan = async (req, res) => {
     try {
-        const { mill_id, station_id, name, interval_type, interval_value, next_due_date } = req.body;
+        const { mill_id, station_id, equipment_id, name, interval_type, interval_value, next_due_date } = req.body;
 
         const plan = await prisma.processingPlan.create({
             data: {
                 mill_id: parseInt(mill_id),
                 station_id: parseInt(station_id),
+                equipment_id: equipment_id ? parseInt(equipment_id) : null,
                 name,
                 interval_type,
                 interval_value: parseInt(interval_value) || 1,
@@ -85,11 +86,12 @@ const createProcessingPlan = async (req, res) => {
 const editProcessingPlan = async (req, res) => {
     try {
         const planId = parseInt(req.params.id);
-        const { mill_id, station_id, name, interval_type, interval_value, next_due_date, is_active } = req.body;
+        const { mill_id, station_id, equipment_id, name, interval_type, interval_value, next_due_date, is_active } = req.body;
         
         const updateData = {
             mill_id: parseInt(mill_id),
             station_id: parseInt(station_id),
+            equipment_id: equipment_id ? parseInt(equipment_id) : null,
             name,
             interval_type,
             interval_value: parseInt(interval_value) || 1,
@@ -135,7 +137,7 @@ const bulkCreateProcessingWOs = async (req, res) => {
 
         const plans = await prisma.processingPlan.findMany({
             where: { id: { in: plan_ids.map(id => parseInt(id)) } },
-            include: { station: true }
+            include: { station: true, equipment: true }
         });
 
         const createdWos = [];
@@ -151,6 +153,7 @@ const bulkCreateProcessingWOs = async (req, res) => {
                     wo_no,
                     mill_id: plan.mill_id,
                     station_id: plan.station_id,
+                    equipment_id: plan.equipment_id || null,
                     category: 'Processing',
                     type: 'Processing',
                     priority: 'P2',

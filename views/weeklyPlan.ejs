@@ -1,4 +1,34 @@
 <div class="card" style="padding: 10px 20px;">
+    <% 
+        const planTitle = typeof currentPlanTitle !== 'undefined' ? currentPlanTitle : (typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan')));
+        const catName = typeof planCategoryName !== 'undefined' ? planCategoryName : (typeof isProcessing !== 'undefined' && isProcessing ? 'Processing' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil' : (typeof isOffice !== 'undefined' && isOffice ? 'Office' : 'Maintenance')));
+        const isMaintenance = !(typeof isProcessing !== 'undefined' && isProcessing) && !(typeof isCivil !== 'undefined' && isCivil) && !(typeof isOffice !== 'undefined' && isOffice);
+        const isCivilPlan = typeof isCivil !== 'undefined' && isCivil;
+        const usesStartFinishLifecycle = isMaintenance || isCivilPlan;
+        const activeCategoryWos = typeof allCategoryWos !== 'undefined' ? allCategoryWos : (typeof processingWos !== 'undefined' ? processingWos : []);
+    %>
+    <!-- Tabs Navigation -->
+    <div style="border-bottom: 1px solid #e2e8f0; margin-bottom: 20px; display: flex; gap: 15px; flex-wrap: wrap;">
+        <button type="button" onclick="switchCategoryTab('plan')" id="cat-tab-btn-plan" style="padding: 10px 16px; border: none; background: none; font-size: 15px; font-weight: 600; cursor: pointer; border-bottom: 3px solid #2563eb; color: #2563eb; transition: all 0.2s;">
+            <i class="fas fa-calendar-alt mr-1"></i> <%= planTitle %>
+        </button>
+        <button type="button" onclick="switchCategoryTab('update')" id="cat-tab-btn-update" style="padding: 10px 16px; border: none; background: none; font-size: 15px; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; color: #64748b; transition: all 0.2s;">
+            <i class="fas fa-tasks mr-1"></i> Update <%= planTitle %>
+        </button>
+        <button type="button" onclick="switchCategoryTab('monitoring')" id="cat-tab-btn-monitoring" style="padding: 10px 16px; border: none; background: none; font-size: 15px; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; color: #64748b; transition: all 0.2s;">
+            <i class="fas fa-chart-gantt mr-1"></i> Monitoring <%= catName %>
+        </button>
+        <% if (isMaintenance) { %>
+            <button type="button" onclick="switchCategoryTab('monthly-plan')" id="cat-tab-btn-monthly-plan" style="padding: 10px 16px; border: none; background: none; font-size: 15px; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; color: #64748b; transition: all 0.2s;">
+                <i class="fas fa-calendar-check mr-1"></i> Monthly Plan
+            </button>
+            <button type="button" onclick="switchCategoryTab('analytics')" id="cat-tab-btn-analytics" style="padding: 10px 16px; border: none; background: none; font-size: 15px; font-weight: 500; cursor: pointer; border-bottom: 3px solid transparent; color: #64748b; transition: all 0.2s;">
+                <i class="fas fa-chart-line mr-1"></i> Analytics & KPI
+            </button>
+        <% } %>
+    </div>
+
+    <div id="cat-content-plan" style="display: block;">
     <% if (user && user.role !== 'SENIOR_MANAGER') { %>
     <div class="card mb-3" style="border-left: 4px solid #17a2b8; padding: 10px 15px;">
         <div class="flex justify-between items-center">
@@ -37,6 +67,7 @@
                                 <th style="background-color: inherit;">Date</th>
                                 <th style="background-color: inherit;">WO No</th>
                                 <th style="background-color: inherit;">Station</th>
+                                <th style="background-color: inherit;">Unit Mesin</th>
                                 <th style="background-color: inherit;">Description</th>
                                 <th style="background-color: inherit;">PIC</th>
                             </tr>
@@ -60,6 +91,9 @@
                                     </td>
                                     <td>
                                         <%= wo.station ? wo.station.name : '-' %>
+                                    </td>
+                                    <td>
+                                        <%= wo.equipment ? wo.equipment.name : '-' %>
                                     </td>
                                     <td>
                                         <%= wo.description.length > 50 ? wo.description.substring(0, 50) + '...' : wo.description %>
@@ -213,6 +247,593 @@
                 <% } %>
         </table>
     </div>
+    </div> <!-- Close #cat-content-plan -->
+
+    <!-- Sub Sheet 2: Update Weekly Plan -->
+    <div id="cat-content-update" style="display: none;">
+        <div class="card mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+            <div class="flex justify-between items-center mb-3">
+                <h4 style="margin: 0; color: #1e293b; font-size: 1.1rem;"><i class="fas fa-clipboard-check text-blue-600 mr-2"></i> Update Penyelesaian Pekerjaan <%= planTitle %></h4>
+            </div>
+
+            <!-- Filter Controls for Update Tab -->
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: end;">
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem; font-weight: 600; margin-bottom: 3px; display: block;">Dari Tanggal</label>
+                    <input type="date" id="updateStartDate" class="form-control" style="font-size: 0.85rem; padding: 5px 8px; width: 140px;" onchange="filterUpdateTable()">
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem; font-weight: 600; margin-bottom: 3px; display: block;">Hingga Tanggal</label>
+                    <input type="date" id="updateEndDate" class="form-control" style="font-size: 0.85rem; padding: 5px 8px; width: 140px;" onchange="filterUpdateTable()">
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label" style="font-size: 0.75rem; font-weight: 600; margin-bottom: 3px; display: block;">Status Pekerjaan</label>
+                    <select id="updateStatusFilter" class="form-control" style="font-size: 0.85rem; padding: 5px 8px; width: 175px;" onchange="filterUpdateTable()">
+                        <option value="ALL">Semua Status</option>
+                        <option value="BELUM" selected>Belum Selesai (Open / In Progress)</option>
+                        <option value="SELESAI">Selesai (Closed)</option>
+                    </select>
+                </div>
+                <div class="form-group mb-0" style="flex-grow: 1; min-width: 200px;">
+                    <label class="form-label" style="font-size: 0.75rem; font-weight: 600; margin-bottom: 3px; display: block;">Cari WO / Mesin / Deskripsi</label>
+                    <input type="text" id="updateSearchText" class="form-control" style="font-size: 0.85rem; padding: 5px 10px;" placeholder="Ketik nomor WO, stasiun, unit mesin, PIC..." oninput="filterUpdateTable()">
+                </div>
+                <div class="form-group mb-0">
+                    <button type="button" class="btn btn-secondary" style="font-size: 0.85rem; padding: 5px 12px;" onclick="resetUpdateFilters()">Reset Filter</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 65vh; overflow-y: auto;">
+            <table class="table" id="updateCategoryTable" style="font-size: 0.85rem; border-collapse: separate; border-spacing: 0;">
+                <thead style="position: sticky; top: 0; background-color: #1e293b; color: #ffffff; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <tr>
+                        <th style="width: 40px; text-align: center; color: white; background-color: #1e293b;">NO</th>
+                        <th style="width: 95px; color: white; background-color: #1e293b;">Tanggal</th>
+                        <th style="width: 150px; color: white; background-color: #1e293b;">WO No</th>
+                        <th style="width: 140px; color: white; background-color: #1e293b;">Stasiun</th>
+                        <th style="width: 150px; color: white; background-color: #1e293b;">Unit Mesin</th>
+                        <th style="color: white; background-color: #1e293b; min-width: 200px;">Keterangan Pekerjaan</th>
+                        <th style="width: 140px; color: white; background-color: #1e293b;">PIC</th>
+                        <th style="width: 210px; text-align: center; color: white; background-color: #1e293b;"><%= usesStartFinishLifecycle ? 'Progress Pekerjaan' : 'Pilihan Selesai' %></th>
+                        <th style="width: 90px; text-align: center; color: white; background-color: #1e293b;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (activeCategoryWos && activeCategoryWos.length > 0) { %>
+                        <% activeCategoryWos.forEach((wo, index) => { 
+                            const isClosed = wo.status === 'CLOSED' || wo.status === 'COMPLETED';
+                            const isInProgress = wo.status === 'IN_PROGRESS';
+                            const createdDateStr = wo.created_at ? new Date(wo.created_at).toISOString().split('T')[0] : '';
+                            const formattedDate = wo.created_at ? new Date(wo.created_at).toLocaleDateString('id-ID') : '-';
+                            const stationName = wo.station ? wo.station.name : '-';
+                            const equipName = wo.equipment ? wo.equipment.name : '-';
+                            const picNames = wo.pics && wo.pics.length > 0 ? wo.pics.map(p => p.name).join(', ') : (wo.assignee ? wo.assignee.name : 'Belum ada');
+                        %>
+                            <tr class="cat-update-row" 
+                                id="row-wo-<%= wo.id %>"
+                                data-date="<%= createdDateStr %>" 
+                                data-status="<%= isClosed ? 'SELESAI' : 'BELUM' %>"
+                                data-text="<%= (wo.wo_no + ' ' + stationName + ' ' + equipName + ' ' + (wo.description || '') + ' ' + picNames).toLowerCase() %>">
+                                <td style="text-align: center; font-weight: 500;"><%= index + 1 %></td>
+                                <td><%= formattedDate %></td>
+                                <td>
+                                    <a href="/work-orders/<%= wo.id %>" style="color: #2563eb; font-weight: 600; text-decoration: none;" class="hover:underline" target="_blank">
+                                        <%= wo.wo_no %>
+                                    </a>
+                                </td>
+                                <td><%= stationName %></td>
+                                <td>
+                                    <% if (wo.equipment) { %>
+                                        <span style="font-weight: 500; color: #0f172a;"><%= wo.equipment.name %></span>
+                                    <% } else { %>
+                                        <span class="text-muted">-</span>
+                                    <% } %>
+                                </td>
+                                <td style="white-space: normal; max-width: 300px;">
+                                    <%= wo.description || '-' %>
+                                </td>
+                                <td>
+                                    <% if (wo.pics && wo.pics.length > 0) { %>
+                                        <span style="font-size: 0.8rem; font-weight: 500;"><%= picNames %></span>
+                                    <% } else if (wo.assignee) { %>
+                                        <span style="font-size: 0.8rem; font-weight: 500;"><%= wo.assignee.name %></span>
+                                    <% } else { %>
+                                        <span class="text-muted italic" style="font-size: 0.8rem;">Belum ada</span>
+                                    <% } %>
+                                </td>
+                                <td style="text-align: center; vertical-align: middle;">
+                                    <% if (usesStartFinishLifecycle) { %>
+                                        <!-- Maintenance & Civil 2-step lifecycle: Start Kerja & Selesai -->
+                                        <div style="display: inline-flex; gap: 12px; align-items: center; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; border: 1px solid #cbd5e1;">
+                                            <label style="margin: 0; cursor: <%= (isInProgress || isClosed) ? 'not-allowed' : 'pointer' %>; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 4px; color: <%= (isInProgress || isClosed) ? '#f59e0b' : '#3b82f6' %>;">
+                                                <input type="checkbox" class="cb-start" value="START" 
+                                                    <%= (isInProgress || isClosed) ? 'checked disabled' : '' %> 
+                                                    onchange="startMaintenanceWo(<%= wo.id %>, '<%= wo.wo_no %>', this)">
+                                                Start Kerja
+                                            </label>
+                                            <label style="margin: 0; cursor: <%= (!isInProgress && !isClosed) ? 'not-allowed' : (isClosed ? 'not-allowed' : 'pointer') %>; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 4px; color: <%= isClosed ? '#10b981' : (isInProgress ? '#16a34a' : '#94a3b8') %>;">
+                                                <input type="checkbox" class="cb-selesai" value="SELESAI" 
+                                                    <%= isClosed ? 'checked disabled' : (!isInProgress ? 'disabled' : '') %> 
+                                                    onchange="closeWeeklyWo(<%= wo.id %>, '<%= wo.wo_no %>', this, true)">
+                                                Selesai
+                                            </label>
+                                        </div>
+                                    <% } else { %>
+                                        <!-- Office & Processing: Belum & Selesai -->
+                                        <div style="display: inline-flex; gap: 12px; align-items: center; background: #f1f5f9; padding: 4px 10px; border-radius: 20px; border: 1px solid #cbd5e1;">
+                                            <label style="margin: 0; cursor: <%= isClosed ? 'not-allowed' : 'pointer' %>; font-size: 0.8rem; display: flex; align-items: center; gap: 4px; color: <%= isClosed ? '#94a3b8' : '#475569' %>;">
+                                                <input type="radio" name="cat_status_<%= wo.id %>" class="radio-belum" value="BELUM" <%= !isClosed ? 'checked' : '' %> <%= isClosed ? 'disabled' : '' %>>
+                                                Belum
+                                            </label>
+                                            <label style="margin: 0; cursor: <%= isClosed ? 'not-allowed' : 'pointer' %>; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 4px; color: <%= isClosed ? '#10b981' : '#16a34a' %>;">
+                                                <input type="radio" name="cat_status_<%= wo.id %>" class="radio-selesai" value="SELESAI" <%= isClosed ? 'checked disabled' : '' %> onchange="closeWeeklyWo(<%= wo.id %>, '<%= wo.wo_no %>', this, false)">
+                                                Selesai
+                                            </label>
+                                        </div>
+                                    <% } %>
+                                </td>
+                                <td style="text-align: center; vertical-align: middle;">
+                                    <span class="badge" id="status-badge-<%= wo.id %>" style="background: <%= isClosed ? '#10b981' : (isInProgress ? '#f59e0b' : '#3b82f6') %>; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">
+                                        <%= wo.status %>
+                                    </span>
+                                </td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">Belum ada data Work Order untuk rencana mingguan ini.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Sub Sheet 3: Monitoring Target vs Actual Gantt -->
+    <div id="cat-content-monitoring" style="display: none;">
+        <div class="card mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <h4 style="margin: 0; color: #1e293b; font-size: 1.1rem;">
+                    <i class="fas fa-chart-gantt text-blue-600 mr-2"></i> Monitoring Realisasi <%= catName %> (Jadwal Target vs Actual)
+                </h4>
+                <div class="d-flex gap-2 align-items-center">
+                    <% 
+                        const currentStart = new Date(typeof monStartDateStr !== 'undefined' ? monStartDateStr : new Date());
+                        const prevStart = new Date(currentStart);
+                        prevStart.setDate(currentStart.getDate() - 7);
+                        const nextStart = new Date(currentStart);
+                        nextStart.setDate(currentStart.getDate() + 7);
+                        
+                        const todayStart = new Date();
+                        todayStart.setDate(todayStart.getDate() - 3);
+
+                        const currentPath = isProcessing ? '/weekly-plan/processing' : (isCivilPlan ? '/weekly-plan/civil' : (typeof isOffice !== 'undefined' && isOffice ? '/weekly-plan/office' : '/weekly-plan'));
+                    %>
+                    <a href="<%= currentPath %>?startDate=<%= prevStart.toISOString().split('T')[0] %>&tab=monitoring" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-left"></i> Prev 7 Hari
+                    </a>
+                    <a href="<%= currentPath %>?startDate=<%= todayStart.toISOString().split('T')[0] %>&tab=monitoring" class="btn btn-outline-secondary btn-sm">
+                        Hari Ini
+                    </a>
+                    <a href="<%= currentPath %>?startDate=<%= nextStart.toISOString().split('T')[0] %>&tab=monitoring" class="btn btn-outline-secondary btn-sm">
+                        Next 7 Hari <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <button type="button" onclick="openPrintModal()" class="btn btn-primary btn-sm ms-2">
+                        <i class="fas fa-print"></i> Print
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 68vh; overflow-y: auto;">
+            <table class="table table-bordered table-sm text-center align-middle" style="min-width: 1200px; font-size: 0.8rem; border-collapse: separate; border-spacing: 0;">
+                <thead style="position: sticky; top: 0; z-index: 10;">
+                    <tr style="background-color: #1e293b; color: #ffffff; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px;">
+                        <th rowspan="2" style="width: 40px; min-width: 40px; max-width: 40px; padding: 10px 5px; position: sticky; left: 0; z-index: 11; background-color: #1e293b; color: #ffffff; box-shadow: 1px 0 0 #0f172a; border: none; border-bottom: 3px solid #0f172a; vertical-align: middle;">NO</th>
+                        <th rowspan="2" style="width: 320px; min-width: 320px; text-align: left; padding: 10px 10px; position: sticky; left: 40px; z-index: 11; background-color: #1e293b; color: #ffffff; box-shadow: 1px 0 0 #0f172a; border: none; border-bottom: 3px solid #0f172a; vertical-align: middle;">JUDUL PROGRAM</th>
+                        <th rowspan="2" style="width: 120px; padding: 10px 8px; background-color: #1e293b; color: #ffffff; border: none; border-bottom: 3px solid #0f172a; border-right: 1px solid rgba(255,255,255,0.05); vertical-align: middle;">STASIUN</th>
+                        <th rowspan="2" style="width: 130px; padding: 10px 8px; background-color: #1e293b; color: #ffffff; border: none; border-bottom: 3px solid #0f172a; border-right: 1px solid rgba(255,255,255,0.05); vertical-align: middle;">PIC</th>
+                        <th rowspan="2" style="width: 80px; padding: 10px 8px; background-color: #1e293b; color: #ffffff; border: none; border-bottom: 3px solid #0f172a; border-right: 1px solid rgba(255,255,255,0.05); vertical-align: middle;">STATUS</th>
+                        <% if (typeof monDates !== 'undefined' && monDates) { %>
+                            <% monDates.forEach(d => { 
+                                const isWeekend = d.date.getDay() === 0 || d.date.getDay() === 6;
+                                const bgColor = isWeekend ? '#0f172a' : '#1e293b';
+                            %>
+                                <th style="width: 38px; min-width: 38px; padding: 6px 2px; background-color: <%= bgColor %>; color: #ffffff; border: none; border-bottom: 3px solid #0f172a; border-right: 1px solid rgba(255,255,255,0.05); vertical-align: middle;">
+                                    <div style="font-size: 1rem; font-weight: bold; text-shadow: 1px 1px 2px rgba(0,0,0,0.5);"><%= d.dayStr %></div>
+                                    <div style="font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.9;"><%= d.monthStr %></div>
+                                </th>
+                            <% }); %>
+                        <% } %>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (typeof monWos !== 'undefined' && monWos && monWos.length > 0) { %>
+                        <% monWos.forEach((wo, index) => { %>
+                            <% 
+                                const targetStart = new Date(wo.created_at);
+                                targetStart.setHours(0,0,0,0);
+                                const targetFinish = wo.target_finish ? new Date(wo.target_finish) : new Date(targetStart);
+                                targetFinish.setHours(23,59,59,999);
+
+                                let actualStart = null;
+                                let actualFinish = null;
+                                if (wo.started_at) {
+                                    actualStart = new Date(wo.started_at);
+                                    actualStart.setHours(0,0,0,0);
+                                    if (wo.completed_at) {
+                                        actualFinish = new Date(wo.completed_at);
+                                    } else if (wo.closed_at) {
+                                        actualFinish = new Date(wo.closed_at);
+                                    } else if (wo.status !== 'CLOSED' && wo.status !== 'COMPLETED') {
+                                        actualFinish = new Date(); 
+                                    } else {
+                                        actualFinish = new Date(actualStart);
+                                    }
+                                    actualFinish.setHours(23,59,59,999);
+                                }
+                            %>
+                            <!-- Target Row -->
+                            <tr>
+                                <td rowspan="2" style="width: 40px; min-width: 40px; max-width: 40px; padding: 4px; position: sticky; left: 0; z-index: 1; background-color: #fff; box-shadow: 1px 0 0 #dee2e6;"><%= index + 1 %></td>
+                                <td rowspan="2" class="text-start" style="position: sticky; left: 40px; z-index: 1; background-color: #fff; box-shadow: 1px 0 0 #dee2e6; max-width: 320px; white-space: normal;">
+                                    <a href="/work-orders/<%= wo.id %>" style="color: #2563eb; font-weight: 600; text-decoration: none;" target="_blank"><%= wo.wo_no %></a><br>
+                                    <span style="font-size: 0.8rem; color: #475569;"><%= wo.description %></span>
+                                </td>
+                                <td rowspan="2"><%= wo.station ? wo.station.name : '-' %></td>
+                                <td rowspan="2">
+                                    <% if (wo.pics && wo.pics.length > 0) { %>
+                                        <%= wo.pics.map(p => p.name).join(', ') %>
+                                    <% } else if (wo.assignee) { %>
+                                        <%= wo.assignee.name %>
+                                    <% } else { %>
+                                        -
+                                    <% } %>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background-color: #fef3c7; color: #d97706; border: 1px solid #fde68a; font-size: 0.65rem; padding: 2px 4px;">TARGET</span>
+                                </td>
+                                <% if (typeof monDates !== 'undefined' && monDates) { %>
+                                    <% monDates.forEach(d => { 
+                                        const currentDay = new Date(d.date);
+                                        currentDay.setHours(12,0,0,0);
+                                        let isTarget = (currentDay >= targetStart && currentDay <= targetFinish);
+                                    %>
+                                        <td style="padding: 2px;">
+                                            <% if (isTarget) { %>
+                                                <div style="background-color: #fcd34d; width: 100%; height: 22px; border-radius: 2px;" title="Target: <%= wo.wo_no %>"></div>
+                                            <% } %>
+                                        </td>
+                                    <% }); %>
+                                <% } %>
+                            </tr>
+                            <!-- Actual Row -->
+                            <tr>
+                                <td style="border-bottom-width: 2px; padding: 2px;">
+                                    <span class="badge" style="background-color: #d1fae5; color: #059669; border: 1px solid #a7f3d0; font-size: 0.65rem; padding: 2px 4px;">ACTUAL</span>
+                                </td>
+                                <% if (typeof monDates !== 'undefined' && monDates) { %>
+                                    <% monDates.forEach(d => { 
+                                        const currentDay = new Date(d.date);
+                                        currentDay.setHours(12,0,0,0);
+                                        let isActual = actualStart && actualFinish && (currentDay >= actualStart && currentDay <= actualFinish);
+                                    %>
+                                        <td style="padding: 2px; border-bottom-width: 2px;">
+                                            <% if (isActual) { %>
+                                                <div style="background-color: #6ee7b7; width: 100%; height: 22px; border-radius: 2px;" title="Actual: <%= wo.wo_no %>"></div>
+                                            <% } %>
+                                        </td>
+                                    <% }); %>
+                                <% } %>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="<%= 5 + (typeof monDates !== 'undefined' && monDates ? monDates.length : 0) %>" class="text-center py-4 text-muted">
+                                Tidak ada data Work Order <%= catName %> pada rentang waktu ini.
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Print Filter Modal -->
+    <div id="printModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 1050; align-items:center; justify-content:center;">
+        <div class="card" style="width: 400px; max-width: 90%; background: white; padding: 20px; border-radius: 8px; margin: 80px auto;">
+            <h4 class="mb-4">Print Filter Monitoring</h4>
+            <form id="printForm" onsubmit="submitMonitoringPrint(event)">
+                <div class="mb-3">
+                    <label class="form-label" style="font-weight: bold;">Date Range</label>
+                    <div class="d-flex gap-2 align-items-center">
+                        <input type="date" id="printStartDate" class="form-control" value="<%= typeof monStartDateStr !== 'undefined' ? monStartDateStr : '' %>" required>
+                        <span>-</span>
+                        <input type="date" id="printEndDate" class="form-control" value="<%= typeof monEndDateStr !== 'undefined' ? monEndDateStr : '' %>" required>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('printModal').style.display='none'">Batal</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-print"></i> Print</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <% if (isMaintenance) { %>
+    <!-- Sub Sheet 4: Monthly Plan (Material Preparation & History) -->
+    <div id="cat-content-monthly-plan" style="display: none;">
+        <!-- Active Monthly Plan -->
+        <div class="card mb-4" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+            <div class="d-flex justify-content-between items-center mb-3">
+                <h4 style="margin: 0; color: #1e293b; font-size: 1.1rem;">
+                    <i class="fas fa-calendar-check text-blue-600 mr-2"></i> Monthly Plan (Material Preparation)
+                </h4>
+                <span class="badge" style="background: #2563eb; color: white; padding: 4px 8px; border-radius: 4px;">Monitoring</span>
+            </div>
+
+            <div class="table-responsive" style="max-height: 40vh; overflow-y: auto;">
+                <table class="table" style="font-size: 0.85rem; border-collapse: separate; border-spacing: 0;">
+                    <thead style="position: sticky; top: 0; background-color: #1e293b; color: #ffffff; z-index: 5;">
+                        <tr>
+                            <th style="width: 150px; color: white; background-color: #1e293b;">WO No</th>
+                            <th style="width: 150px; color: white; background-color: #1e293b;">Stasiun</th>
+                            <th style="color: white; background-color: #1e293b;">Keterangan Pekerjaan</th>
+                            <th style="width: 200px; color: white; background-color: #1e293b;">Status Material</th>
+                            <th style="width: 130px; text-align: center; color: white; background-color: #1e293b;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (typeof wos !== 'undefined' && wos && wos.length > 0) { %>
+                            <% wos.forEach(wo => { 
+                                const total = wo.monthly_materials ? wo.monthly_materials.length : 0;
+                                const completed = wo.monthly_materials ? wo.monthly_materials.filter(m => m.is_complete).length : 0;
+                                const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+                            %>
+                                <tr class="hover:bg-gray-50">
+                                    <td>
+                                        <span style="color: #2563eb; font-weight: 600; cursor: pointer; text-decoration: underline;" onclick="openMaterialModal('<%= wo.id %>', '<%= wo.wo_no %>')">
+                                            <%= wo.wo_no %>
+                                        </span>
+                                    </td>
+                                    <td><%= wo.station ? wo.station.name : '-' %></td>
+                                    <td style="white-space: normal; max-width: 300px;">
+                                        <%= wo.description || '-' %>
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                                            <span style="font-weight: 500; font-size: 0.8rem;"><%= completed %> / <%= total %> Lengkap</span>
+                                            <div style="width: 100%; background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
+                                                <div style="width: <%= percentage %>%; background: <%= percentage === 100 ? '#10b981' : '#f59e0b' %>; height: 100%;"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <button type="button" class="btn btn-sm btn-primary" style="font-size: 0.75rem; padding: 4px 8px;" onclick="openMaterialModal('<%= wo.id %>', '<%= wo.wo_no %>')">
+                                            Manage Materials
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Belum ada Work Order yang diajukan ke Monthly Plan.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Historical Monthly Plan -->
+        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px;">
+            <div class="d-flex justify-content-between items-center mb-3">
+                <h4 style="margin: 0; color: #1e293b; font-size: 1.1rem;">
+                    <i class="fas fa-history text-green-600 mr-2"></i> Historical Monthly Plan (Material Lengkap)
+                </h4>
+                <span class="badge" style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px;">Completed</span>
+            </div>
+
+            <div class="table-responsive" style="max-height: 40vh; overflow-y: auto;">
+                <table class="table" style="font-size: 0.85rem; border-collapse: separate; border-spacing: 0;">
+                    <thead style="position: sticky; top: 0; background-color: #1e293b; color: #ffffff; z-index: 5;">
+                        <tr>
+                            <th style="width: 150px; color: white; background-color: #1e293b;">WO No</th>
+                            <th style="width: 150px; color: white; background-color: #1e293b;">Stasiun</th>
+                            <th style="color: white; background-color: #1e293b;">Keterangan Pekerjaan</th>
+                            <th style="width: 130px; text-align: center; color: white; background-color: #1e293b;">Status Material</th>
+                            <th style="width: 120px; text-align: center; color: white; background-color: #1e293b;">Status WO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (typeof historicalWos !== 'undefined' && historicalWos && historicalWos.length > 0) { %>
+                            <% historicalWos.forEach(wo => { %>
+                                <tr class="hover:bg-gray-50">
+                                    <td>
+                                        <a href="/work-orders/<%= wo.id %>" style="color: #2563eb; font-weight: 600; text-decoration: none;" target="_blank">
+                                            <%= wo.wo_no %>
+                                        </a>
+                                    </td>
+                                    <td><%= wo.station ? wo.station.name : '-' %></td>
+                                    <td style="white-space: normal; max-width: 300px;">
+                                        <%= wo.description || '-' %>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="badge" style="background: #10b981; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">All Ready</span>
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="badge" style="background: <%= wo.status === 'CLOSED' ? '#10b981' : (wo.status === 'IN_PROGRESS' ? '#f59e0b' : '#3b82f6') %>; color: white; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px;">
+                                            <%= wo.status %>
+                                        </span>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-4 text-muted">Belum ada history Monthly Plan yang selesai disiapkan.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Material Modal for Sub Sheet 4 -->
+    <div id="materialModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; justify-content: center; align-items: center;">
+        <div class="card" style="width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; background: white; border-radius: 8px; padding: 20px; margin: 50px auto;">
+            <div class="d-flex justify-content-between items-center mb-4">
+                <h3 id="modalWoTitle" style="margin: 0;">Materials for WO</h3>
+                <button type="button" onclick="closeMaterialModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+
+            <!-- Add Material Form -->
+            <form id="addMaterialForm" style="display: flex; gap: 10px; margin-bottom: 20px;" onsubmit="addMaterial(event)">
+                <input type="hidden" id="modalWoId">
+                <input type="text" id="matName" class="form-control" placeholder="Nama Material / Sparepart" required style="flex: 1;">
+                <input type="number" id="matQty" class="form-control" placeholder="Qty" value="1" min="1" required style="width: 80px;">
+                <button type="submit" class="btn btn-primary">Tambah</button>
+            </form>
+
+            <!-- Material List Table -->
+            <div class="table-responsive">
+                <table class="table" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr style="background: #f1f5f9;">
+                            <th style="width: 60px; text-align: center;">Status</th>
+                            <th>Material</th>
+                            <th style="width: 80px; text-align: center;">Qty</th>
+                            <th style="width: 60px; text-align: center;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="materialsList">
+                        <tr><td colspan="4" class="text-center py-3 text-muted">Memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="button" class="btn btn-secondary" onclick="closeMaterialModal()">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sub Sheet 5: Analytics & KPI -->
+    <div id="cat-content-analytics" style="display: none;">
+        <!-- Core KPI Cards -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin-bottom: 20px;">
+            
+            <!-- MTTR -->
+            <div style="background: #fff; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0; border-left: 4px solid #ef4444; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="color: #64748b; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px;">Mean Time To Repair (MTTR)</div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-tools fa-2x" style="color: #ef4444;"></i>
+                    <div>
+                        <h2 style="font-size: 1.6rem; font-weight: 700; color: #1e293b; margin: 0;">
+                            <%= typeof mttrHours !== 'undefined' ? mttrHours : '0.00' %> <span style="font-size: 0.8rem; color: #64748b; font-weight: 400;">Hours</span>
+                        </h2>
+                        <small style="color: #94a3b8; font-size: 0.75rem;">Avg time to fix breakdowns</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MTBF -->
+            <div style="background: #fff; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0; border-left: 4px solid #10b981; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="color: #64748b; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px;">Mean Time Between Failures (MTBF)</div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-heartbeat fa-2x" style="color: #10b981;"></i>
+                    <div>
+                        <h2 style="font-size: 1.6rem; font-weight: 700; color: #1e293b; margin: 0;">
+                            <%= typeof mtbfHours !== 'undefined' ? mtbfHours : '0.00' %> <span style="font-size: 0.8rem; color: #64748b; font-weight: 400;">Hours</span>
+                        </h2>
+                        <small style="color: #94a3b8; font-size: 0.75rem;">Avg time between breakdowns</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PM Compliance -->
+            <div style="background: #fff; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0; border-left: 4px solid #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="color: #64748b; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px;">PM Compliance Rate</div>
+                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 6px;">
+                    <i class="fas fa-calendar-check fa-2x" style="color: #3b82f6;"></i>
+                    <div>
+                        <h2 style="font-size: 1.6rem; font-weight: 700; color: #1e293b; margin: 0;">
+                            <%= typeof pmComplianceRate !== 'undefined' ? pmComplianceRate : 0 %>%
+                        </h2>
+                        <small style="color: #94a3b8; font-size: 0.75rem;">Preventive WO completed on time</small>
+                    </div>
+                </div>
+                <div style="height: 6px; background: #e2e8f0; border-radius: 3px; width: 100%; overflow: hidden;">
+                    <div style="height: 100%; width: <%= Math.min(100, typeof pmComplianceRate !== 'undefined' ? pmComplianceRate : 0) %>%; background-color: #3b82f6; border-radius: 3px;"></div>
+                </div>
+            </div>
+
+            <!-- Total Plant Downtime -->
+            <div style="background: #fff; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0; border-left: 4px solid #f59e0b; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <div style="color: #64748b; font-size: 0.8rem; font-weight: 600; margin-bottom: 8px;">Total Plant Downtime</div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-industry fa-2x" style="color: #f59e0b;"></i>
+                    <div>
+                        <h2 style="font-size: 1.6rem; font-weight: 700; color: #1e293b; margin: 0;">
+                            <%= typeof totalDowntimeHours !== 'undefined' ? totalDowntimeHours : '0.00' %> <span style="font-size: 0.8rem; color: #64748b; font-weight: 400;">Hours</span>
+                        </h2>
+                        <small style="color: #94a3b8; font-size: 0.75rem;">Cumulative breakdown hours</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RCA and Criticality Section -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
+            
+            <!-- Root Cause Analysis (RCA) -->
+            <div style="background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 15px;">
+                <h5 style="margin: 0 0 12px 0; color: #1e293b; font-weight: 600; font-size: 0.95rem;">
+                    <i class="fas fa-search-location text-purple-600 mr-2"></i> Root Cause Analysis (RCA) Distribution
+                </h5>
+                <% if (typeof rcaDistribution !== 'undefined' && Object.keys(rcaDistribution).length > 0) { %>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px;">
+                        <% Object.keys(rcaDistribution).forEach(category => { %>
+                            <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; text-align: center; background: #faf5ff;">
+                                <h3 style="font-size: 1.4rem; margin: 0; color: #8b5cf6;"><%= rcaDistribution[category] %></h3>
+                                <span style="color: #64748b; font-size: 0.75rem; font-weight: 500;"><%= category %></span>
+                            </div>
+                        <% }) %>
+                    </div>
+                <% } else { %>
+                    <div style="text-align: center; color: #94a3b8; padding: 1.5rem 0;">
+                        <i class="fas fa-chart-pie fa-2x" style="opacity: 0.3; margin-bottom: 0.5rem;"></i>
+                        <p style="font-size: 0.8rem; margin: 0;">Belum ada data RCA yang tercatat.</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Equipment Criticality Breakdown -->
+            <div style="background: #fff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 15px;">
+                <h5 style="margin: 0 0 12px 0; color: #1e293b; font-weight: 600; font-size: 0.95rem;">
+                    <i class="fas fa-exclamation-triangle text-amber-500 mr-2"></i> Active WOs by Equipment Criticality
+                </h5>
+                <div style="display: flex; justify-content: space-around; text-align: center; padding-top: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.6rem; margin: 0; color: #ef4444;"><%= typeof criticalityStats !== 'undefined' ? criticalityStats.High : 0 %></h3>
+                        <span class="badge badge-red" style="font-size: 0.75rem;">Critical (A)</span>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.6rem; margin: 0; color: #f59e0b;"><%= typeof criticalityStats !== 'undefined' ? criticalityStats.Medium : 0 %></h3>
+                        <span class="badge badge-yellow" style="font-size: 0.75rem;">Medium (B)</span>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.6rem; margin: 0; color: #10b981;"><%= typeof criticalityStats !== 'undefined' ? criticalityStats.Low : 0 %></h3>
+                        <span class="badge badge-green" style="font-size: 0.75rem;">Low (C)</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <% } %>
 
 <!-- Assign PIC Modal -->
 <div id="assignGlobalPicModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 10000;">
@@ -510,13 +1131,19 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Station *</label>
-                    <select name="station_id" class="form-control" required>
+                    <select name="station_id" id="nonWoStationId" class="form-control" required onchange="filterNonWoEquipments(this.value)">
                         <option value="">-- Select Station --</option>
                         <% if(typeof stations !== 'undefined') { %>
                             <% stations.forEach(s => { %>
                                 <option value="<%= s.id %>"><%= s.name %></option>
                             <% }); %>
                         <% } %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Unit Mesin</label>
+                    <select name="equipment_id" id="nonWoEquipmentId" class="form-control">
+                        <option value="">-- Select Unit Mesin (Optional) --</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -552,6 +1179,26 @@
 </div>
 
 <script>
+    const nonWoStationsData = <%- JSON.stringify(typeof stations !== 'undefined' ? stations : []) %>;
+
+    function filterNonWoEquipments(stationId) {
+        const equipSelect = document.getElementById('nonWoEquipmentId');
+        if (!equipSelect) return;
+        
+        equipSelect.innerHTML = '<option value="">-- Select Unit Mesin (Optional) --</option>';
+        if (!stationId) return;
+
+        const matchedSt = nonWoStationsData.find(s => s.id.toString() === stationId.toString());
+        if (matchedSt && matchedSt.equipment && matchedSt.equipment.length > 0) {
+            matchedSt.equipment.forEach(eq => {
+                const opt = document.createElement('option');
+                opt.value = eq.id;
+                opt.textContent = eq.code ? `${eq.name} (${eq.code})` : eq.name;
+                equipSelect.appendChild(opt);
+            });
+        }
+    }
+
     function openNonWoModal() {
         document.getElementById('nonWoModal').style.display = 'block';
     }
@@ -559,6 +1206,10 @@
     function closeNonWoModal() {
         document.getElementById('nonWoModal').style.display = 'none';
         document.getElementById('nonWoForm').reset();
+        const equipSelect = document.getElementById('nonWoEquipmentId');
+        if (equipSelect) {
+            equipSelect.innerHTML = '<option value="">-- Select Unit Mesin (Optional) --</option>';
+        }
     }
 
     function checkNonWoMaxPics() {
@@ -775,6 +1426,392 @@
         for(let i=0, n=checkboxes.length; i<n; i++) {
             checkboxes[i].checked = source.checked;
         }
+    }
+</script>
+
+<script>
+    const monthlyWosData = <%- JSON.stringify(typeof wos !== 'undefined' && wos ? wos : []) %>;
+
+    function switchCategoryTab(tabName) {
+        const tabPlanBtn = document.getElementById('cat-tab-btn-plan');
+        const tabUpdateBtn = document.getElementById('cat-tab-btn-update');
+        const tabMonBtn = document.getElementById('cat-tab-btn-monitoring');
+        const tabMonthlyBtn = document.getElementById('cat-tab-btn-monthly-plan');
+        const tabAnalyticsBtn = document.getElementById('cat-tab-btn-analytics');
+
+        const contentPlan = document.getElementById('cat-content-plan');
+        const contentUpdate = document.getElementById('cat-content-update');
+        const contentMon = document.getElementById('cat-content-monitoring');
+        const contentMonthly = document.getElementById('cat-content-monthly-plan');
+        const contentAnalytics = document.getElementById('cat-content-analytics');
+
+        // Reset all buttons
+        [tabPlanBtn, tabUpdateBtn, tabMonBtn, tabMonthlyBtn, tabAnalyticsBtn].forEach(btn => {
+            if (btn) {
+                btn.style.borderBottom = '3px solid transparent';
+                btn.style.color = '#64748b';
+                btn.style.fontWeight = '500';
+            }
+        });
+
+        // Hide all contents
+        if (contentPlan) contentPlan.style.display = 'none';
+        if (contentUpdate) contentUpdate.style.display = 'none';
+        if (contentMon) contentMon.style.display = 'none';
+        if (contentMonthly) contentMonthly.style.display = 'none';
+        if (contentAnalytics) contentAnalytics.style.display = 'none';
+
+        if (tabName === 'plan') {
+            if (tabPlanBtn) {
+                tabPlanBtn.style.borderBottom = '3px solid #2563eb';
+                tabPlanBtn.style.color = '#2563eb';
+                tabPlanBtn.style.fontWeight = '600';
+            }
+            if (contentPlan) contentPlan.style.display = 'block';
+        } else if (tabName === 'update') {
+            if (tabUpdateBtn) {
+                tabUpdateBtn.style.borderBottom = '3px solid #2563eb';
+                tabUpdateBtn.style.color = '#2563eb';
+                tabUpdateBtn.style.fontWeight = '600';
+            }
+            if (contentUpdate) contentUpdate.style.display = 'block';
+            filterUpdateTable();
+        } else if (tabName === 'monitoring') {
+            if (tabMonBtn) {
+                tabMonBtn.style.borderBottom = '3px solid #2563eb';
+                tabMonBtn.style.color = '#2563eb';
+                tabMonBtn.style.fontWeight = '600';
+            }
+            if (contentMon) contentMon.style.display = 'block';
+        } else if (tabName === 'monthly-plan') {
+            if (tabMonthlyBtn) {
+                tabMonthlyBtn.style.borderBottom = '3px solid #2563eb';
+                tabMonthlyBtn.style.color = '#2563eb';
+                tabMonthlyBtn.style.fontWeight = '600';
+            }
+            if (contentMonthly) contentMonthly.style.display = 'block';
+        } else if (tabName === 'analytics') {
+            if (tabAnalyticsBtn) {
+                tabAnalyticsBtn.style.borderBottom = '3px solid #2563eb';
+                tabAnalyticsBtn.style.color = '#2563eb';
+                tabAnalyticsBtn.style.fontWeight = '600';
+            }
+            if (contentAnalytics) contentAnalytics.style.display = 'block';
+        }
+    }
+
+    // Auto-select tab based on URL query parameter or controller activeTab
+    document.addEventListener("DOMContentLoaded", function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tabParam = urlParams.get('tab') || '<%= typeof activeTab !== "undefined" ? activeTab : "plan" %>';
+        if (['monitoring', 'update', 'monthly-plan', 'analytics'].includes(tabParam)) {
+            switchCategoryTab(tabParam);
+        }
+    });
+
+    // Material Modal Scripts for Sub Sheet 4 (Monthly Plan)
+    function openMaterialModal(woId, woNo) {
+        document.getElementById('modalWoId').value = woId;
+        document.getElementById('modalWoTitle').innerText = 'Materials for ' + woNo;
+        renderMaterialList(woId);
+        document.getElementById('materialModal').style.display = 'flex';
+    }
+
+    function closeMaterialModal() {
+        document.getElementById('materialModal').style.display = 'none';
+    }
+
+    function renderMaterialList(woId) {
+        const wo = monthlyWosData.find(w => w.id == woId);
+        const tbody = document.getElementById('materialsList');
+        tbody.innerHTML = '';
+
+        if (!wo || !wo.monthly_materials || wo.monthly_materials.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center py-3 text-muted">Belum ada material yang ditambahkan.</td></tr>';
+            return;
+        }
+
+        wo.monthly_materials.forEach(mat => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="text-align: center;">
+                    <input type="checkbox" ${mat.is_complete ? 'checked' : ''} onchange="toggleMaterial('${woId}', '${mat.id}', this.checked)" style="width: 16px; height: 16px; cursor: pointer;">
+                </td>
+                <td style="${mat.is_complete ? 'text-decoration: line-through; color: #94a3b8;' : 'font-weight: 500;'}">${mat.material_name}</td>
+                <td style="text-align: center; ${mat.is_complete ? 'text-decoration: line-through; color: #94a3b8;' : ''}">${mat.quantity}</td>
+                <td style="text-align: center;">
+                    <button type="button" class="btn btn-sm text-red-600" style="background: none; border: none; font-size: 0.9rem; cursor: pointer;" onclick="deleteMaterial('${woId}', '${mat.id}')">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    async function addMaterial(e) {
+        e.preventDefault();
+        const woId = document.getElementById('modalWoId').value;
+        const name = document.getElementById('matName').value;
+        const qty = document.getElementById('matQty').value;
+
+        try {
+            const res = await fetch(`/api/monthly-plan/${woId}/materials`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ material_name: name, quantity: qty })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const wo = monthlyWosData.find(w => w.id == woId);
+                if (wo) {
+                    if (!wo.monthly_materials) wo.monthly_materials = [];
+                    wo.monthly_materials.push(data.material);
+                }
+                document.getElementById('matName').value = '';
+                document.getElementById('matQty').value = '1';
+                renderMaterialList(woId);
+            } else {
+                alert('Gagal menambah material: ' + data.error);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Kesalahan koneksi saat menambah material.');
+        }
+    }
+
+    async function toggleMaterial(woId, matId, isComplete) {
+        try {
+            const res = await fetch(`/api/monthly-plan/${woId}/materials/${matId}/toggle`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_complete: isComplete })
+            });
+            const data = await res.json();
+            if (data.success) {
+                const wo = monthlyWosData.find(w => w.id == woId);
+                if (wo) {
+                    const mat = wo.monthly_materials.find(m => m.id == matId);
+                    if (mat) mat.is_complete = isComplete;
+                }
+                renderMaterialList(woId);
+
+                if (data.allComplete) {
+                    alert('Semua material sudah lengkap! WO ini telah selesai persiapan material.');
+                    window.location.reload();
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Kesalahan koneksi saat mengupdate status material.');
+        }
+    }
+
+    async function deleteMaterial(woId, matId) {
+        if (!confirm('Hapus material ini?')) return;
+        try {
+            const res = await fetch(`/api/monthly-plan/materials/${matId}`, { method: 'DELETE' });
+            if (res.ok) {
+                const wo = monthlyWosData.find(w => w.id == woId);
+                if (wo) {
+                    wo.monthly_materials = wo.monthly_materials.filter(m => m.id != matId);
+                }
+                renderMaterialList(woId);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Kesalahan koneksi saat menghapus material.');
+        }
+    }
+
+    function openPrintModal() {
+        const modal = document.getElementById('printModal');
+        if (modal) modal.style.display = 'flex';
+    }
+
+    function submitMonitoringPrint(e) {
+        e.preventDefault();
+        const start = document.getElementById('printStartDate').value;
+        const end = document.getElementById('printEndDate').value;
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.set('startDate', start);
+        urlParams.set('endDate', end);
+        urlParams.set('tab', 'monitoring');
+        urlParams.set('autoPrint', 'true');
+        window.location.search = urlParams.toString();
+    }
+
+    // Auto print if requested
+    <% if (typeof autoPrint !== 'undefined' && autoPrint) { %>
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                window.print();
+            }, 600);
+        });
+    <% } %>
+
+    async function startMaintenanceWo(woId, woNo, el) {
+        if (!confirm(`Mulai pekerjaan untuk WO ${woNo}?\nStatus WO akan diubah menjadi IN_PROGRESS.`)) {
+            el.checked = false;
+            return;
+        }
+
+        el.disabled = true;
+        const row = el.closest('tr');
+        const cbSelesai = row ? row.querySelector('.cb-selesai') : null;
+
+        try {
+            const res = await fetch(`/api/work-orders/${woId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'IN_PROGRESS' })
+            });
+
+            if (res.ok) {
+                const statusBadge = document.getElementById(`status-badge-${woId}`);
+                if (statusBadge) {
+                    statusBadge.className = 'badge';
+                    statusBadge.style.background = '#f59e0b';
+                    statusBadge.style.color = '#ffffff';
+                    statusBadge.innerText = 'IN_PROGRESS';
+                }
+                el.checked = true;
+                el.disabled = true;
+                if (cbSelesai) {
+                    cbSelesai.disabled = false;
+                    const parentLabel = cbSelesai.closest('label');
+                    if (parentLabel) {
+                        parentLabel.style.cursor = 'pointer';
+                        parentLabel.style.color = '#16a34a';
+                    }
+                }
+            } else {
+                const err = await res.json();
+                alert('Gagal update status: ' + (err.error || 'Terjadi kesalahan'));
+                el.checked = false;
+                el.disabled = false;
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Terjadi kesalahan koneksi saat mengupdate status.');
+            el.checked = false;
+            el.disabled = false;
+        }
+    }
+
+    async function closeWeeklyWo(woId, woNo, el, isMaint = false) {
+        if (!confirm(`Tandai pekerjaan untuk WO ${woNo} sebagai SELESAI?\nStatus WO akan diubah menjadi CLOSED dan seluruh pilihan centang akan terkunci.`)) {
+            el.checked = false;
+            const row = el.closest('tr');
+            if (row && !isMaint) {
+                const radioBelum = row.querySelector('.radio-belum');
+                if (radioBelum) radioBelum.checked = true;
+            }
+            return;
+        }
+
+        el.disabled = true;
+        const row = el.closest('tr');
+        const cbStart = row ? row.querySelector('.cb-start') : null;
+        const radioBelum = row ? row.querySelector('.radio-belum') : null;
+        if (cbStart) cbStart.disabled = true;
+        if (radioBelum) radioBelum.disabled = true;
+
+        try {
+            const res = await fetch(`/api/work-orders/${woId}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'CLOSED' })
+            });
+
+            if (res.ok) {
+                const statusBadge = document.getElementById(`status-badge-${woId}`);
+                if (statusBadge) {
+                    statusBadge.className = 'badge';
+                    statusBadge.style.background = '#10b981';
+                    statusBadge.style.color = '#ffffff';
+                    statusBadge.innerText = 'CLOSED';
+                }
+                el.checked = true;
+                el.disabled = true;
+                if (cbStart) {
+                    cbStart.checked = true;
+                    cbStart.disabled = true;
+                }
+                if (radioBelum) {
+                    radioBelum.checked = false;
+                    radioBelum.disabled = true;
+                }
+                if (row) {
+                    row.setAttribute('data-status', 'SELESAI');
+                }
+            } else {
+                const err = await res.json();
+                alert('Gagal update status: ' + (err.error || 'Terjadi kesalahan'));
+                el.checked = false;
+                el.disabled = false;
+                if (radioBelum) {
+                    radioBelum.checked = true;
+                    radioBelum.disabled = false;
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Terjadi kesalahan koneksi saat mengupdate status.');
+            el.checked = false;
+            el.disabled = false;
+            if (radioBelum) {
+                radioBelum.checked = true;
+                radioBelum.disabled = false;
+            }
+        }
+    }
+
+    function filterUpdateTable() {
+        const startDate = document.getElementById('updateStartDate') ? document.getElementById('updateStartDate').value : '';
+        const endDate = document.getElementById('updateEndDate') ? document.getElementById('updateEndDate').value : '';
+        const statusFilter = document.getElementById('updateStatusFilter') ? document.getElementById('updateStatusFilter').value : 'ALL';
+        const searchText = (document.getElementById('updateSearchText') ? document.getElementById('updateSearchText').value : '').toLowerCase().trim();
+
+        const rows = document.querySelectorAll('.cat-update-row');
+
+        rows.forEach(row => {
+            const rowDate = row.getAttribute('data-date') || '';
+            const rowStatus = row.getAttribute('data-status') || '';
+            const rowText = row.getAttribute('data-text') || '';
+
+            let matchesDate = true;
+            if (startDate && rowDate && rowDate < startDate) matchesDate = false;
+            if (endDate && rowDate && rowDate > endDate) matchesDate = false;
+
+            let matchesStatus = true;
+            if (statusFilter !== 'ALL') {
+                matchesStatus = (rowStatus === statusFilter);
+            }
+
+            let matchesSearch = true;
+            if (searchText) {
+                matchesSearch = rowText.includes(searchText);
+            }
+
+            if (matchesDate && matchesStatus && matchesSearch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function resetUpdateFilters() {
+        const s = document.getElementById('updateStartDate');
+        const e = document.getElementById('updateEndDate');
+        const sf = document.getElementById('updateStatusFilter');
+        const st = document.getElementById('updateSearchText');
+        if (s) s.value = '';
+        if (e) e.value = '';
+        if (sf) sf.value = 'ALL';
+        if (st) st.value = '';
+        filterUpdateTable();
     }
 </script>
 </div>

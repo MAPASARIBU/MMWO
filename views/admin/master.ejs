@@ -112,6 +112,7 @@
                 <tr>
                     <th>Mill</th>
                     <th>Station</th>
+                    <th>Unit Mesin</th>
                     <th>Name</th>
                     <th>Interval</th>
                     <th>Next Due Date</th>
@@ -125,6 +126,7 @@
                         <tr>
                             <td><%= plan.mill.name %></td>
                             <td><%= plan.station.name %></td>
+                            <td><%= plan.equipment ? plan.equipment.name : '-' %></td>
                             <td><%= plan.name %></td>
                             <td><%= plan.interval_value %> <%= plan.interval_type %>(s)</td>
                             <td><%= plan.next_due_date ? plan.next_due_date.toISOString().split('T')[0] : '-' %></td>
@@ -145,7 +147,7 @@
                     <% }) %>
                 <% } else { %>
                     <tr>
-                        <td colspan="7" class="text-center text-muted">No processing plans found.</td>
+                        <td colspan="8" class="text-center text-muted">No processing plans found.</td>
                     </tr>
                 <% } %>
             </tbody>
@@ -237,13 +239,15 @@
 
             <div class="form-group">
                 <label class="form-label">Station *</label>
-                <select name="station_id" id="stationId" class="form-control" required>
+                <select name="station_id" id="stationId" class="form-control" required onchange="filterEquipments(this.value)">
                     <option value="">-- Select Station --</option>
-                    <% mills.forEach(m => { %>
-                        <% m.stations.forEach(s => { %>
-                            <option value="<%= s.id %>" data-mill="<%= s.mill_id %>"><%= s.name %></option>
-                        <% }) %>
-                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Unit Mesin</label>
+                <select name="equipment_id" id="equipmentId" class="form-control">
+                    <option value="">-- Select Unit Mesin (Optional) --</option>
                 </select>
             </div>
 
@@ -615,27 +619,91 @@
     }
 
     // --- Processing Plan Scripts ---
-    function filterStations(millId) {
+    const allMillsData = <%- JSON.stringify(mills) %>;
+    const equipmentMap = {};
+    allMillsData.forEach(m => {
+        if (m.stations) {
+            m.stations.forEach(s => {
+                equipmentMap[s.id] = s.equipment || [];
+            });
+        }
+    });
+
+    function filterStations(millId, selectedStationId = null) {
         const stationSelect = document.getElementById('stationId');
-        const options = stationSelect.querySelectorAll('option[data-mill]');
-        let firstValid = null;
+        if (!stationSelect) return;
         
-        options.forEach(opt => {
-            if (millId === '' || opt.getAttribute('data-mill') === millId) {
-                opt.style.display = '';
-                if (!firstValid) firstValid = opt.value;
-            } else {
-                opt.style.display = 'none';
+        stationSelect.innerHTML = '<option value="">-- Select Station --</option>';
+        
+        if (!millId) {
+            filterEquipments('');
+            return;
+        }
+
+        const mill = allMillsData.find(m => m.id.toString() === millId.toString());
+        if (mill && mill.stations) {
+            mill.stations.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (selectedStationId && s.id.toString() === selectedStationId.toString()) {
+                    opt.selected = true;
+                }
+                stationSelect.appendChild(opt);
+            });
+        }
+
+        if (selectedStationId) {
+            stationSelect.value = selectedStationId.toString();
+        }
+        
+        filterEquipments(stationSelect.value);
+    }
+
+    async function filterEquipments(stationId, selectedEquipId = null) {
+        const equipSelect = document.getElementById('equipmentId');
+        if (!equipSelect) return;
+
+        equipSelect.innerHTML = '<option value="">-- Select Unit Mesin (Optional) --</option>';
+
+        if (!stationId) return;
+
+        let equipments = equipmentMap[stationId] || [];
+        if (equipments.length === 0) {
+            try {
+                const res = await fetch(`/api/equipment?station_id=${stationId}`);
+                if (res.ok) {
+                    equipments = await res.json();
+                    equipmentMap[stationId] = equipments;
+                }
+            } catch (e) {
+                console.error('Error fetching equipment:', e);
             }
+        }
+
+        equipments.forEach(eq => {
+            const opt = document.createElement('option');
+            opt.value = eq.id;
+            opt.textContent = eq.code ? `${eq.name} (${eq.code})` : eq.name;
+            if (selectedEquipId && eq.id.toString() === selectedEquipId.toString()) {
+                opt.selected = true;
+            }
+            equipSelect.appendChild(opt);
         });
-        
-        stationSelect.value = firstValid || '';
+
+        if (selectedEquipId) {
+            equipSelect.value = selectedEquipId.toString();
+        }
     }
 
     <% if (user.role === 'ADMIN') { %>
         document.addEventListener('DOMContentLoaded', () => {
             const millSelect = document.getElementById('millId');
-            if(millSelect && millSelect.value) filterStations(millSelect.value);
+            if (millSelect && millSelect.value) filterStations(millSelect.value);
+        });
+    <% } else { %>
+        document.addEventListener('DOMContentLoaded', () => {
+            filterStations('<%= user.mill_id %>');
         });
     <% } %>
 
@@ -646,7 +714,10 @@
         document.getElementById('statusGroup').style.display = 'none';
         
         <% if (user.role === 'ADMIN') { %>
-            filterStations(document.getElementById('millId').value);
+            const millId = document.getElementById('millId').value;
+            filterStations(millId);
+        <% } else { %>
+            filterStations('<%= user.mill_id %>');
         <% } %>
 
         document.getElementById('planModal').style.display = 'block';
@@ -659,10 +730,14 @@
         const millEl = document.getElementById('millId');
         if (millEl && millEl.tagName === 'SELECT') {
             millEl.value = plan.mill_id;
-            filterStations(plan.mill_id.toString());
         }
 
-        document.getElementById('stationId').value = plan.station_id;
+        // Dynamically populate station and select the plan's station
+        filterStations(plan.mill_id ? plan.mill_id.toString() : '', plan.station_id);
+        
+        // Dynamically populate equipments and select the plan's equipment
+        filterEquipments(plan.station_id ? plan.station_id.toString() : '', plan.equipment_id);
+
         document.getElementById('planName').value = plan.name;
         document.getElementById('intervalValue').value = plan.interval_value;
         document.getElementById('intervalType').value = plan.interval_type;

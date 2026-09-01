@@ -60,6 +60,7 @@
                 <tr>
                     <th>WO No</th>
                     <th>Station</th>
+                    <th>Unit Mesin</th>
                     <th>Description</th>
                     <th>Priority</th>
                     <% if (user.role !== 'PROC') { %>
@@ -80,7 +81,10 @@
                                     <%= wo.wo_no %>
                                 </span></td>
                             <td>
-                                <%= wo.station.name %>
+                                <%= wo.station ? wo.station.name : '-' %>
+                            </td>
+                            <td>
+                                <%= wo.equipment ? wo.equipment.name : '-' %>
                             </td>
                             <td style="white-space: normal; min-width: 150px; max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
                                 <%= wo.description.length > 40 ? wo.description.substring(0, 40) + '...' : wo.description %>
@@ -120,7 +124,7 @@
                         <% }); %>
                             <% } else { %>
                                 <tr>
-                                    <td colspan="6" class="text-center py-4">No work orders found matching your
+                                    <td colspan="8" class="text-center py-4">No work orders found matching your
                                         criteria.</td>
                                 </tr>
                                 <% } %>

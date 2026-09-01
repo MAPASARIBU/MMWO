@@ -27,8 +27,7 @@ router.post('/:id/pics', ensureAuthenticated, workOrderController.assignPics);
 
 // TEST NOTIFICATION (Temporary)
 router.get('/test-notification/:id', async (req, res) => {
-    const { PrismaClient } = require('@prisma/client');
-    const prisma = new PrismaClient();
+        const prisma = require('../prisma');
     const whatsappService = require('../services/whatsappService');
     
     try {

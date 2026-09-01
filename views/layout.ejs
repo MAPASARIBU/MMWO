@@ -159,43 +159,6 @@
                 </a>
             </li>
             <% } %>
-
-            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'MTC'].includes(user.role)) { %>
-            <li class="nav-item">
-                <a href="/monthly-plan" style="display: block; color: #fff; padding: 15px;">
-                    Monthly Plan
-                </a>
-            </li>
-            <% } %>
-
-            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'MTC'].includes(user.role)) { %>
-            <li class="nav-item">
-                <a href="/monitoring/maintenance" style="display: block; color: #fff; padding: 15px;">
-                    <i class="fas fa-chart-gantt" style="margin-right: 8px;"></i> Monitoring Maintenance
-                </a>
-            </li>
-            <% } %>
-
-            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'PROC'].includes(user.role)) { %>
-            <li class="nav-item">
-                <a href="/monitoring/processing" style="display: block; color: #fff; padding: 15px;">
-                    <i class="fas fa-chart-gantt" style="margin-right: 8px;"></i> Monitoring Processing
-                </a>
-            </li>
-            <% } %>
-
-            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'OAA'].includes(user.role)) { %>
-            <li class="nav-item">
-                <a href="/monitoring/office" style="display: block; color: #fff; padding: 15px;">
-                    <i class="fas fa-chart-gantt" style="margin-right: 8px;"></i> Monitoring Office
-                </a>
-            </li>
-            <% } %>
-            <li class="nav-item">
-                <a href="/analytics" style="display: block; color: #38bdf8; padding: 15px; font-weight: bold;">
-                    <i class="fas fa-chart-line"></i> Analytics & KPI
-                </a>
-            </li>
             <% } %>
             <% if (user && ['ADMIN', 'OAA', 'MTC', 'PROC'].includes(user.role)) { %>
                 <li class="nav-item">

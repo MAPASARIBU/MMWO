@@ -71,6 +71,7 @@ model Equipment {
   parts       Part[]
   hm_records  HMRecord[]
   periodic_pms PeriodicPM[]
+  processing_plans ProcessingPlan[]
 
   @@map("equipment")
 }
@@ -116,6 +117,13 @@ model WorkOrder {
   rca_notes           String?
   materials           WorkOrderMaterial[]
 
+  @@index([mill_id])
+  @@index([category])
+  @@index([status])
+  @@index([created_at])
+  @@index([station_id])
+  @@index([mill_id, category, status])
+  @@index([mill_id, status])
   @@map("work_orders")
 }
 
@@ -199,6 +207,8 @@ model WeeklyPlan {
   planner      User      @relation(fields: [planned_by], references: [id])
   wo           WorkOrder @relation(fields: [wo_id], references: [id])
 
+  @@index([planned_week])
+  @@index([planned_day])
   @@map("weekly_plan")
 }
 
@@ -269,6 +279,7 @@ model ProcessingPlan {
   id              Int       @id @default(autoincrement())
   mill_id         Int
   station_id      Int
+  equipment_id    Int?
   name            String
   interval_type   String    // 'Week', 'Month', 'Quarter', 'Semester', 'Year'
   interval_value  Int       @default(1)
@@ -279,6 +290,7 @@ model ProcessingPlan {
 
   station         Station   @relation(fields: [station_id], references: [id])
   mill            Mill      @relation(fields: [mill_id], references: [id])
+  equipment       Equipment? @relation(fields: [equipment_id], references: [id])
 
   @@map("processing_plans")
 }

@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 const { renderView } = require('./indexController');
 
 const listWorkOrders = async (req, res) => {
@@ -26,6 +25,7 @@ const listWorkOrders = async (req, res) => {
         }
         
         where.category = { not: 'Processing' };
+        where.wo_no = { not: { startsWith: 'PRC' } };
         if (priority) where.priority = priority;
         if (category) where.category = category;
 
@@ -223,7 +223,8 @@ const printWORecap = async (req, res) => {
         }
 
         const where = {
-            category: { not: 'Processing' }
+            category: { not: 'Processing' },
+            wo_no: { not: { startsWith: 'PRC' } }
         };
         if (targetMillId) where.mill_id = targetMillId;
 

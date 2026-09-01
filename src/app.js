@@ -7,7 +7,6 @@ const express = require('express');
 const session = require('express-session');
 const morgan = require('morgan');
 const path = require('path');
-const { PrismaClient } = require('@prisma/client');
 const { ensureAuthenticated, ensureRole } = require('./middleware/authMiddleware');
 require('dotenv').config();
 
@@ -28,7 +27,7 @@ const { startHMCron } = require('./cron/hmCron');
 const whatsappService = require('./services/whatsappService');
 
 const app = express();
-const prisma = new PrismaClient();
+const prisma = require('./prisma');
 const PORT = process.env.PORT || 3000;
 
 // View engine setup
@@ -38,8 +37,11 @@ app.set('view engine', 'ejs');
 // Cache bust version for static assets (refreshed on every server restart)
 app.locals.appVersion = Date.now();
 
+const compression = require('compression');
+
 // Middleware
 app.set('trust proxy', 1); // Trust first proxy (Railway)
+app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -97,7 +99,7 @@ app.get('/weekly-plan/office', ensureAuthenticated, weeklyPlanPageController.get
 app.get('/weekly-plan/office/print', ensureAuthenticated, weeklyPlanPageController.getWeeklyPlanPrint);
 
 const monthlyPlanController = require('./controllers/monthlyPlanController');
-app.get('/monthly-plan', ensureAuthenticated, monthlyPlanController.getMonthlyPlanPage);
+app.get('/monthly-plan', ensureAuthenticated, (req, res) => res.redirect('/weekly-plan?tab=monthly-plan'));
 app.post('/api/work-orders/:id/monthly-plan-status', ensureAuthenticated, monthlyPlanController.setMonthlyPlanStatus);
 app.post('/api/monthly-plan/:id/materials', ensureAuthenticated, monthlyPlanController.addMaterial);
 app.delete('/api/monthly-plan/materials/:material_id', ensureAuthenticated, monthlyPlanController.deleteMaterial);

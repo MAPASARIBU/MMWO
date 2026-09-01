@@ -1,8 +1,7 @@
 const { Client, RemoteAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode');
 const PrismaStore = require('./PrismaStore');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../prisma');
 
 class WhatsAppService {
     constructor() {

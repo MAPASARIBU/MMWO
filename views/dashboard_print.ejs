@@ -207,6 +207,7 @@
                             <tr>
                                 <th>WO No</th>
                                 <th>Station</th>
+                                <th>Unit Mesin</th>
                                 <th>Description</th>
                                 <th>Category</th>
                                 <th>Priority</th>
@@ -221,6 +222,9 @@
                                     </td>
                                     <td>
                                         <%= wo.station ? wo.station.name : '-' %>
+                                    </td>
+                                    <td>
+                                        <%= wo.equipment ? wo.equipment.name : '-' %>
                                     </td>
                                     <td>
                                         <%= wo.description.length> 80 ? wo.description.substring(0, 80) + '...' :
@@ -252,12 +256,13 @@
                             <thead>
                                 <tr>
                                     <th style="width: 15%;">WO No</th>
-                                    <th style="width: 25%;">Description</th>
+                                    <th style="width: 20%;">Description</th>
                                     <th style="width: 15%;">Station</th>
+                                    <th style="width: 15%;">Unit Mesin</th>
                                     <th style="width: 10%;">Category</th>
                                     <th style="width: 10%;">Priority</th>
                                     <th style="width: 10%;">Status</th>
-                                    <th style="width: 15%;">Created At</th>
+                                    <th style="width: 10%;">Created At</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -276,6 +281,9 @@
                                                     <%= wo.station ? wo.station.name : '-' %>
                                                 </td>
                                                 <td>
+                                                    <%= wo.equipment ? wo.equipment.name : '-' %>
+                                                </td>
+                                                <td>
                                                     <%= wo.category || '-' %>
                                                 </td>
                                                 <td>
@@ -291,7 +299,7 @@
                                             <% }); %>
                                                 <% } else { %>
                                                     <tr>
-                                                        <td colspan="6" style="text-align: center; padding: 20px;">No
+                                                        <td colspan="8" style="text-align: center; padding: 20px;">No
                                                             work orders found matching the criteria.</td>
                                                     </tr>
                                                     <% } %>

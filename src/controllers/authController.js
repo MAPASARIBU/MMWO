@@ -1,19 +1,41 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../prisma');
 const bcrypt = require('bcryptjs');
 const { renderView } = require('./indexController');
 
-const prisma = new PrismaClient();
+let cachedMills = [];
+
+// Helper to fetch mills with retry and fallback
+async function getMillsWithRetry(retries = 3, delayMs = 800) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
+            if (mills && mills.length > 0) {
+                cachedMills = mills;
+                return mills;
+            }
+        } catch (err) {
+            console.warn(`[authController] Mill query attempt ${i + 1}/${retries} failed:`, err.message);
+            if (i < retries - 1) {
+                await new Promise(res => setTimeout(res, delayMs));
+            }
+        }
+    }
+    return cachedMills.length > 0 ? cachedMills : [];
+}
 
 const loginPage = async (req, res) => {
     if (req.session.user) {
         return res.redirect('/dashboard');
     }
     try {
-        const mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
+        const mills = await getMillsWithRetry();
+        if (mills.length === 0) {
+            return res.render('login', { error: 'Database sedang menyambung, silakan muat ulang halaman (refresh) dalam beberapa detik.', mills: [] });
+        }
         res.render('login', { error: null, mills });
     } catch (error) {
         console.error("Error fetching mills for login:", error);
-        res.render('login', { error: 'System error loading login page', mills: [] });
+        res.render('login', { error: cachedMills.length > 0 ? null : 'System error loading login page', mills: cachedMills });
     }
 };
 
@@ -23,7 +45,7 @@ const login = async (req, res) => {
     try {
         // Validate Mill Selection
         if (!millId) {
-            const mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
+            const mills = await getMillsWithRetry();
             return res.render('login', { error: 'Please select a Mill', mills });
         }
 
@@ -31,7 +53,7 @@ const login = async (req, res) => {
         const selectedMill = await prisma.mill.findUnique({ where: { id: selectedMillId } });
 
         if (!selectedMill) {
-            const mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
+            const mills = await getMillsWithRetry();
             return res.render('login', { error: 'Invalid Mill selected', mills });
         }
 
@@ -39,7 +61,7 @@ const login = async (req, res) => {
             where: { username },
         });
 
-        const mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } }); // Re-fetch for error render
+        const mills = await getMillsWithRetry(); // Re-fetch for error render
 
         if (!user) {
             return res.render('login', { error: 'Invalid username or password', mills });
@@ -87,7 +109,7 @@ const login = async (req, res) => {
         res.redirect('/dashboard');
     } catch (error) {
         console.error(error);
-        const mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } }).catch(() => []);
+        const mills = await getMillsWithRetry();
         res.render('login', { error: 'An error occurred during login', mills });
     }
 };
