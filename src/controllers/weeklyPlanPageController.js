@@ -345,6 +345,66 @@ const getWeeklyPlanPage = async (req, res) => {
             }
         }) : Promise.resolve([]);
 
+        // 9. Monthly Monitoring Order Data (Sub Sheet: Monthly Monitoring Order)
+        const monOrderYear = parseInt(req.query.monOrderYear) || new Date().getFullYear();
+        const monOrderStation = req.query.monOrderStation || '12_MAIN';
+        const monOrderCategory = req.query.monOrderCategory || 'ALL';
+        const monOrderPrefix = req.query.monOrderPrefix || 'ALL';
+
+        let monOrderWhere = {
+            created_at: {
+                gte: new Date(Date.UTC(monOrderYear, 0, 1, 0, 0, 0, 0)),
+                lte: new Date(Date.UTC(monOrderYear, 11, 31, 23, 59, 59, 999))
+            },
+            ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {}))
+        };
+
+        if (monOrderCategory && monOrderCategory !== 'ALL') {
+            monOrderWhere.category = monOrderCategory;
+        } else {
+            monOrderWhere.category = { notIn: ['Processing', 'Civil', 'Office'] };
+        }
+
+        if (monOrderPrefix === 'WO') {
+            monOrderWhere.wo_no = { startsWith: 'WO' };
+        } else if (monOrderPrefix === 'FAB') {
+            monOrderWhere.wo_no = { startsWith: 'FAB' };
+        } else {
+            monOrderWhere.OR = [
+                { wo_no: { startsWith: 'WO' } },
+                { wo_no: { startsWith: 'FAB' } }
+            ];
+        }
+
+        if (monOrderStation && monOrderStation !== '12_MAIN' && monOrderStation !== 'ALL') {
+            const sId = parseInt(monOrderStation);
+            if (!isNaN(sId)) {
+                monOrderWhere.station_id = sId;
+            } else {
+                monOrderWhere.station = { name: { equals: monOrderStation, mode: 'insensitive' } };
+            }
+        }
+
+        const monthlyOrderWosPromise = isMaintenance ? prisma.workOrder.findMany({
+            where: monOrderWhere,
+            select: {
+                id: true,
+                wo_no: true,
+                created_at: true,
+                category: true,
+                type: true,
+                priority: true,
+                status: true,
+                description: true,
+                station_id: true,
+                station: { select: { id: true, name: true, order_index: true } },
+                equipment: { select: { id: true, name: true, code: true } },
+                pics: { select: { id: true, name: true } },
+                assignee: { select: { id: true, name: true } }
+            },
+            orderBy: { created_at: 'asc' }
+        }) : Promise.resolve([]);
+
         const millsPromise = isMaintenance ? prisma.mill.findMany({ orderBy: { name: 'asc' } }) : Promise.resolve([]);
 
         // --- EXECUTE ALL QUERIES IN PARALLEL VIA PROMISE.ALL ---
@@ -358,6 +418,7 @@ const getWeeklyPlanPage = async (req, res) => {
             monthlyWos,
             historicalMonthlyWos,
             analyticsWos,
+            monthlyOrderWos,
             mills
         ] = await Promise.all([
             plansPromise,
@@ -369,6 +430,7 @@ const getWeeklyPlanPage = async (req, res) => {
             monthlyWosPromise,
             historicalMonthlyWosPromise,
             analyticsWosPromise,
+            monthlyOrderWosPromise,
             millsPromise
         ]);
 
@@ -460,6 +522,254 @@ const getWeeklyPlanPage = async (req, res) => {
             }
         });
 
+        // --- 10. CALCULATE MONTHLY MONITORING ORDER MATRIX (12 STASIUN UTAMA & REKAP BULANAN) ---
+        const MAIN_12_STATIONS = [
+            "FFB Reception",
+            "Sterilizer",
+            "Threshing",
+            "Pressing",
+            "Nut & Kernel",
+            "Clarification",
+            "Power Plant",
+            "Steam Plant",
+            "Water Treatment Plant",
+            "CPO Washing Plant",
+            "Effluent Pond",
+            "Kernel Bin Storage"
+        ];
+
+        const normalizeStation = (name) => {
+            if (!name) return 'Other';
+            const lower = name.toLowerCase().trim();
+            if (lower.includes('ffb') || lower.includes('reception') || lower.includes('loading')) return 'FFB Reception';
+            if (lower.includes('steriliz') || lower.includes('rebusan')) return 'Sterilizer';
+            if (lower.includes('thresh') || lower.includes('penebah') || lower.includes('tipper')) return 'Threshing';
+            if (lower.includes('press') || lower.includes('kempa') || lower.includes('digester')) return 'Pressing';
+            if (lower.includes('nut') || (lower.includes('kernel') && !lower.includes('bin') && !lower.includes('storage'))) return 'Nut & Kernel';
+            if (lower.includes('clarif') || lower.includes('pemurnian') || lower.includes('cst')) return 'Clarification';
+            if (lower.includes('power') || lower.includes('turbin') || lower.includes('genset')) return 'Power Plant';
+            if (lower.includes('steam') || lower.includes('boiler') || lower.includes('ketel')) return 'Steam Plant';
+            if (lower.includes('water') || lower.includes('treatment') || lower.includes('wtp')) return 'Water Treatment Plant';
+            if (lower.includes('wash') || lower.includes('washing')) return 'CPO Washing Plant';
+            if (lower.includes('effluent') || lower.includes('limbah') || lower.includes('pond')) return 'Effluent Pond';
+            if (lower.includes('storage bin') || lower.includes('kernel bin') || lower.includes('bin storage')) return 'Kernel Bin Storage';
+            return name;
+        };
+
+        let monitoringStationRows = [];
+
+        if (monOrderStation === '12_MAIN') {
+            monitoringStationRows = MAIN_12_STATIONS.map((name, idx) => {
+                const found = stations.find(s => normalizeStation(s.name) === name);
+                return {
+                    no: idx + 1,
+                    stationId: found ? found.id : null,
+                    stationName: name,
+                    isMainStation: true
+                };
+            });
+        } else if (monOrderStation === 'ALL') {
+            monitoringStationRows = stations.map((s, idx) => ({
+                no: idx + 1,
+                stationId: s.id,
+                stationName: s.name,
+                isMainStation: MAIN_12_STATIONS.includes(normalizeStation(s.name))
+            }));
+        } else {
+            const stId = parseInt(monOrderStation);
+            const found = stations.find(s => s.id === stId || (s.name && s.name.toLowerCase() === String(monOrderStation).toLowerCase()));
+            if (found) {
+                monitoringStationRows = [{
+                    no: 1,
+                    stationId: found.id,
+                    stationName: found.name,
+                    isMainStation: MAIN_12_STATIONS.includes(normalizeStation(found.name))
+                }];
+            } else {
+                monitoringStationRows = MAIN_12_STATIONS.map((name, idx) => {
+                    const f = stations.find(s => normalizeStation(s.name) === name);
+                    return {
+                        no: idx + 1,
+                        stationId: f ? f.id : null,
+                        stationName: name,
+                        isMainStation: true
+                    };
+                });
+            }
+        }
+
+        const monthNamesShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const monthNamesFull = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+        const monthlyOrderMatrix = monitoringStationRows.map(row => {
+            const months = Array(12).fill(null).map((_, mIdx) => ({
+                monthIndex: mIdx,
+                monthName: monthNamesShort[mIdx],
+                monthFullName: monthNamesFull[mIdx],
+                count: 0,
+                woCount: 0,
+                fabCount: 0,
+                closedCount: 0,
+                openCount: 0,
+                wos: []
+            }));
+
+            monthlyOrderWos.forEach(wo => {
+                let isMatch = false;
+                if (monOrderStation === '12_MAIN') {
+                    const woNorm = normalizeStation(wo.station?.name);
+                    isMatch = (woNorm === row.stationName);
+                } else {
+                    isMatch = (row.stationId && wo.station_id === row.stationId) || (wo.station?.name === row.stationName);
+                }
+
+                if (isMatch) {
+                    const dt = new Date(wo.created_at);
+                    const m = dt.getMonth();
+                    if (m >= 0 && m < 12) {
+                        months[m].count++;
+                        if (wo.wo_no && wo.wo_no.startsWith('FAB')) {
+                            months[m].fabCount++;
+                        } else {
+                            months[m].woCount++;
+                        }
+
+                        if (wo.status === 'CLOSED' || wo.status === 'COMPLETED') {
+                            months[m].closedCount++;
+                        } else {
+                            months[m].openCount++;
+                        }
+
+                        months[m].wos.push({
+                            id: wo.id,
+                            wo_no: wo.wo_no,
+                            created_at: wo.created_at,
+                            formatted_date: dt.toLocaleDateString('id-ID'),
+                            category: wo.category,
+                            type: wo.type,
+                            priority: wo.priority,
+                            status: wo.status,
+                            description: wo.description,
+                            equipment_name: wo.equipment ? wo.equipment.name : '-',
+                            pic_name: wo.pics && wo.pics.length > 0 ? wo.pics.map(p => p.name).join(', ') : (wo.assignee ? wo.assignee.name : '-')
+                        });
+                    }
+                }
+            });
+
+            const totalYear = months.reduce((acc, m) => acc + m.count, 0);
+            const totalWo = months.reduce((acc, m) => acc + m.woCount, 0);
+            const totalFab = months.reduce((acc, m) => acc + m.fabCount, 0);
+            const totalClosed = months.reduce((acc, m) => acc + m.closedCount, 0);
+            const totalOpen = months.reduce((acc, m) => acc + m.openCount, 0);
+
+            // Calculate trend: compare recent 2 active months with data or last month vs previous
+            const currentMonthIdx = monOrderYear === new Date().getFullYear() ? new Date().getMonth() : 11;
+            let trend = 'STABLE';
+            let trendDiff = 0;
+            if (currentMonthIdx > 0) {
+                const curM = months[currentMonthIdx].count;
+                const prevM = months[currentMonthIdx - 1].count;
+                trendDiff = curM - prevM;
+                if (trendDiff > 0) trend = 'UP';
+                else if (trendDiff < 0) trend = 'DOWN';
+                else trend = 'STABLE';
+            }
+
+            return {
+                ...row,
+                months,
+                totalYear,
+                totalWo,
+                totalFab,
+                totalClosed,
+                totalOpen,
+                trend,
+                trendDiff
+            };
+        });
+
+        const monthlyOrderTotals = Array(12).fill(null).map((_, mIdx) => {
+            let count = 0;
+            let woCount = 0;
+            let fabCount = 0;
+            let closedCount = 0;
+            let openCount = 0;
+            let wos = [];
+
+            monthlyOrderMatrix.forEach(row => {
+                count += row.months[mIdx].count;
+                woCount += row.months[mIdx].woCount;
+                fabCount += row.months[mIdx].fabCount;
+                closedCount += row.months[mIdx].closedCount;
+                openCount += row.months[mIdx].openCount;
+                wos = wos.concat(row.months[mIdx].wos);
+            });
+
+            return {
+                monthIndex: mIdx,
+                monthName: monthNamesShort[mIdx],
+                monthFullName: monthNamesFull[mIdx],
+                count,
+                woCount,
+                fabCount,
+                closedCount,
+                openCount,
+                wos
+            };
+        });
+
+        const grandTotalWos = monthlyOrderTotals.reduce((acc, m) => acc + m.count, 0);
+        const grandTotalWo = monthlyOrderTotals.reduce((acc, m) => acc + m.woCount, 0);
+        const grandTotalFab = monthlyOrderTotals.reduce((acc, m) => acc + m.fabCount, 0);
+        const grandTotalClosed = monthlyOrderTotals.reduce((acc, m) => acc + m.closedCount, 0);
+        const grandTotalOpen = monthlyOrderTotals.reduce((acc, m) => acc + m.openCount, 0);
+
+        const monthlyOrderMoMGrowth = monthlyOrderTotals.map((m, idx) => {
+            if (idx === 0) return { diff: 0, pct: 0, text: '-' };
+            const prev = monthlyOrderTotals[idx - 1].count;
+            const diff = m.count - prev;
+            if (prev === 0) {
+                return { diff, pct: m.count > 0 ? 100 : 0, text: m.count > 0 ? '+100%' : '0%' };
+            }
+            const pct = Math.round((diff / prev) * 100);
+            return { diff, pct, text: (pct > 0 ? '+' : '') + pct + '%' };
+        });
+
+        const monOrderCategoryCounts = {
+            Mechanical: 0,
+            Electrical: 0,
+            Fabrication: 0,
+            Civil: 0,
+            Instrument: 0,
+            Utility: 0,
+            Others: 0
+        };
+        monthlyOrderWos.forEach(wo => {
+            const cat = wo.category || 'Others';
+            if (monOrderCategoryCounts[cat] !== undefined) {
+                monOrderCategoryCounts[cat]++;
+            } else {
+                monOrderCategoryCounts.Others = (monOrderCategoryCounts.Others || 0) + 1;
+            }
+        });
+
+        let peakMonthObj = { name: '-', count: 0 };
+        monthlyOrderTotals.forEach(m => {
+            if (m.count > peakMonthObj.count) {
+                peakMonthObj = { name: m.monthFullName, count: m.count };
+            }
+        });
+
+        let topStationObj = { name: '-', count: 0 };
+        monthlyOrderMatrix.forEach(r => {
+            if (r.totalYear > topStationObj.count) {
+                topStationObj = { name: r.stationName, count: r.totalYear };
+            }
+        });
+
+        const completionRatePct = grandTotalWos > 0 ? Math.round((grandTotalClosed / grandTotalWos) * 100) : 0;
+
         const mttrHours = breakdownCount > 0 ? ((totalRepairTimeMs / breakdownCount) / (1000 * 60 * 60)).toFixed(2) : '0.00';
         const mtbfHours = mtbfCount > 0 ? ((totalTimeBetweenFailuresMs / mtbfCount) / (1000 * 60 * 60)).toFixed(2) : '0.00';
         const pmComplianceRate = pmTotalCount > 0 ? Math.round((pmCompliantCount / pmTotalCount) * 100) : 0;
@@ -501,6 +811,23 @@ const getWeeklyPlanPage = async (req, res) => {
                 // Monthly Plan Sub Sheet 4 data
                 wos: monthlyWos,
                 historicalWos: historicalMonthlyWos,
+                // Monthly Monitoring Order Sub Sheet data
+                monOrderYear,
+                monOrderStation,
+                monOrderCategory,
+                monOrderPrefix,
+                monthlyOrderMatrix,
+                monthlyOrderTotals,
+                monthlyOrderMoMGrowth,
+                grandTotalWos,
+                grandTotalWo,
+                grandTotalFab,
+                grandTotalClosed,
+                grandTotalOpen,
+                completionRatePct,
+                peakMonthObj,
+                topStationObj,
+                monOrderCategoryCounts,
                 // Analytics & KPI Sub Sheet 5 data
                 mttrHours,
                 mtbfHours,
