@@ -37,117 +37,131 @@
 
 </div>
 
-<!-- Dashboard Monitoring Tables (Requested by User) -->
-<% if (typeof maintenanceTable !== 'undefined') { %>
-<div class="card mt-4">
-    <div class="flex justify-between items-center mb-4">
-        <h3><i class="fas fa-tools"></i> A. MAINTENANCE WEEKLY PLANT</h3>
+<!-- Dashboard Monitoring Tables (Side-by-Side Responsive Grid) -->
+<% if (typeof maintenanceTable !== 'undefined' || typeof processingTable !== 'undefined') { %>
+<div class="monitoring-tables-grid mt-4" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(480px, 1fr)); gap: 16px; align-items: stretch;">
+    
+    <% if (typeof maintenanceTable !== 'undefined') { %>
+    <div class="card" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; background: #ffffff;">
+        <div>
+            <div class="flex justify-between items-center mb-3">
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-tools text-blue-600"></i> A. MAINTENANCE WEEKLY PLAN
+                </h3>
+            </div>
+            <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.78rem;">
+                    <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
+                        <tr>
+                            <th style="text-align: left; padding: 7px 8px; width: 34%; font-weight: 700;">TYPE WO</th>
+                            <th style="padding: 7px 4px; width: 11%; font-weight: 700;">TOTAL</th>
+                            <th style="padding: 7px 4px; width: 11%; font-weight: 700; color: #2563eb;">OPEN</th>
+                            <th style="padding: 7px 4px; width: 11%; font-weight: 700; color: #d97706;" title="In Progress">IN PROG</th>
+                            <th style="padding: 7px 4px; width: 12%; font-weight: 700; color: #16a34a;" title="Complete & Close">CLOSED</th>
+                            <th style="padding: 7px 4px; width: 11%; font-weight: 700; color: #7c3aed;">ASSIGN</th>
+                            <th style="padding: 7px 4px; width: 10%; font-weight: 700; color: #64748b;">HOLD</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="text-align: left; padding: 6px 8px; font-weight: 500; color: #334155;">WO GANTI PART (HM BASE)</td>
+                            <td style="padding: 6px 4px; font-weight: 700;"><%= maintenanceTable.hmBase.total %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #2563eb;"><%= maintenanceTable.hmBase.open %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #d97706;"><%= maintenanceTable.hmBase.inProgress %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #16a34a;"><%= maintenanceTable.hmBase.completeClose %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #7c3aed;"><%= maintenanceTable.hmBase.assigned %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #64748b;"><%= maintenanceTable.hmBase.onHold %></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9; background-color: #fafbfc;">
+                            <td style="text-align: left; padding: 6px 8px; font-weight: 500; color: #334155;">AUTO PM (TIME BASE)</td>
+                            <td style="padding: 6px 4px; font-weight: 700;"><%= maintenanceTable.autoPm.total %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #2563eb;"><%= maintenanceTable.autoPm.open %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #d97706;"><%= maintenanceTable.autoPm.inProgress %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #16a34a;"><%= maintenanceTable.autoPm.completeClose %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #7c3aed;"><%= maintenanceTable.autoPm.assigned %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #64748b;"><%= maintenanceTable.autoPm.onHold %></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="text-align: left; padding: 6px 8px; font-weight: 500; color: #334155;">WO (MECH, UTIL, OTHER, CIVIL, FAB)</td>
+                            <td style="padding: 6px 4px; font-weight: 700;"><%= maintenanceTable.mechCivilEtc.total %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #2563eb;"><%= maintenanceTable.mechCivilEtc.open %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #d97706;"><%= maintenanceTable.mechCivilEtc.inProgress %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #16a34a;"><%= maintenanceTable.mechCivilEtc.completeClose %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #7c3aed;"><%= maintenanceTable.mechCivilEtc.assigned %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #64748b;"><%= maintenanceTable.mechCivilEtc.onHold %></td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid #f1f5f9; background-color: #fafbfc;">
+                            <td style="text-align: left; padding: 6px 8px; font-weight: 500; color: #334155;">WO (ELECTRICAL, INSTRUMENT)</td>
+                            <td style="padding: 6px 4px; font-weight: 700;"><%= maintenanceTable.electInst.total %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #2563eb;"><%= maintenanceTable.electInst.open %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #d97706;"><%= maintenanceTable.electInst.inProgress %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #16a34a;"><%= maintenanceTable.electInst.completeClose %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #7c3aed;"><%= maintenanceTable.electInst.assigned %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #64748b;"><%= maintenanceTable.electInst.onHold %></td>
+                        </tr>
+                        <tr style="border-top: 2px solid #cbd5e1; background-color: #f1f5f9; font-weight: bold;">
+                            <td style="text-align: left; padding: 7px 8px; color: #1e293b; font-weight: 800;">TOTAL</td>
+                            <td style="padding: 7px 4px; color: #0f172a; font-weight: 800;"><%= maintenanceTable.hmBase.total + maintenanceTable.autoPm.total + maintenanceTable.mechCivilEtc.total + maintenanceTable.electInst.total %></td>
+                            <td style="padding: 7px 4px; color: #2563eb; font-weight: 800;"><%= maintenanceTable.hmBase.open + maintenanceTable.autoPm.open + maintenanceTable.mechCivilEtc.open + maintenanceTable.electInst.open %></td>
+                            <td style="padding: 7px 4px; color: #d97706; font-weight: 800;"><%= maintenanceTable.hmBase.inProgress + maintenanceTable.autoPm.inProgress + maintenanceTable.mechCivilEtc.inProgress + maintenanceTable.electInst.inProgress %></td>
+                            <td style="padding: 7px 4px; color: #16a34a; font-weight: 800;"><%= maintenanceTable.hmBase.completeClose + maintenanceTable.autoPm.completeClose + maintenanceTable.mechCivilEtc.completeClose + maintenanceTable.electInst.completeClose %></td>
+                            <td style="padding: 7px 4px; color: #7c3aed; font-weight: 800;"><%= maintenanceTable.hmBase.assigned + maintenanceTable.autoPm.assigned + maintenanceTable.mechCivilEtc.assigned + maintenanceTable.electInst.assigned %></td>
+                            <td style="padding: 7px 4px; color: #64748b; font-weight: 800;"><%= maintenanceTable.hmBase.onHold + maintenanceTable.autoPm.onHold + maintenanceTable.mechCivilEtc.onHold + maintenanceTable.electInst.onHold %></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <div class="table-responsive" style="overflow-x: auto;">
-        <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.85em;">
-            <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
-                <tr>
-                    <th style="text-align: left; padding: 8px 12px; width: 28%; font-weight: 600;">TYPE WO</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600;">TOTAL WO</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #3b82f6;">OPEN</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #f59e0b;">IN PROGRESS</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #10b981;">COMPLETE & CLOSE</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #8b5cf6;">ASSIGNED</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #64748b;">ON HOLD</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">WO PENGANTIAN PART (HM BASE)</td>
-                    <td style="padding: 8px; font-weight: 600;"><%= maintenanceTable.hmBase.total %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.open %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.inProgress %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.completeClose %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.assigned %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.onHold %></td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9; background-color: #fcfcfc;">
-                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">AUTO PM (TIME BASE)</td>
-                    <td style="padding: 8px; font-weight: 600;"><%= maintenanceTable.autoPm.total %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.open %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.inProgress %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.completeClose %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.assigned %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.autoPm.onHold %></td>
-                </tr>
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">WO (MECHANICAL, UTILITY, OTHER, CIVIL, FAB)</td>
-                    <td style="padding: 8px; font-weight: 600;"><%= maintenanceTable.mechCivilEtc.total %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.open %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.inProgress %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.completeClose %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.assigned %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.mechCivilEtc.onHold %></td>
-                </tr>
-                <tr>
-                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">WO (ELECTRICAL, INSTRUMENT)</td>
-                    <td style="padding: 8px; font-weight: 600;"><%= maintenanceTable.electInst.total %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.electInst.open %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.electInst.inProgress %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.electInst.completeClose %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.electInst.assigned %></td>
-                    <td style="padding: 8px;"><%= maintenanceTable.electInst.onHold %></td>
-                </tr>
-                <tr style="border-top: 2px solid #e2e8f0; background-color: #f8fafc; font-weight: bold;">
-                    <td style="text-align: left; padding: 8px 12px; color: #334155;">TOTAL</td>
-                    <td style="padding: 8px;"><%= maintenanceTable.hmBase.total + maintenanceTable.autoPm.total + maintenanceTable.mechCivilEtc.total + maintenanceTable.electInst.total %></td>
-                    <td style="padding: 8px; color: #3b82f6;"><%= maintenanceTable.hmBase.open + maintenanceTable.autoPm.open + maintenanceTable.mechCivilEtc.open + maintenanceTable.electInst.open %></td>
-                    <td style="padding: 8px; color: #f59e0b;"><%= maintenanceTable.hmBase.inProgress + maintenanceTable.autoPm.inProgress + maintenanceTable.mechCivilEtc.inProgress + maintenanceTable.electInst.inProgress %></td>
-                    <td style="padding: 8px; color: #10b981;"><%= maintenanceTable.hmBase.completeClose + maintenanceTable.autoPm.completeClose + maintenanceTable.mechCivilEtc.completeClose + maintenanceTable.electInst.completeClose %></td>
-                    <td style="padding: 8px; color: #8b5cf6;"><%= maintenanceTable.hmBase.assigned + maintenanceTable.autoPm.assigned + maintenanceTable.mechCivilEtc.assigned + maintenanceTable.electInst.assigned %></td>
-                    <td style="padding: 8px; color: #64748b;"><%= maintenanceTable.hmBase.onHold + maintenanceTable.autoPm.onHold + maintenanceTable.mechCivilEtc.onHold + maintenanceTable.electInst.onHold %></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
-<% } %>
+    <% } %>
 
-<% if (typeof processingTable !== 'undefined') { %>
-<div class="card mt-4">
-    <div class="flex justify-between items-center mb-4">
-        <h3><i class="fas fa-industry"></i> B. PROCESSING WEEKLY PLANT</h3>
+    <% if (typeof processingTable !== 'undefined') { %>
+    <div class="card" style="margin: 0; display: flex; flex-direction: column; justify-content: space-between; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; background: #ffffff;">
+        <div>
+            <div class="flex justify-between items-center mb-3">
+                <h3 style="font-size: 0.95rem; font-weight: 700; color: #1e293b; margin: 0; display: flex; align-items: center; gap: 6px;">
+                    <i class="fas fa-industry text-indigo-600"></i> B. PROCESSING WEEKLY PLAN
+                </h3>
+            </div>
+            <div class="table-responsive" style="overflow-x: auto;">
+                <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.78rem;">
+                    <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
+                        <tr>
+                            <th style="text-align: left; padding: 7px 8px; width: 34%; font-weight: 700;">TYPE WO</th>
+                            <th style="padding: 7px 4px; width: 11%; font-weight: 700;">TOTAL</th>
+                            <th style="padding: 7px 4px; width: 11%; font-weight: 700; color: #2563eb;">OPEN</th>
+                            <th style="padding: 7px 4px; width: 11%; font-weight: 700; color: #d97706;" title="In Progress">IN PROG</th>
+                            <th style="padding: 7px 4px; width: 12%; font-weight: 700; color: #16a34a;" title="Complete & Close">CLOSED</th>
+                            <th style="padding: 7px 4px; width: 11%; font-weight: 700; color: #7c3aed;">ASSIGN</th>
+                            <th style="padding: 7px 4px; width: 10%; font-weight: 700; color: #64748b;">HOLD</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="text-align: left; padding: 6px 8px; font-weight: 500; color: #334155;">PROCESSING (AUTO PM / SCHEDULED)</td>
+                            <td style="padding: 6px 4px; font-weight: 700;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.total : (processingTable.manualProcessing ? processingTable.manualProcessing.total : 0) %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #2563eb;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.open : (processingTable.manualProcessing ? processingTable.manualProcessing.open : 0) %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #d97706;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.inProgress : (processingTable.manualProcessing ? processingTable.manualProcessing.inProgress : 0) %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #16a34a;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.completeClose : (processingTable.manualProcessing ? processingTable.manualProcessing.completeClose : 0) %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #7c3aed;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.assigned : (processingTable.manualProcessing ? processingTable.manualProcessing.assigned : 0) %></td>
+                            <td style="padding: 6px 4px; font-weight: 600; color: #64748b;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.onHold : (processingTable.manualProcessing ? processingTable.manualProcessing.onHold : 0) %></td>
+                        </tr>
+                        <tr style="border-top: 2px solid #cbd5e1; background-color: #f1f5f9; font-weight: bold;">
+                            <td style="text-align: left; padding: 7px 8px; color: #1e293b; font-weight: 800;">TOTAL</td>
+                            <td style="padding: 7px 4px; color: #0f172a; font-weight: 800;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.total : (processingTable.manualProcessing ? processingTable.manualProcessing.total : 0) %></td>
+                            <td style="padding: 7px 4px; color: #2563eb; font-weight: 800;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.open : (processingTable.manualProcessing ? processingTable.manualProcessing.open : 0) %></td>
+                            <td style="padding: 7px 4px; color: #d97706; font-weight: 800;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.inProgress : (processingTable.manualProcessing ? processingTable.manualProcessing.inProgress : 0) %></td>
+                            <td style="padding: 7px 4px; color: #16a34a; font-weight: 800;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.completeClose : (processingTable.manualProcessing ? processingTable.manualProcessing.completeClose : 0) %></td>
+                            <td style="padding: 7px 4px; color: #7c3aed; font-weight: 800;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.assigned : (processingTable.manualProcessing ? processingTable.manualProcessing.assigned : 0) %></td>
+                            <td style="padding: 7px 4px; color: #64748b; font-weight: 800;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.onHold : (processingTable.manualProcessing ? processingTable.manualProcessing.onHold : 0) %></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-    <div class="table-responsive" style="overflow-x: auto;">
-        <table class="table text-center" style="margin-bottom: 0; width: 100%; border-collapse: collapse; font-size: 0.85em;">
-            <thead style="background-color: #f8fafc; color: #475569; border-bottom: 2px solid #e2e8f0;">
-                <tr>
-                    <th style="text-align: left; padding: 8px 12px; width: 28%; font-weight: 600;">TYPE WO</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600;">TOTAL WO</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #3b82f6;">OPEN</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #f59e0b;">IN PROGRESS</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #10b981;">COMPLETE & CLOSE</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #8b5cf6;">ASSIGNED</th>
-                    <th style="padding: 8px; width: 12%; font-weight: 600; color: #64748b;">ON HOLD</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td style="text-align: left; padding: 8px 12px; font-weight: 500; color: #334155;">PROCESSING (AUTO PM / SCHEDULED)</td>
-                    <td style="padding: 8px; font-weight: 600;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.total : (processingTable.manualProcessing ? processingTable.manualProcessing.total : 0) %></td>
-                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.open : (processingTable.manualProcessing ? processingTable.manualProcessing.open : 0) %></td>
-                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.inProgress : (processingTable.manualProcessing ? processingTable.manualProcessing.inProgress : 0) %></td>
-                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.completeClose : (processingTable.manualProcessing ? processingTable.manualProcessing.completeClose : 0) %></td>
-                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.assigned : (processingTable.manualProcessing ? processingTable.manualProcessing.assigned : 0) %></td>
-                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.onHold : (processingTable.manualProcessing ? processingTable.manualProcessing.onHold : 0) %></td>
-                </tr>
-                <tr style="border-top: 2px solid #e2e8f0; background-color: #f8fafc; font-weight: bold;">
-                    <td style="text-align: left; padding: 8px 12px; color: #334155;">TOTAL</td>
-                    <td style="padding: 8px;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.total : (processingTable.manualProcessing ? processingTable.manualProcessing.total : 0) %></td>
-                    <td style="padding: 8px; color: #3b82f6;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.open : (processingTable.manualProcessing ? processingTable.manualProcessing.open : 0) %></td>
-                    <td style="padding: 8px; color: #f59e0b;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.inProgress : (processingTable.manualProcessing ? processingTable.manualProcessing.inProgress : 0) %></td>
-                    <td style="padding: 8px; color: #10b981;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.completeClose : (processingTable.manualProcessing ? processingTable.manualProcessing.completeClose : 0) %></td>
-                    <td style="padding: 8px; color: #8b5cf6;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.assigned : (processingTable.manualProcessing ? processingTable.manualProcessing.assigned : 0) %></td>
-                    <td style="padding: 8px; color: #64748b;"><%= processingTable.autoProcessing ? processingTable.autoProcessing.onHold : (processingTable.manualProcessing ? processingTable.manualProcessing.onHold : 0) %></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <% } %>
+
 </div>
 <% } %>
 

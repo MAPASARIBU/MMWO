@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Weekly Maintenance Plan - <%= today %></title>
+    <title><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Weekly Processing Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Weekly Civil Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Weekly Office Plan' : 'Weekly Maintenance Plan')) %> - <%= today %></title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -156,22 +156,20 @@
     </div>
 
     <div class="section">
-        <div class="section-title">Maintenance Plan</div>
+        <div class="section-title"><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Plan' : 'Maintenance Plan')) %></div>
         <table>
             <thead>
                 <tr>
                     <th style="width: 20%;">Station</th>
-                    <th style="width: 65%;">Description</th>
-                    <% if (typeof isProcessing === 'undefined' || !isProcessing) { %>
-                    <th style="width: 15%;">PIC</th>
-                    <% } %>
+                    <th style="width: 55%;">Description</th>
+                    <th style="width: 25%;">PIC</th>
                 </tr>
             </thead>
             <tbody>
                 <% if (Object.keys(groupedPlans).length > 0) { %>
                     <% for (const category in groupedPlans) { %>
                         <tr style="background-color: #d1ecf1; border-top: 2px solid #333;">
-                            <td colspan="<%= (typeof isProcessing === 'undefined' || !isProcessing) ? 3 : 2 %>" style="font-weight: bold; font-size: 18px; text-transform: uppercase;">
+                            <td colspan="3" style="font-weight: bold; font-size: 18px; text-transform: uppercase;">
                                 KATEGORI: <%= category %>
                             </td>
                         </tr>
@@ -179,7 +177,6 @@
                             <tr>
                                 <td><%= plan.wo.station ? plan.wo.station.name : '-' %></td>
                                 <td><%= plan.wo.description %></td>
-                                <% if (typeof isProcessing === 'undefined' || !isProcessing) { %>
                                 <td>
                                     <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
                                         <%= plan.wo.pics.map(p => p.name).join(', ') %>
@@ -187,13 +184,12 @@
                                         -
                                     <% } %>
                                 </td>
-                                <% } %>
                             </tr>
                         <% }); %>
                     <% } %>
                 <% } else { %>
                     <tr>
-                        <td colspan="<%= (typeof isProcessing === 'undefined' || !isProcessing) ? 3 : 2 %>" style="text-align: center; padding: 20px;">No planned work found matching the criteria.</td>
+                        <td colspan="3" style="text-align: center; padding: 20px;">No planned work found matching the criteria.</td>
                     </tr>
                 <% } %>
             </tbody>

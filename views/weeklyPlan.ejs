@@ -84,6 +84,45 @@
                             </tr>
                         </thead>
                         <tbody id="candidateTableBody">
+                            <% 
+                            if (typeof isProcessing !== 'undefined' && isProcessing && typeof candidateWos !== 'undefined' && candidateWos.length > 0) {
+                                const procStationOrder = [
+                                    "FFB Reception", "Sterilizer", "Threshing", "Pressing",
+                                    "Nut & Kernel", "Clarification", "Power Plant", "Steam Plant",
+                                    "Kernel Bin Storage", "Storage Bin", "CPO Storage",
+                                    "Water Treatment Plant", "CPO Washing Plant", "Effluent Pond",
+                                    "Laboratorium", "Workshop", "Mill Building", "Housing", "Godown", "VEHICLE"
+                                ].map(s => s.toLowerCase());
+
+                                candidateWos.sort((a, b) => {
+                                    const getD = (d) => {
+                                        if (!d) return '';
+                                        const dt = new Date(d);
+                                        return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+                                    };
+                                    const dateA = getD(a.created_at);
+                                    const dateB = getD(b.created_at);
+                                    if (dateA !== dateB) return dateB.localeCompare(dateA);
+
+                                    const statA = a.station && a.station.name ? a.station.name.trim().toLowerCase() : '';
+                                    const statB = b.station && b.station.name ? b.station.name.trim().toLowerCase() : '';
+
+                                    const idxA = procStationOrder.indexOf(statA);
+                                    const idxB = procStationOrder.indexOf(statB);
+
+                                    if (idxA !== -1 && idxB !== -1) {
+                                        if (idxA !== idxB) return idxA - idxB;
+                                    } else if (idxA !== -1) {
+                                        return -1;
+                                    } else if (idxB !== -1) {
+                                        return 1;
+                                    } else if (statA !== statB) {
+                                        return statA.localeCompare(statB);
+                                    }
+                                    return (a.id || 0) - (b.id || 0);
+                                });
+                            }
+                            %>
                             <% candidateWos.forEach((wo, idx) => { 
                                 const isEven = idx % 2 === 0;
                                 const rowBg = isEven ? '#ffffff' : '#f8fafc';
@@ -405,6 +444,45 @@
                 </thead>
                 <tbody>
                     <% if (activeCategoryWos && activeCategoryWos.length > 0) { %>
+                        <% 
+                        if (typeof isProcessing !== 'undefined' && isProcessing) {
+                            const procStationOrder = [
+                                "FFB Reception", "Sterilizer", "Threshing", "Pressing",
+                                "Nut & Kernel", "Clarification", "Power Plant", "Steam Plant",
+                                "Kernel Bin Storage", "Storage Bin", "CPO Storage",
+                                "Water Treatment Plant", "CPO Washing Plant", "Effluent Pond",
+                                "Laboratorium", "Workshop", "Mill Building", "Housing", "Godown", "VEHICLE"
+                            ].map(s => s.toLowerCase());
+
+                            activeCategoryWos.sort((a, b) => {
+                                const getD = (d) => {
+                                    if (!d) return '';
+                                    const dt = new Date(d);
+                                    return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0') + '-' + String(dt.getDate()).padStart(2, '0');
+                                };
+                                const dateA = getD(a.created_at);
+                                const dateB = getD(b.created_at);
+                                if (dateA !== dateB) return dateB.localeCompare(dateA);
+
+                                const statA = a.station && a.station.name ? a.station.name.trim().toLowerCase() : '';
+                                const statB = b.station && b.station.name ? b.station.name.trim().toLowerCase() : '';
+
+                                const idxA = procStationOrder.indexOf(statA);
+                                const idxB = procStationOrder.indexOf(statB);
+
+                                if (idxA !== -1 && idxB !== -1) {
+                                    if (idxA !== idxB) return idxA - idxB;
+                                } else if (idxA !== -1) {
+                                    return -1;
+                                } else if (idxB !== -1) {
+                                    return 1;
+                                } else if (statA !== statB) {
+                                    return statA.localeCompare(statB);
+                                }
+                                return (a.id || 0) - (b.id || 0);
+                            });
+                        }
+                        %>
                         <% activeCategoryWos.forEach((wo, index) => { 
                             const isClosed = wo.status === 'CLOSED' || wo.status === 'COMPLETED';
                             const isInProgress = wo.status === 'IN_PROGRESS';

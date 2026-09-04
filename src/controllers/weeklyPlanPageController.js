@@ -1,6 +1,71 @@
 const prisma = require('../prisma');
 const { renderView } = require('./indexController');
 
+const PROCESSING_STATION_ORDER = [
+    "FFB Reception",
+    "Sterilizer",
+    "Threshing",
+    "Pressing",
+    "Nut & Kernel",
+    "Clarification",
+    "Power Plant",
+    "Steam Plant",
+    "Kernel Bin Storage",
+    "Storage Bin",
+    "CPO Storage",
+    "Water Treatment Plant",
+    "CPO Washing Plant",
+    "Effluent Pond",
+    "Laboratorium",
+    "Workshop",
+    "Mill Building",
+    "Housing",
+    "Godown",
+    "VEHICLE"
+].map(s => s.toLowerCase());
+
+const getLocalDateStr = (d) => {
+    if (!d) return '';
+    const date = new Date(d);
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+};
+
+const sortProcessingWos = (woList) => {
+    if (!woList || woList.length <= 1) return;
+    woList.sort((a, b) => {
+        // 1. Primary: Date (Tanggal termuda / Newest date first)
+        const dateA = getLocalDateStr(a.created_at);
+        const dateB = getLocalDateStr(b.created_at);
+        
+        if (dateA !== dateB) {
+            return dateB.localeCompare(dateA); // Newest date first
+        }
+        
+        // 2. Secondary: Station order (urutan stasiun terdepan secara mill)
+        const statA = a.station && a.station.name ? a.station.name.trim().toLowerCase() : '';
+        const statB = b.station && b.station.name ? b.station.name.trim().toLowerCase() : '';
+        
+        const indexA = PROCESSING_STATION_ORDER.indexOf(statA);
+        const indexB = PROCESSING_STATION_ORDER.indexOf(statB);
+        
+        if (indexA !== -1 && indexB !== -1) {
+            if (indexA !== indexB) return indexA - indexB;
+        } else if (indexA !== -1) {
+            return -1;
+        } else if (indexB !== -1) {
+            return 1;
+        } else if (statA !== statB) {
+            return statA.localeCompare(statB);
+        }
+        
+        // 3. Fallback: ID asc
+        return (a.id || 0) - (b.id || 0);
+    });
+};
+
 const getWeeklyPlanPage = async (req, res) => {
     try {
         const { week, day, candidateStation, candidateMonth } = req.query;
@@ -463,6 +528,11 @@ const getWeeklyPlanPage = async (req, res) => {
             safeQuery(analyticsWosPromise, []),
             safeQuery(monthlyOrderWosPromise, [])
         ]);
+
+        if (isProcessing) {
+            sortProcessingWos(candidateWos);
+            sortProcessingWos(allCategoryWos);
+        }
 
         const filteredMonWos = monWos.filter(wo => {
             const targetStart = new Date(wo.created_at);
@@ -1238,21 +1308,15 @@ const getWeeklyPlanPrint = async (req, res) => {
             groupedPlans[category].push(plan);
         });
 
-        const processingStationOrder = [
-            "FFB Reception", "Sterilizer", "Threshing", "Pressing",
-            "Nut & Kernel", "Clarification", "Power Plant", "Steam Plant",
-            "Kernel Bin Storage", "Water Treatment Plant", "CPO Washing Plant", "Effluent Pond"
-        ].map(s => s.toLowerCase());
-
         // Sort each category's plans by station name (custom order for Processing, alphabetical for others)
         for (const cat in groupedPlans) {
             groupedPlans[cat].sort((a, b) => {
-                const statA = a.wo.station ? a.wo.station.name : 'Z';
-                const statB = b.wo.station ? b.wo.station.name : 'Z';
+                const statA = a.wo.station ? a.wo.station.name.trim().toLowerCase() : 'z';
+                const statB = b.wo.station ? b.wo.station.name.trim().toLowerCase() : 'z';
                 
                 if (isProcessing) {
-                    const indexA = processingStationOrder.indexOf(statA.toLowerCase());
-                    const indexB = processingStationOrder.indexOf(statB.toLowerCase());
+                    const indexA = PROCESSING_STATION_ORDER.indexOf(statA);
+                    const indexB = PROCESSING_STATION_ORDER.indexOf(statB);
                     
                     if (indexA !== -1 && indexB !== -1) return indexA - indexB;
                     if (indexA !== -1) return -1;
