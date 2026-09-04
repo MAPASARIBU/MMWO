@@ -60,10 +60,22 @@ const getWeeklyPlanPage = async (req, res) => {
         };
         const currentWeek = getISOWeekString(new Date());
 
-        // --- ASSEMBLE PARALLEL QUERY PROMISES ---
+        const activeTab = req.query.tab || 'plan';
+        const isNeedPlan = (activeTab === 'plan');
+        const isNeedUpdate = (activeTab === 'update');
+        const isNeedMonitoring = (activeTab === 'monitoring');
+        const isNeedMonthlyOrders = (activeTab === 'monthly-orders' || activeTab === 'monthly-monitoring-orders');
+        const isNeedMonthlyPlan = (activeTab === 'monthly-plan');
+        const isNeedAnalytics = (activeTab === 'analytics');
 
-        // 1. Weekly Plans Query
-        const plansPromise = prisma.weeklyPlan.findMany({
+        // --- ASSEMBLE PARALLEL QUERY PROMISES (TARGETED BY ACTIVE TAB FOR MAXIMUM PERFORMANCE) ---
+
+        // 1. Weekly Plans Query (Sub Sheet 1)
+        if (!where.planned_week && !where.planned_day) {
+            where.planned_week = week || currentWeek;
+        }
+
+        const plansPromise = isNeedPlan ? prisma.weeklyPlan.findMany({
             where: {
                 ...where,
                 wo: woFilter
@@ -80,7 +92,7 @@ const getWeeklyPlanPage = async (req, res) => {
                 planner: { select: { name: true } }
             },
             orderBy: { planned_day: 'desc' }
-        });
+        }) : Promise.resolve([]);
 
         // 2. Candidate WOs Query (Sub Sheet 1)
         let candidateWhere = {
@@ -112,7 +124,7 @@ const getWeeklyPlanPage = async (req, res) => {
             candidateWhere.mill_id = { in: user.accessible_mills || [] };
         }
 
-        const candidateWosPromise = prisma.workOrder.findMany({
+        const candidateWosPromise = isNeedPlan ? prisma.workOrder.findMany({
             where: candidateWhere,
             select: {
                 id: true,
@@ -128,8 +140,8 @@ const getWeeklyPlanPage = async (req, res) => {
                 pics: { select: { id: true, name: true } }
             },
             orderBy: { created_at: 'desc' },
-            ...(hasCandidateFilter ? {} : { take: 100 })
-        });
+            ...(hasCandidateFilter ? {} : { take: 80 })
+        }) : Promise.resolve([]);
 
         // 3. Workshop Employees Query
         let empWhere = { is_active: true };
@@ -151,11 +163,11 @@ const getWeeklyPlanPage = async (req, res) => {
             empWhere.department = { in: ['Workshop Employees', 'Labour Employees', 'Other Employees'] };
         }
 
-        const workshopEmployeesPromise = prisma.workshopEmployee.findMany({
+        const workshopEmployeesPromise = (isNeedPlan || isNeedUpdate) ? prisma.workshopEmployee.findMany({
             where: empWhere,
             select: { id: true, name: true, department: true, position: true },
             orderBy: { name: 'asc' }
-        });
+        }) : Promise.resolve([]);
 
         // 4. Stations Query (Scoped strictly to target mill)
         let stationWhere = {};
@@ -167,19 +179,10 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const stationsPromise = prisma.station.findMany({
             where: stationWhere,
-            select: {
-                id: true,
-                name: true,
-                equipment: {
-                    select: { id: true, name: true },
-                    orderBy: { name: 'asc' }
-                }
-            },
-            orderBy: { name: 'asc' }
+            orderBy: { order_index: 'asc' }
         });
 
         // 5. All Category WOs Query (Sub Sheet 2: Update)
-        // Default to active WOs + closed within the last 60 days to keep payload super fast
         const sixtyDaysAgo = new Date();
         sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
@@ -195,7 +198,7 @@ const getWeeklyPlanPage = async (req, res) => {
             ]
         };
 
-        const allCategoryWosPromise = prisma.workOrder.findMany({
+        const allCategoryWosPromise = isNeedUpdate ? prisma.workOrder.findMany({
             where: catWhere,
             select: {
                 id: true,
@@ -208,8 +211,9 @@ const getWeeklyPlanPage = async (req, res) => {
                 pics: { select: { id: true, name: true } },
                 assignee: { select: { id: true, name: true } }
             },
-            orderBy: { created_at: 'desc' }
-        });
+            orderBy: { created_at: 'desc' },
+            take: 200
+        }) : Promise.resolve([]);
 
         // 6. Monitoring Timeline Data (Sub Sheet 3: Monitoring Gantt)
         let { startDate: monStartDate, endDate: monEndDate, autoPrint } = req.query;
@@ -271,7 +275,7 @@ const getWeeklyPlanPage = async (req, res) => {
             ]
         };
 
-        const monWosPromise = prisma.workOrder.findMany({
+        const monWosPromise = isNeedMonitoring ? prisma.workOrder.findMany({
             where: monWhere,
             select: {
                 id: true,
@@ -290,12 +294,13 @@ const getWeeklyPlanPage = async (req, res) => {
             orderBy: [
                 { status: 'asc' },
                 { created_at: 'desc' }
-            ]
-        });
+            ],
+            take: 200
+        }) : Promise.resolve([]);
 
         // 7. Monthly Plan Data (Sub Sheet 4: only for Maintenance Weekly Plan)
         const isMaintenance = !isProcessing && !isCivil && !isOffice;
-        const monthlyWosPromise = isMaintenance ? prisma.workOrder.findMany({
+        const monthlyWosPromise = (isMaintenance && isNeedMonthlyPlan) ? prisma.workOrder.findMany({
             where: {
                 ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
                 monthly_plan_status: 'MONTHLY',
@@ -309,7 +314,7 @@ const getWeeklyPlanPage = async (req, res) => {
             orderBy: { created_at: 'desc' }
         }) : Promise.resolve([]);
 
-        const historicalMonthlyWosPromise = isMaintenance ? prisma.workOrder.findMany({
+        const historicalMonthlyWosPromise = (isMaintenance && isNeedMonthlyPlan) ? prisma.workOrder.findMany({
             where: {
                 ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
                 monthly_plan_status: 'MONTHLY_DONE',
@@ -324,7 +329,7 @@ const getWeeklyPlanPage = async (req, res) => {
         }) : Promise.resolve([]);
 
         // 8. Analytics & KPI Data (Sub Sheet 5: only for Maintenance Weekly Plan)
-        const analyticsWosPromise = isMaintenance ? prisma.workOrder.findMany({
+        const analyticsWosPromise = (isMaintenance && isNeedAnalytics) ? prisma.workOrder.findMany({
             where: {
                 ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
                 created_at: { gte: sixtyDaysAgo }
@@ -347,9 +352,11 @@ const getWeeklyPlanPage = async (req, res) => {
 
         // 9. Monthly Monitoring Order Data (Sub Sheet: Monthly Monitoring Order)
         const monOrderYear = parseInt(req.query.monOrderYear) || new Date().getFullYear();
+        const monOrderMonth = (req.query.monOrderMonth !== undefined && req.query.monOrderMonth !== '' && req.query.monOrderMonth !== 'ALL') ? parseInt(req.query.monOrderMonth) : 'ALL';
         const monOrderStation = req.query.monOrderStation || '12_MAIN';
         const monOrderCategory = req.query.monOrderCategory || 'ALL';
         const monOrderPrefix = req.query.monOrderPrefix || 'ALL';
+        const monOrderType = req.query.monOrderType || 'ALL';
 
         let monOrderWhere = {
             created_at: {
@@ -376,6 +383,16 @@ const getWeeklyPlanPage = async (req, res) => {
             ];
         }
 
+        if (monOrderType && monOrderType !== 'ALL') {
+            if (monOrderType === 'Other') {
+                monOrderWhere.type = { notIn: ['Preventive', 'Breakdown', 'Corrective', 'Improvement', 'Safety'] };
+            } else if (monOrderType === 'Breakdown') {
+                monOrderWhere.type = { in: ['Breakdown', 'Corrective'] };
+            } else {
+                monOrderWhere.type = { equals: monOrderType, mode: 'insensitive' };
+            }
+        }
+
         if (monOrderStation && monOrderStation !== '12_MAIN' && monOrderStation !== 'ALL') {
             const sId = parseInt(monOrderStation);
             if (!isNaN(sId)) {
@@ -385,7 +402,7 @@ const getWeeklyPlanPage = async (req, res) => {
             }
         }
 
-        const monthlyOrderWosPromise = isMaintenance ? prisma.workOrder.findMany({
+        const monthlyOrderWosPromise = (isMaintenance && isNeedMonthlyOrders) ? prisma.workOrder.findMany({
             where: monOrderWhere,
             select: {
                 id: true,
@@ -398,8 +415,7 @@ const getWeeklyPlanPage = async (req, res) => {
                 description: true,
                 station_id: true,
                 station: { select: { id: true, name: true, order_index: true } },
-                equipment: { select: { id: true, name: true, code: true } },
-                pics: { select: { id: true, name: true } },
+                equipment: { select: { id: true, name: true } },
                 assignee: { select: { id: true, name: true } }
             },
             orderBy: { created_at: 'asc' }
@@ -407,31 +423,45 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const millsPromise = isMaintenance ? prisma.mill.findMany({ orderBy: { name: 'asc' } }) : Promise.resolve([]);
 
-        // --- EXECUTE ALL QUERIES IN PARALLEL VIA PROMISE.ALL ---
+        // Helper to safely resolve queries with fallback on network/timeout glitch
+        const safeQuery = async (promise, fallback = []) => {
+            try {
+                return await promise;
+            } catch (err) {
+                console.warn("Safe query fallback triggered:", err.message);
+                return fallback;
+            }
+        };
+
+        // --- EXECUTE QUERIES IN 2 BALANCED BATCHES TO PREVENT CONNECTION POOL EXHAUSTION ---
         const [
             plans,
             candidateWos,
             workshopEmployees,
             stations,
-            allCategoryWos,
+            mills,
+            allCategoryWos
+        ] = await Promise.all([
+            safeQuery(plansPromise, []),
+            safeQuery(candidateWosPromise, []),
+            safeQuery(workshopEmployeesPromise, []),
+            safeQuery(stationsPromise, []),
+            safeQuery(millsPromise, []),
+            safeQuery(allCategoryWosPromise, [])
+        ]);
+
+        const [
             monWos,
             monthlyWos,
             historicalMonthlyWos,
             analyticsWos,
-            monthlyOrderWos,
-            mills
+            monthlyOrderWos
         ] = await Promise.all([
-            plansPromise,
-            candidateWosPromise,
-            workshopEmployeesPromise,
-            stationsPromise,
-            allCategoryWosPromise,
-            monWosPromise,
-            monthlyWosPromise,
-            historicalMonthlyWosPromise,
-            analyticsWosPromise,
-            monthlyOrderWosPromise,
-            millsPromise
+            safeQuery(monWosPromise, []),
+            safeQuery(monthlyWosPromise, []),
+            safeQuery(historicalMonthlyWosPromise, []),
+            safeQuery(analyticsWosPromise, []),
+            safeQuery(monthlyOrderWosPromise, [])
         ]);
 
         const filteredMonWos = monWos.filter(wo => {
@@ -602,6 +632,14 @@ const getWeeklyPlanPage = async (req, res) => {
         const monthNamesFull = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 
         const monthlyOrderMatrix = monitoringStationRows.map(row => {
+            const typeCounts = {
+                Preventive: 0,
+                Breakdown: 0,
+                Improvement: 0,
+                Safety: 0,
+                Other: 0
+            };
+
             const months = Array(12).fill(null).map((_, mIdx) => ({
                 monthIndex: mIdx,
                 monthName: monthNamesShort[mIdx],
@@ -611,6 +649,11 @@ const getWeeklyPlanPage = async (req, res) => {
                 fabCount: 0,
                 closedCount: 0,
                 openCount: 0,
+                preventiveCount: 0,
+                breakdownCount: 0,
+                improvementCount: 0,
+                safetyCount: 0,
+                otherCount: 0,
                 wos: []
             }));
 
@@ -638,6 +681,24 @@ const getWeeklyPlanPage = async (req, res) => {
                             months[m].closedCount++;
                         } else {
                             months[m].openCount++;
+                        }
+
+                        const t = (wo.type || '').trim();
+                        if (t === 'Preventive') {
+                            months[m].preventiveCount++;
+                            typeCounts.Preventive++;
+                        } else if (t === 'Breakdown' || t === 'Corrective') {
+                            months[m].breakdownCount++;
+                            typeCounts.Breakdown++;
+                        } else if (t === 'Improvement') {
+                            months[m].improvementCount++;
+                            typeCounts.Improvement++;
+                        } else if (t === 'Safety') {
+                            months[m].safetyCount++;
+                            typeCounts.Safety++;
+                        } else {
+                            months[m].otherCount++;
+                            typeCounts.Other++;
                         }
 
                         months[m].wos.push({
@@ -676,6 +737,9 @@ const getWeeklyPlanPage = async (req, res) => {
                 else trend = 'STABLE';
             }
 
+            const breakdownRatio = totalYear > 0 ? Math.round((typeCounts.Breakdown / totalYear) * 100) : 0;
+            const pmrRatio = totalYear > 0 ? Math.round((typeCounts.Preventive / totalYear) * 100) : 0;
+
             return {
                 ...row,
                 months,
@@ -684,6 +748,9 @@ const getWeeklyPlanPage = async (req, res) => {
                 totalFab,
                 totalClosed,
                 totalOpen,
+                typeCounts,
+                breakdownRatio,
+                pmrRatio,
                 trend,
                 trendDiff
             };
@@ -695,15 +762,26 @@ const getWeeklyPlanPage = async (req, res) => {
             let fabCount = 0;
             let closedCount = 0;
             let openCount = 0;
+            let preventiveCount = 0;
+            let breakdownCount = 0;
+            let improvementCount = 0;
+            let safetyCount = 0;
+            let otherCount = 0;
             let wos = [];
 
             monthlyOrderMatrix.forEach(row => {
-                count += row.months[mIdx].count;
-                woCount += row.months[mIdx].woCount;
-                fabCount += row.months[mIdx].fabCount;
-                closedCount += row.months[mIdx].closedCount;
-                openCount += row.months[mIdx].openCount;
-                wos = wos.concat(row.months[mIdx].wos);
+                const m = row.months[mIdx];
+                count += m.count;
+                woCount += m.woCount;
+                fabCount += m.fabCount;
+                closedCount += m.closedCount;
+                openCount += m.openCount;
+                preventiveCount += m.preventiveCount;
+                breakdownCount += m.breakdownCount;
+                improvementCount += m.improvementCount;
+                safetyCount += m.safetyCount;
+                otherCount += m.otherCount;
+                wos = wos.concat(m.wos);
             });
 
             return {
@@ -715,6 +793,13 @@ const getWeeklyPlanPage = async (req, res) => {
                 fabCount,
                 closedCount,
                 openCount,
+                preventiveCount,
+                breakdownCount,
+                improvementCount,
+                safetyCount,
+                otherCount,
+                pmrPct: count > 0 ? Math.round((preventiveCount / count) * 100) : 0,
+                bdPct: count > 0 ? Math.round((breakdownCount / count) * 100) : 0,
                 wos
             };
         });
@@ -754,21 +839,235 @@ const getWeeklyPlanPage = async (req, res) => {
             }
         });
 
-        let peakMonthObj = { name: '-', count: 0 };
+        // 10. Damage Type Breakdown & Trends
+        const monOrderTypeCounts = {
+            Preventive: 0,
+            Breakdown: 0,
+            Improvement: 0,
+            Safety: 0,
+            Other: 0
+        };
+        monthlyOrderWos.forEach(wo => {
+            const t = (wo.type || '').trim();
+            if (t === 'Preventive') monOrderTypeCounts.Preventive++;
+            else if (t === 'Breakdown' || t === 'Corrective') monOrderTypeCounts.Breakdown++;
+            else if (t === 'Improvement') monOrderTypeCounts.Improvement++;
+            else if (t === 'Safety') monOrderTypeCounts.Safety++;
+            else monOrderTypeCounts.Other++;
+        });
+
+        const monthlyOrderTypeTrends = monthlyOrderTotals.map(m => ({
+            monthIndex: m.monthIndex,
+            monthName: m.monthName,
+            monthFullName: m.monthFullName,
+            count: m.count,
+            preventive: m.preventiveCount,
+            breakdown: m.breakdownCount,
+            improvement: m.improvementCount,
+            safety: m.safetyCount,
+            other: m.otherCount,
+            pmrPct: m.pmrPct,
+            bdPct: m.bdPct
+        }));
+
+        let peakMonthObj = { name: '-', count: 0, breakdownCount: 0 };
         monthlyOrderTotals.forEach(m => {
             if (m.count > peakMonthObj.count) {
-                peakMonthObj = { name: m.monthFullName, count: m.count };
+                peakMonthObj = { name: m.monthFullName, count: m.count, breakdownCount: m.breakdownCount };
             }
         });
 
         let topStationObj = { name: '-', count: 0 };
+        let topBreakdownStationObj = { name: '-', count: 0, ratio: 0, total: 0 };
         monthlyOrderMatrix.forEach(r => {
             if (r.totalYear > topStationObj.count) {
                 topStationObj = { name: r.stationName, count: r.totalYear };
             }
+            if (r.typeCounts.Breakdown > topBreakdownStationObj.count) {
+                topBreakdownStationObj = {
+                    name: r.stationName,
+                    count: r.typeCounts.Breakdown,
+                    ratio: r.breakdownRatio,
+                    total: r.totalYear
+                };
+            }
         });
 
         const completionRatePct = grandTotalWos > 0 ? Math.round((grandTotalClosed / grandTotalWos) * 100) : 0;
+        const pmrRate = grandTotalWos > 0 ? Math.round((monOrderTypeCounts.Preventive / grandTotalWos) * 100) : 0;
+        const bdRate = grandTotalWos > 0 ? Math.round((monOrderTypeCounts.Breakdown / grandTotalWos) * 100) : 0;
+        const imprRate = grandTotalWos > 0 ? Math.round((monOrderTypeCounts.Improvement / grandTotalWos) * 100) : 0;
+        const safetyRate = grandTotalWos > 0 ? Math.round((monOrderTypeCounts.Safety / grandTotalWos) * 100) : 0;
+
+        // 11. Smart Engineering Diagnostic & Recommendations Engine (Monthly vs Full-Year Scope)
+        const isMonthlyDiagnosa = (monOrderMonth !== 'ALL' && monOrderMonth >= 0 && monOrderMonth < 12);
+        let diagnosaPeriodLabel = `Tahun ${monOrderYear} (1 Tahun Penuh)`;
+        let diagnosaShortLabel = `Tahun ${monOrderYear}`;
+        let selectedMonthName = '-';
+        let selectedMonthShort = '-';
+
+        let diagTotalWos = grandTotalWos;
+        let diagTotalClosed = grandTotalClosed;
+        let diagTotalOpen = grandTotalOpen;
+        let diagCompletionRate = completionRatePct;
+        let diagPmrRate = pmrRate;
+        let diagBdRate = bdRate;
+        let diagPrevCount = monOrderTypeCounts.Preventive;
+        let diagBdCount = monOrderTypeCounts.Breakdown;
+        let diagImprCount = monOrderTypeCounts.Improvement;
+        let diagSafetyCount = monOrderTypeCounts.Safety;
+        let diagOtherCount = monOrderTypeCounts.Other;
+        let diagTopStation = topStationObj;
+        let diagTopBdStation = topBreakdownStationObj;
+        let diagMoMGrowth = { diff: 0, pct: 0, text: `Beban kerja puncak berada di bulan ${peakMonthObj.name} (${peakMonthObj.count} WO)` };
+
+        if (isMonthlyDiagnosa) {
+            const mIdx = monOrderMonth;
+            const selData = monthlyOrderTotals[mIdx];
+            selectedMonthName = monthNamesFull[mIdx];
+            selectedMonthShort = monthNamesShort[mIdx];
+            diagnosaPeriodLabel = `Bulan ${selectedMonthName} ${monOrderYear}`;
+            diagnosaShortLabel = `${selectedMonthName} ${monOrderYear}`;
+
+            diagTotalWos = selData.count;
+            diagTotalClosed = selData.closedCount;
+            diagTotalOpen = selData.openCount;
+            diagCompletionRate = selData.count > 0 ? Math.round((selData.closedCount / selData.count) * 100) : 0;
+            diagPmrRate = selData.pmrPct;
+            diagBdRate = selData.bdPct;
+            diagPrevCount = selData.preventiveCount;
+            diagBdCount = selData.breakdownCount;
+            diagImprCount = selData.improvementCount;
+            diagSafetyCount = selData.safetyCount;
+            diagOtherCount = selData.otherCount;
+
+            // Month specific station hotspots
+            let mTopSt = { name: '-', count: 0 };
+            let mTopBdSt = { name: '-', count: 0, ratio: 0, total: 0 };
+            monthlyOrderMatrix.forEach(r => {
+                const mCell = r.months[mIdx];
+                if (mCell.count > mTopSt.count) {
+                    mTopSt = { name: r.stationName, count: mCell.count };
+                }
+                if (mCell.breakdownCount > mTopBdSt.count) {
+                    const ratio = mCell.count > 0 ? Math.round((mCell.breakdownCount / mCell.count) * 100) : 0;
+                    mTopBdSt = {
+                        name: r.stationName,
+                        count: mCell.breakdownCount,
+                        ratio: ratio,
+                        total: mCell.count
+                    };
+                }
+            });
+            diagTopStation = mTopSt;
+            diagTopBdStation = mTopBdSt;
+
+            // MoM Growth vs Previous Month
+            if (mIdx > 0) {
+                const prevMData = monthlyOrderTotals[mIdx - 1];
+                const prevCount = prevMData.count;
+                const diff = selData.count - prevCount;
+                if (prevCount === 0) {
+                    diagMoMGrowth = { diff, pct: selData.count > 0 ? 100 : 0, text: selData.count > 0 ? `Naik +100% (+${diff} WO dibanding ${monthNamesShort[mIdx - 1]})` : `Sama (0 WO)` };
+                } else {
+                    const pct = Math.round((diff / prevCount) * 100);
+                    if (pct > 0) {
+                        diagMoMGrowth = { diff, pct, text: `Beban order naik +${pct}% (+${diff} WO dibanding ${monthNamesShort[mIdx - 1]})` };
+                    } else if (pct < 0) {
+                        diagMoMGrowth = { diff, pct, text: `Beban order turun ${pct}% (${diff} WO dibanding ${monthNamesShort[mIdx - 1]})` };
+                    } else {
+                        diagMoMGrowth = { diff, pct, text: `Beban order stabil (Sama dengan ${monthNamesShort[mIdx - 1]}: ${prevCount} WO)` };
+                    }
+                }
+            } else {
+                diagMoMGrowth = { diff: 0, pct: 0, text: `Bulan awal tahun operasional (${selectedMonthName})` };
+            }
+        }
+
+        let healthStatus = 'EXCELLENT';
+        let healthTitle = `Proaktif & Terkendali Prima (${diagnosaShortLabel})`;
+        let healthBadgeColor = '#10b981';
+        let healthBgColor = '#ecfdf5';
+        let healthIcon = 'fas fa-circle-check';
+
+        if (diagBdRate > 25 || (diagTotalWos > 0 && diagCompletionRate < 60)) {
+            healthStatus = 'CRITICAL';
+            healthTitle = `Kritis - Beban Breakdown / Backlog Tinggi (${diagnosaShortLabel})`;
+            healthBadgeColor = '#ef4444';
+            healthBgColor = '#fef2f2';
+            healthIcon = 'fas fa-triangle-exclamation';
+        } else if (diagBdRate > 15 || diagPmrRate < 70 || (diagTotalWos > 0 && diagCompletionRate < 75)) {
+            healthStatus = 'WARNING';
+            healthTitle = `Waspada - Butuh Penajaman PM & Monitoring (${diagnosaShortLabel})`;
+            healthBadgeColor = '#f59e0b';
+            healthBgColor = '#fffbeb';
+            healthIcon = 'fas fa-circle-exclamation';
+        }
+
+        const hotspotStationName = diagTopBdStation.count > 0 ? diagTopBdStation.name : (diagTopStation.name !== '-' ? diagTopStation.name : 'Utama Pabrik');
+        const hotspotBdCount = diagTopBdStation.count;
+        const hotspotRatio = diagTopBdStation.ratio;
+
+        const smartRecommendations = [
+            {
+                pillar: 'Keandalan Mesin & Mitigasi Stasiun Hotspot',
+                pillarCode: 'RELIABILITY',
+                icon: 'fas fa-industry',
+                color: '#dc2626',
+                priority: 'P1 - High Priority',
+                priorityClass: 'badge-danger',
+                owner: 'Asisten Maintenance & Mill Workshop PIC',
+                target: `Stasiun ${hotspotStationName}`,
+                problem: isMonthlyDiagnosa
+                    ? `Pada ${diagnosaShortLabel}, Stasiun ${hotspotStationName} mencatatkan konsentrasi beban tertinggi di pabrik (${hotspotBdCount > 0 ? hotspotBdCount + ' Breakdown WO (' + hotspotRatio + '% beban stasiun)' : diagTopStation.count + ' Total WO'}).`
+                    : `Stasiun ${hotspotStationName} mencatatkan konsentrasi beban tertinggi di pabrik (${hotspotBdCount > 0 ? hotspotBdCount + ' Breakdown WO (' + hotspotRatio + '% beban stasiun)' : topStationObj.count + ' Total WO'}).`,
+                action: isMonthlyDiagnosa
+                    ? `Segera laksanakan inspeksi mendalam (Deep Condition Assessment) pada komponen bergerak Stasiun ${hotspotStationName}, periksa vibrasi & thermography motor/gearbox, dan ganti part aus sebelum jadwal operasional bulan depan.`
+                    : `Lakukan asesmen kondisi menyeluruh (Condition Assessment) pada komponen bergerak (moving parts: shaft, bearing, liner plate, packing, roller chain), evaluasi temperatur & getaran secara berkala (vibration analysis & thermography), serta percepat peremajaan part yang mendekati batas lifetime HM.`,
+                standard: 'ISO 14224 & SMRP Standard Failure Mode Mitigation'
+            },
+            {
+                pillar: 'Optimalisasi Preventive & Autonomous Maintenance (TPM Pillar 1 & 2)',
+                pillarCode: 'PREVENTIVE',
+                icon: 'fas fa-shield-halved',
+                color: '#2563eb',
+                priority: 'P2 - Medium Priority',
+                priorityClass: 'badge-primary',
+                owner: 'Asisten Proses & Asisten Maintenance',
+                target: 'Seluruh 12 Stasiun Utama Pabrik',
+                problem: `Rasio Pemeliharaan Pencegahan (PMR) pada ${diagnosaShortLabel} berada pada ${diagPmrRate}% (Target World-Class PKS $\\ge$ 80% Total WO).`,
+                action: isMonthlyDiagnosa
+                    ? `Tingkatkan kedisiplinan inspeksi mandiri CILT (Cleaning, Inspection, Lubrication, Tightening) oleh operator proses. Pastikan jadwal PM mingguan di bulan depan terealisasi 100% tepat waktu.`
+                    : `Tingkatkan kedisiplinan operator dalam inspeksi harian CILT (Cleaning, Inspection, Lubrication, Tightening) sebelum proses pengolahan. Jadwalkan Overhaul Terencana pada masa low-crop sebelum memasuki bulan beban puncak (${peakMonthObj.name}) untuk mencegah lonjakan breakdown saat throughput TBS tinggi.`,
+                standard: 'TPM Autonomous Maintenance (Jishu Hozen) & PM Compliance'
+            },
+            {
+                pillar: 'Manajemen Buffer Stock Sparepart Kritis & Material Readiness',
+                pillarCode: 'SUPPLY_CHAIN',
+                icon: 'fas fa-boxes-stacked',
+                color: '#8b5cf6',
+                priority: 'P2 - Medium Priority',
+                priorityClass: 'badge-info',
+                owner: 'KTU, Gudang & Perencana Pemeliharaan (Planner)',
+                target: 'Gudang Material & Bengkel Workshop',
+                problem: `Sebanyak ${diagTotalOpen} WO periode ini masih berstatus OPEN (${100 - diagCompletionRate}% belum ditutup/closed).`,
+                action: `Lakukan audit fisik ketersediaan suku cadang fast-moving (bearing, packing, liner, filter). Gunakan modul Monthly Plan Material untuk memastikan material 100% siap sebelum servis dieksekusi agar WO dapat segera selesai dan ditutup.`,
+                standard: 'Critical Spare Parts Min-Max Inventory Control & Kesiapan Material 100%'
+            },
+            {
+                pillar: 'Root Cause Failure Analysis (RCFA) & Zero Safety Incident',
+                pillarCode: 'SAFETY_RCFA',
+                icon: 'fas fa-clipboard-check',
+                color: '#059669',
+                priority: 'P3 - Standard Compliance',
+                priorityClass: 'badge-success',
+                owner: 'Mill Manager & Tim K3 Pabrik',
+                target: 'Tim Engineering & Seluruh Area Operasional',
+                problem: `Tercatat ${diagSafetyCount} order Keselamatan (Safety) dan ${diagBdCount} insiden Breakdown pada ${diagnosaShortLabel}.`,
+                action: `Terapkan investigasi 5-Why RCFA untuk breakdown kronis guna mengeliminasi akar masalah berulang. Prioritaskan penanganan seluruh order Safety dengan respon cepat demi menjamin Zero Accident dan kepatuhan ISPO/RSPO.`,
+                standard: 'RCFA 5-Why Methodology & Sistem Manajemen K3 (SMK3 / ISO 45001 / ISPO)'
+            }
+        ];
 
         const mttrHours = breakdownCount > 0 ? ((totalRepairTimeMs / breakdownCount) / (1000 * 60 * 60)).toFixed(2) : '0.00';
         const mtbfHours = mtbfCount > 0 ? ((totalTimeBetweenFailuresMs / mtbfCount) / (1000 * 60 * 60)).toFixed(2) : '0.00';
@@ -782,7 +1081,6 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const planCategoryName = isProcessing ? 'Processing' : (isCivil ? 'Civil' : (isOffice ? 'Office' : 'Maintenance'));
         const currentPlanTitle = isProcessing ? 'Processing Weekly Plan' : (isCivil ? 'Civil Weekly Plan' : (isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan'));
-        const activeTab = req.query.tab || 'plan';
 
         res.render('layout', {
             title: currentPlanTitle,
@@ -813,9 +1111,30 @@ const getWeeklyPlanPage = async (req, res) => {
                 historicalWos: historicalMonthlyWos,
                 // Monthly Monitoring Order Sub Sheet data
                 monOrderYear,
+                monOrderMonth,
+                isMonthlyDiagnosa,
+                diagnosaPeriodLabel,
+                diagnosaShortLabel,
+                selectedMonthName,
+                selectedMonthShort,
+                diagTotalWos,
+                diagTotalClosed,
+                diagTotalOpen,
+                diagCompletionRate,
+                diagPmrRate,
+                diagBdRate,
+                diagPrevCount,
+                diagBdCount,
+                diagImprCount,
+                diagSafetyCount,
+                diagOtherCount,
+                diagTopStation,
+                diagTopBdStation,
+                diagMoMGrowth,
                 monOrderStation,
                 monOrderCategory,
                 monOrderPrefix,
+                monOrderType,
                 monthlyOrderMatrix,
                 monthlyOrderTotals,
                 monthlyOrderMoMGrowth,
@@ -827,7 +1146,20 @@ const getWeeklyPlanPage = async (req, res) => {
                 completionRatePct,
                 peakMonthObj,
                 topStationObj,
+                topBreakdownStationObj,
                 monOrderCategoryCounts,
+                monOrderTypeCounts,
+                monthlyOrderTypeTrends,
+                pmrRate,
+                bdRate,
+                imprRate,
+                safetyRate,
+                healthStatus,
+                healthTitle,
+                healthBadgeColor,
+                healthBgColor,
+                healthIcon,
+                smartRecommendations,
                 // Analytics & KPI Sub Sheet 5 data
                 mttrHours,
                 mtbfHours,
@@ -869,23 +1201,23 @@ const getWeeklyPlanPrint = async (req, res) => {
             categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
         }
 
-        let woFilter = { 
-            category: categoryFilter,
-            status: { notIn: ['CLOSED', 'COMPLETED'] }
-        };
-
         const plans = await prisma.weeklyPlan.findMany({
             where: {
                 ...where,
-                wo: woFilter
+                wo: { category: categoryFilter }
             },
-            include: {
+            select: {
+                id: true,
+                planned_week: true,
+                planned_day: true,
                 wo: {
-                    include: {
-                        mill: true,
-                        station: true,
-                        equipment: true,
-                        pics: true
+                    select: {
+                        id: true,
+                        category: true,
+                        description: true,
+                        station: { select: { id: true, name: true } },
+                        equipment: { select: { id: true, name: true } },
+                        pics: { select: { id: true, name: true } }
                     }
                 },
                 planner: { select: { name: true } }
@@ -898,6 +1230,7 @@ const getWeeklyPlanPrint = async (req, res) => {
         // Group plans by category
         const groupedPlans = {};
         plans.forEach(plan => {
+            if (!plan.wo) return;
             const category = plan.wo.category || 'Uncategorized';
             if (!groupedPlans[category]) {
                 groupedPlans[category] = [];

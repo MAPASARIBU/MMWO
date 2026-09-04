@@ -56,80 +56,167 @@
 
         <% if (typeof candidateWos !=='undefined' && candidateWos.length> 0) { %>
             <hr class="my-2">
-            <form action="/api/weekly-plan/bulk" method="POST">
+            <div>
                 <div class="flex justify-between items-center mb-2">
-                    <h5 class="m-0" style="font-size: 1.05rem;">Select WOs to Plan</h5>
-                    <button type="button" class="btn btn-sm btn-primary" onclick="openSortirModal()">Sortir</button>
+                    <h5 class="m-0" style="font-size: 0.95rem; font-weight: 700; color: #1e293b;">
+                        <i class="fas fa-list-check text-blue-600 mr-1"></i> Select WOs to Plan
+                    </h5>
+                    <div style="font-size: 0.8rem; color: #64748b;">
+                        Centang WO untuk memasukkan ke <strong>Draft Daily Maintenance Work</strong> di bawah
+                    </div>
                 </div>
 
-                <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
-                    <table class="table table-sm">
-                        <thead style="position: sticky; top: 0; background-color: #f8fafc; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div class="table-responsive" style="max-height: 480px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px;">
+                    <table class="table table-sm table-hover m-0 align-middle" style="font-size: 0.85rem; border-collapse: separate; border-spacing: 0;">
+                        <thead style="position: sticky; top: 0; background-color: #1e293b; color: #ffffff; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                             <tr>
-                                <th width="40" style="background-color: inherit;"><input type="checkbox" onclick="toggleAll(this)"></th>
-                                <th style="background-color: inherit;">Date</th>
-                                <th style="background-color: inherit;">WO No</th>
-                                <th style="background-color: inherit;">Station</th>
-                                <th style="background-color: inherit;">Unit Mesin</th>
-                                <th style="background-color: inherit;">Description</th>
-                                <th style="background-color: inherit;">PIC</th>
+                                <th style="width: 100px; padding: 8px 10px; background-color: #1e293b; color: #ffffff;">Date</th>
+                                <th style="width: 150px; padding: 8px 10px; background-color: #1e293b; color: #ffffff;">Station</th>
+                                <th style="width: 160px; padding: 8px 10px; background-color: #1e293b; color: #ffffff;">Unit Mesin</th>
+                                <th style="padding: 8px 10px; min-width: 220px; background-color: #1e293b; color: #ffffff;">Description</th>
+                                <th style="width: 65px; text-align: center; padding: 8px 4px; background-color: #1e293b; color: #ffffff;" title="Pilih WO untuk direncanakan">
+                                    <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                        <span style="font-size: 0.7rem; font-weight: 600;">Pilih</span>
+                                        <input type="checkbox" id="checkAllCandidates" onclick="toggleAllCandidates(this)" style="cursor: pointer; width: 15px; height: 15px;" title="Pilih Semua">
+                                    </div>
+                                </th>
+                                <th style="width: 160px; padding: 8px 10px; background-color: #1e293b; color: #ffffff;">PIC</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <% candidateWos.forEach(wo=> { %>
-                                <tr>
-                                    <td>
-                                        <input type="checkbox" name="wo_ids[]" value="<%= wo.id %>">
+                        <tbody id="candidateTableBody">
+                            <% candidateWos.forEach((wo, idx) => { 
+                                const isEven = idx % 2 === 0;
+                                const rowBg = isEven ? '#ffffff' : '#f8fafc';
+                            %>
+                                <tr id="candidate-row-<%= wo.id %>" 
+                                    class="candidate-wo-row" 
+                                    style="background-color: <%= rowBg %>; transition: background-color 0.2s;"
+                                    data-wo-id="<%= wo.id %>"
+                                    data-wo-no="<%= wo.wo_no || '' %>"
+                                    data-created-at="<%= new Date(wo.created_at).toLocaleDateString('id-ID') %>"
+                                    data-station="<%= wo.station ? wo.station.name : '-' %>"
+                                    data-equipment="<%= wo.equipment ? wo.equipment.name : '-' %>"
+                                    data-description="<%= (wo.description || '-').replace(/"/g, '&quot;') %>"
+                                    data-category="<%= wo.category || 'Mechanical' %>"
+                                    data-pics="<%= JSON.stringify((wo.pics || []).map(p => ({ id: p.id, name: p.name }))) %>">
+                                    <td style="padding: 6px 10px; font-weight: 500; color: #475569;">
+                                        <%= new Date(wo.created_at).toLocaleDateString('id-ID') %>
                                     </td>
-                                    <td>
-                                        <%= new Date(wo.created_at).toLocaleDateString() %>
-                                    </td>
-                                    <td>
-                                        <a href="/work-orders/<%= wo.id %>" style="text-decoration: none; font-weight: 500; color: #2563eb;" class="hover:underline">
-                                            <%= wo.wo_no %>
-                                        </a>
-                                        <% if (wo.monthly_plan_status === 'MONTHLY_DONE') { %>
-                                            <span class="badge" style="background: #10b981; color: white; font-size: 0.6rem; margin-left: 5px;">Material Ready</span>
-                                        <% } %>
-                                    </td>
-                                    <td>
+                                    <td style="padding: 6px 10px; font-weight: 600; color: #1e293b;">
                                         <%= wo.station ? wo.station.name : '-' %>
                                     </td>
-                                    <td>
-                                        <%= wo.equipment ? wo.equipment.name : '-' %>
-                                    </td>
-                                    <td>
-                                        <%= wo.description.length > 50 ? wo.description.substring(0, 50) + '...' : wo.description %>
-                                    </td>
-                                    <td>
-                                        <% if (wo.pics && wo.pics.length > 0) { %>
-                                            <%= wo.pics.map(p => p.name).join(', ') %>
+                                    <td style="padding: 6px 10px;">
+                                        <% if (wo.equipment) { %>
+                                            <span style="font-weight: 500; color: #0f172a;"><%= wo.equipment.name %></span>
                                         <% } else { %>
-                                            <span class="text-muted italic text-sm">Belum ada</span>
+                                            <span class="text-muted">-</span>
                                         <% } %>
+                                    </td>
+                                    <td style="padding: 6px 10px; white-space: normal; max-width: 320px;">
+                                        <%= wo.description || '-' %>
+                                        <% if (wo.monthly_plan_status === 'MONTHLY_DONE') { %>
+                                            <span class="badge" style="background: #10b981; color: white; font-size: 0.65rem; margin-left: 5px;">Material Ready</span>
+                                        <% } %>
+                                    </td>
+                                    <td style="text-align: center; vertical-align: middle; padding: 6px 4px; background-color: rgba(37, 99, 235, 0.04);">
+                                        <input type="checkbox" name="wo_ids[]" value="<%= wo.id %>" class="candidate-wo-checkbox" onchange="onCandidateCheckboxChange(this)" style="cursor: pointer; width: 16px; height: 16px;">
+                                    </td>
+                                    <td style="padding: 6px 10px;" id="pic-cell-<%= wo.id %>">
+                                        <div class="pic-names-text">
+                                            <% if (wo.pics && wo.pics.length > 0) { %>
+                                                <span style="font-size: 0.8rem; font-weight: 500;"><%= wo.pics.map(p => p.name).join(', ') %></span>
+                                            <% } else { %>
+                                                <span class="text-muted italic" style="font-size: 0.8rem;">Belum ada</span>
+                                            <% } %>
+                                        </div>
                                         <% if (user && (user.role !== 'PROC' || (typeof isProcessing !== 'undefined' && isProcessing)) && user.role !== 'SENIOR_MANAGER') { %>
-                                            <div class="mt-2 no-print">
-                                                <button type="button" class="btn btn-sm" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.75rem; font-weight: 600;" onclick="openGlobalPicModal(<%= wo.id %>, <%= JSON.stringify((wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
+                                            <div class="mt-1 no-print">
+                                                <button type="button" class="btn btn-sm btn-assign-pic" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.72rem; font-weight: 600; padding: 2px 6px;" onclick="openGlobalPicModal(<%= wo.id %>, <%= JSON.stringify((wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
                                             </div>
                                         <% } %>
                                     </td>
                                 </tr>
-                                <% }) %>
+                            <% }) %>
                         </tbody>
                     </table>
                 </div>
-            </form>
-            <script>
-                function toggleAll(source) {
-                    checkboxes = document.getElementsByName('wo_ids[]');
-                    for (var i = 0, n = checkboxes.length; i < n; i++) {
-                        checkboxes[i].checked = source.checked;
-                    }
-                }
-            </script>
-            <% } else { %>
-                <p class="text-muted italic">No unfinished work orders found.</p>
-                <% } %>
+            </div>
+        <% } else { %>
+            <p class="text-muted italic">No unfinished work orders found.</p>
+        <% } %>
+    </div>
+
+    <!-- DRAFT DAILY MAINTENANCE WORK (STAGING PANEL) -->
+    <div id="draftDailyPlanCard" class="card mb-4" style="border: 2px solid #2563eb; border-radius: 8px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.12); background: #ffffff; overflow: hidden;">
+        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: rgba(255, 255, 255, 0.2); width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.15rem;">
+                    📋
+                </div>
+                <div>
+                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #ffffff; letter-spacing: 0.3px;">
+                        Draft Daily <%= typeof isProcessing !== 'undefined' && isProcessing ? 'Process' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil' : (typeof isOffice !== 'undefined' && isOffice ? 'Office' : 'Maintenance')) %> Work
+                    </h4>
+                    <div style="font-size: 0.78rem; opacity: 0.9; margin-top: 1px;">
+                        Tinjau seluruh pekerjaan terpilih sebelum diterbitkan menjadi Program Kerja Harian
+                    </div>
+                </div>
+                <span id="draftCountBadge" class="badge" style="background: #ffffff; color: #1e3a8a; font-size: 0.82rem; font-weight: 700; padding: 4px 10px; border-radius: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                    0 Pekerjaan Terpilih
+                </span>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <!-- Quick Date Controls -->
+                <div style="display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.18); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3);">
+                    <label style="font-size: 0.8rem; font-weight: 600; margin: 0; color: #ffffff; white-space: nowrap;">
+                        <i class="fas fa-calendar-day mr-1"></i> Tgl Program:
+                    </label>
+                    <input type="date" id="draftPlanDate" class="form-control form-control-sm" style="height: 28px; font-size: 0.82rem; font-weight: 700; color: #0f172a; width: 145px; padding: 2px 6px; border-radius: 4px; border: 1px solid #cbd5e1; background: #ffffff;" required>
+                    <button type="button" class="btn btn-sm btn-light" style="font-size: 0.72rem; padding: 2px 8px; font-weight: 600; height: 28px; border-radius: 4px;" onclick="setDraftDateQuick('today')">Hari Ini</button>
+                    <button type="button" class="btn btn-sm btn-light" style="font-size: 0.72rem; padding: 2px 8px; font-weight: 600; height: 28px; border-radius: 4px;" onclick="setDraftDateQuick('tomorrow')">Besok</button>
+                </div>
+
+                <!-- Action Buttons -->
+                <button type="button" id="btnSaveDailyDraft" class="btn btn-sm" style="background: #10b981; color: white; font-weight: 700; font-size: 0.85rem; padding: 5px 15px; border-radius: 6px; border: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: all 0.2s;" onclick="submitDraftDailyPlan()">
+                    <i class="fas fa-save mr-1"></i> Simpan & Terbitkan
+                </button>
+                <button type="button" class="btn btn-sm" style="background: rgba(255,255,255,0.2); color: white; font-weight: 600; font-size: 0.78rem; padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.3);" onclick="clearAllDrafts()" title="Kosongkan draft">
+                    <i class="fas fa-trash-alt mr-1"></i> Bersihkan
+                </button>
+            </div>
+        </div>
+
+        <!-- Draft Table Content Area -->
+        <div style="padding: 12px 15px;">
+            <div id="draftEmptyState" style="text-align: center; padding: 28px 15px; color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
+                <div style="font-size: 2.2rem; margin-bottom: 6px; opacity: 0.6;">📥</div>
+                <div style="font-weight: 600; font-size: 0.95rem; color: #334155;">Belum ada pekerjaan yang dipilih</div>
+                <div style="font-size: 0.82rem; color: #64748b; margin-top: 3px;">
+                    Silakan centang kolom <strong>[Pilih]</strong> pada tabel <em>Find Unfinished Work</em> di atas untuk memasukkan pekerjaan ke dalam draft program kerja ini.
+                </div>
+            </div>
+
+            <div id="draftTableContainer" class="table-responsive" style="display: none; border: 1px solid #e2e8f0; border-radius: 6px; max-height: 380px; overflow-y: auto;">
+                <table class="table table-sm table-hover m-0 align-middle" style="font-size: 0.85rem; border-collapse: separate; border-spacing: 0;">
+                    <thead style="position: sticky; top: 0; background-color: #f1f5f9; color: #1e293b; z-index: 10; font-weight: 700; border-bottom: 2px solid #cbd5e1;">
+                        <tr>
+                            <th style="width: 45px; text-align: center; padding: 8px 6px;">No</th>
+                            <th style="width: 95px; padding: 8px 8px;">Tgl WO</th>
+                            <th style="width: 140px; padding: 8px 8px;">Stasiun</th>
+                            <th style="width: 150px; padding: 8px 8px;">Unit Mesin</th>
+                            <th style="padding: 8px 8px; min-width: 220px;">Deskripsi Kerusakan</th>
+                            <th style="width: 100px; padding: 8px 8px;">Kategori</th>
+                            <th style="width: 170px; padding: 8px 8px;">PIC Pelaksana</th>
+                            <th style="width: 60px; text-align: center; padding: 8px 6px;">Batal</th>
+                        </tr>
+                    </thead>
+                    <tbody id="draftTableBody">
+                        <!-- Dynamic Rows populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
     <% } %>
 
@@ -147,66 +234,68 @@
     </div>
     <% } %>
 
-    <div class="flex justify-between items-center mb-4">
-        <h4>Record Program kerja</h4>
-    </div>
+    <!-- RECORD PROGRAM KERJA HARIAN FINAL -->
+    <div class="card mb-4" style="border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; background: #ffffff;">
+        <div style="background: #1e293b; color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: rgba(255, 255, 255, 0.15); width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem;">
+                    📁
+                </div>
+                <div>
+                    <h4 style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #ffffff; letter-spacing: 0.2px;">
+                        Record Program Kerja Harian Final
+                    </h4>
+                    <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 1px;">
+                        Daftar dokumen program kerja harian yang telah terbit dan siap dicetak / diarsipkan
+                    </div>
+                </div>
+            </div>
+            <% 
+                let groupedPlans = {};
+                plans.forEach(plan => {
+                    let pd = plan.planned_day || 'Unassigned Date';
+                    if (!groupedPlans[pd]) groupedPlans[pd] = [];
+                    groupedPlans[pd].push(plan);
+                });
+                const dates = Object.keys(groupedPlans).sort((a, b) => {
+                    if (a === 'Unassigned Date') return 1;
+                    if (b === 'Unassigned Date') return -1;
+                    const isDateA = a.includes('-');
+                    const isDateB = b.includes('-');
+                    if (isDateA && isDateB) return new Date(b) - new Date(a);
+                    else if (isDateA) return -1;
+                    else if (isDateB) return 1;
+                    else return a.localeCompare(b);
+                });
+            %>
+            <div>
+                <span class="badge" style="background: #3b82f6; color: white; font-size: 0.8rem; font-weight: 700; padding: 4px 10px; border-radius: 20px;">
+                    <%= dates.length %> Dokumen Program Kerja
+                </span>
+            </div>
+        </div>
 
-    <script>
-        function printPlan() {
-            const week = document.querySelector('input[name="week"]').value;
-            const day = document.querySelector('select[name="day"]').value;
-            let url = '<%= typeof isProcessing !== "undefined" && isProcessing ? "/weekly-plan/processing/print" : (typeof isCivil !== "undefined" && isCivil ? "/weekly-plan/civil/print" : (typeof isOffice !== "undefined" && isOffice ? "/weekly-plan/office/print" : "/weekly-plan/print")) %>?';
-            if (week) url += `week=${week}&`;
-            if (day) url += `day=${day}`;
-            window.open(url, '_blank');
-        }
-    </script>
-
-    <div class="table-responsive">
-        <table class="table">
-                <% 
-                    let groupedPlans = {};
-                    plans.forEach(plan => {
-                        let pd = plan.planned_day || 'Unassigned Date';
-                        if (!groupedPlans[pd]) groupedPlans[pd] = [];
-                        groupedPlans[pd].push(plan);
-                    });
-                    const dates = Object.keys(groupedPlans).sort((a, b) => {
-                        if (a === 'Unassigned Date') return 1;
-                        if (b === 'Unassigned Date') return -1;
-                        
-                        const isDateA = a.includes('-');
-                        const isDateB = b.includes('-');
-                        
-                        if (isDateA && isDateB) {
-                            return new Date(b) - new Date(a);
-                        } else if (isDateA) {
-                            return -1;
-                        } else if (isDateB) {
-                            return 1;
-                        } else {
-                            return a.localeCompare(b);
-                        }
-                    });
-                %>
+        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+            <table id="recordProgramKerjaTable" class="table table-sm table-hover m-0 align-middle" style="font-size: 0.85rem; border-collapse: separate; border-spacing: 0;">
+                <thead style="position: sticky; top: 0; background-color: #f8fafc; color: #334155; z-index: 10; font-weight: 700; border-bottom: 2px solid #e2e8f0;">
+                    <tr>
+                        <th style="width: 50px; padding: 10px; text-align: center;">NO</th>
+                        <th style="width: 100px; padding: 10px; text-align: center;">BULAN</th>
+                        <th style="padding: 10px; min-width: 320px;">KETERANGAN / DOKUMEN PROGRAM KERJA</th>
+                        <th style="width: 140px; padding: 10px; text-align: center;">TOTAL JOB</th>
+                        <th style="width: 120px; padding: 10px; text-align: center;">STATUS</th>
+                    </tr>
+                </thead>
+                <tbody id="recordProgramKerjaBody">
                 <% if (dates.length > 0) { %>
-                    <thead style="position: sticky; top: 0; background-color: #f8fafc; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <tr>
-                            <th width="50" style="background-color: inherit;">NO</th>
-                            <th width="100" style="background-color: inherit;">BULAN</th>
-                            <th style="background-color: inherit;">KETERANGAN</th>
-                        </tr>
-                    </thead>
-                    <tbody>
                     <% dates.forEach((date, index) => { %>
                         <% 
                             let monthStr = '-';
                             let formattedDate = date;
                             if (date !== 'Unassigned Date' && date.includes('-')) { 
                                 const dt = new Date(date);
-                                const optionsDate = { day: 'numeric', month: 'long', year: 'numeric' };
+                                const optionsDate = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
                                 formattedDate = dt.toLocaleDateString('id-ID', optionsDate);
-                                // Format month like Jun-26
                                 const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
                                 const m = monthNames[dt.getMonth()];
                                 const y = dt.getFullYear().toString().slice(-2);
@@ -218,37 +307,49 @@
                             if (typeof isProcessing !== 'undefined' && isProcessing) printBasePath = "/weekly-plan/processing/print";
                             else if (typeof isCivil !== 'undefined' && isCivil) printBasePath = "/weekly-plan/civil/print";
                             else if (typeof isOffice !== 'undefined' && isOffice) printBasePath = "/weekly-plan/office/print";
+
+                            let deptName = "Maintenance";
+                            if (typeof isProcessing !== 'undefined' && isProcessing) deptName = "Process";
+                            else if (typeof isCivil !== 'undefined' && isCivil) deptName = "Civil";
+                            else if (typeof isOffice !== 'undefined' && isOffice) deptName = "Office";
+
+                            const jobCount = (groupedPlans[date] || []).length;
                         %>
-                        <tr>
-                            <td><%= index + 1 %></td>
-                            <td><%= monthStr %></td>
+                        <tr id="record-row-<%= date %>" data-date="<%= date %>" style="cursor: pointer; transition: background-color 0.15s;" onclick="openDailyPlanPreviewModal('<%= printBasePath %>?day=<%= date %>', '<%= formattedDate %>', '<%= deptName %>')" title="Klik untuk preview dan cetak dokumen">
+                            <td style="text-align: center; font-weight: 700; color: #475569;"><%= index + 1 %></td>
+                            <td style="text-align: center;">
+                                <span class="badge" style="background: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 0.78rem; padding: 4px 8px; border-radius: 4px;"><%= monthStr %></span>
+                            </td>
                             <td>
-                                <a href="<%= printBasePath %>?day=<%= date %>" target="_blank" style="text-decoration: none; color: #1e293b; font-weight: 500;" class="hover:text-blue-600">
-                                    <% 
-                                        let deptName = "Maintenance";
-                                        if (typeof isProcessing !== 'undefined' && isProcessing) deptName = "Process";
-                                        else if (typeof isCivil !== 'undefined' && isCivil) deptName = "Civil";
-                                        else if (typeof isOffice !== 'undefined' && isOffice) deptName = "Office";
-                                    %>
-                                    <% if (date !== 'Unassigned Date' && date.includes('-')) { %>
-                                        Program Kerja Harian <%= deptName %> tanggal <%= formattedDate %>
-                                    <% } else { %>
-                                        Program Kerja Harian <%= deptName %> - <%= date %>
-                                    <% } %>
-                                    <i class="fas fa-print" style="margin-left: 8px; color: #3b82f6; font-size: 0.9em;"></i>
-                                </a>
+                                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                                    <span style="font-weight: 600; color: #1e40af; font-size: 0.9rem;">
+                                        <i class="fas fa-file-invoice text-blue-600 mr-2"></i> Program Kerja Harian <%= deptName %> - <%= formattedDate %>
+                                    </span>
+                                    <span class="badge" style="background: #eff6ff; color: #2563eb; font-size: 0.72rem; border: 1px solid #bfdbfe; padding: 3px 8px; border-radius: 4px; font-weight: 600;">
+                                        <i class="fas fa-eye mr-1"></i> Preview & Cetak
+                                    </span>
+                                </div>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="badge" style="background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.78rem; padding: 4px 8px; border-radius: 12px; border: 1px solid #cbd5e1;">
+                                    <%= jobCount %> Pekerjaan
+                                </span>
+                            </td>
+                            <td style="text-align: center;">
+                                <span class="badge" style="background: #dcfce7; color: #15803d; font-weight: 600; font-size: 0.75rem; padding: 4px 8px; border-radius: 12px;">
+                                    <i class="fas fa-check-circle mr-1"></i> Terbit
+                                </span>
                             </td>
                         </tr>
                     <% }); %>
-                    </tbody>
                 <% } else { %>
-                    <tbody>
-                        <tr>
-                            <td colspan="3" class="text-center py-4">No planned work found.</td>
-                        </tr>
-                    </tbody>
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted italic">Belum ada dokumen program kerja harian yang diterbitkan.</td>
+                    </tr>
                 <% } %>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
     </div> <!-- Close #cat-content-plan -->
 
@@ -846,7 +947,7 @@
                     <h4 style="margin: 0; color: #1e293b; font-size: 1.15rem; font-weight: 700;">
                         <i class="fas fa-table-list text-blue-600 mr-2"></i> MONTHLY MONITORING WORK ORDER
                     </h4>
-                    <span style="font-size: 0.8rem; color: #64748b;">Rekapitulasi tren Work Order (WO- & FAB-) per bulan untuk monitoring beban kerja & pemetaan permasalahan stasiun</span>
+                    <span style="font-size: 0.8rem; color: #64748b;">Rekapitulasi tren Work Order (WO- & FAB-) per bulan, pemetaan beban kerja, tren tipe kerusakan & rekomendasi standar teknik</span>
                 </div>
                 <div class="d-flex gap-2 align-items-center">
                     <button type="button" onclick="exportMonthlyOrderCsv()" class="btn btn-outline-success btn-sm" style="font-weight: 600; font-size: 0.82rem;">
@@ -865,7 +966,7 @@
                 <% if (typeof selectedMillId !== 'undefined' && selectedMillId) { %><input type="hidden" name="millId" value="<%= selectedMillId %>"><% } %>
 
                 <!-- 1. Tahun Filter -->
-                <div class="form-group mb-0" style="min-width: 110px;">
+                <div class="form-group mb-0" style="min-width: 100px;">
                     <label style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; display: block;">
                         <i class="fas fa-calendar-alt text-muted mr-1"></i> Tahun
                     </label>
@@ -877,8 +978,22 @@
                     </select>
                 </div>
 
+                <!-- 1.b Periode Diagnosa / Review Filter -->
+                <div class="form-group mb-0" style="min-width: 175px;">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: #1e40af; margin-bottom: 4px; display: block;">
+                        <i class="fas fa-calendar-check text-blue-600 mr-1"></i> Periode Diagnosa
+                    </label>
+                    <select name="monOrderMonth" id="selectMonOrderMonth" class="form-control" style="font-size: 0.85rem; padding: 6px 10px; font-weight: 700; color: #1e40af; background-color: #eff6ff; border-color: #bfdbfe;" onchange="this.form.submit()">
+                        <option value="ALL" <%= (typeof monOrderMonth === 'undefined' || monOrderMonth === 'ALL') ? 'selected' : '' %>>📊 1 Tahun Penuh (<%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>)</option>
+                        <% const mNamesDropdown = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']; %>
+                        <% mNamesDropdown.forEach((mName, mIdx) => { %>
+                            <option value="<%= mIdx %>" <%= (typeof monOrderMonth !== 'undefined' && monOrderMonth !== 'ALL' && monOrderMonth == mIdx) ? 'selected' : '' %>>🗓️ Bulan <%= mName %></option>
+                        <% }); %>
+                    </select>
+                </div>
+
                 <!-- 2. Stasiun Filter -->
-                <div class="form-group mb-0" style="min-width: 230px; flex: 1;">
+                <div class="form-group mb-0" style="min-width: 220px; flex: 1;">
                     <label style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; display: block;">
                         <i class="fas fa-industry text-muted mr-1"></i> Pilihan Stasiun
                     </label>
@@ -896,7 +1011,7 @@
                 </div>
 
                 <!-- 3. Category Filter -->
-                <div class="form-group mb-0" style="min-width: 170px;">
+                <div class="form-group mb-0" style="min-width: 150px;">
                     <label style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; display: block;">
                         <i class="fas fa-tags text-muted mr-1"></i> Kategori WO
                     </label>
@@ -912,8 +1027,23 @@
                     </select>
                 </div>
 
-                <!-- 4. WO Prefix Filter -->
-                <div class="form-group mb-0" style="min-width: 160px;">
+                <!-- 4. Type Kerusakan Filter -->
+                <div class="form-group mb-0" style="min-width: 170px;">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; display: block;">
+                        <i class="fas fa-wrench text-muted mr-1"></i> Type Kerusakan
+                    </label>
+                    <select name="monOrderType" class="form-control" style="font-size: 0.85rem; padding: 6px 10px; font-weight: 600;" onchange="this.form.submit()">
+                        <option value="ALL" <%= (typeof monOrderType === 'undefined' || monOrderType === 'ALL') ? 'selected' : '' %>>Semua Type Kerusakan</option>
+                        <option value="Preventive" <%= (typeof monOrderType !== 'undefined' && monOrderType === 'Preventive') ? 'selected' : '' %>>🛡️ Preventive (PM)</option>
+                        <option value="Breakdown" <%= (typeof monOrderType !== 'undefined' && monOrderType === 'Breakdown') ? 'selected' : '' %>>⚡ Breakdown (BD)</option>
+                        <option value="Improvement" <%= (typeof monOrderType !== 'undefined' && monOrderType === 'Improvement') ? 'selected' : '' %>>🚀 Improvement (IMPR)</option>
+                        <option value="Safety" <%= (typeof monOrderType !== 'undefined' && monOrderType === 'Safety') ? 'selected' : '' %>>🦺 Safety (K3)</option>
+                        <option value="Other" <%= (typeof monOrderType !== 'undefined' && monOrderType === 'Other') ? 'selected' : '' %>>⚙️ Others / Non-WO</option>
+                    </select>
+                </div>
+
+                <!-- 5. WO Prefix Filter -->
+                <div class="form-group mb-0" style="min-width: 150px;">
                     <label style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; display: block;">
                         <i class="fas fa-barcode text-muted mr-1"></i> Tipe Nomor WO
                     </label>
@@ -935,84 +1065,123 @@
         </div>
 
         <!-- Executive KPI Cards -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px;">
             <!-- 1. Total WO -->
             <div style="background: #ffffff; border-radius: 8px; padding: 14px 16px; border: 1px solid #e2e8f0; border-left: 4px solid #2563eb; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                <div style="color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Total Work Order (<%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>)</div>
-                <div style="display: flex; align-items: baseline; gap: 10px;">
-                    <h2 style="font-size: 1.8rem; font-weight: 800; color: #0f172a; margin: 0;"><%= typeof grandTotalWos !== 'undefined' ? grandTotalWos : 0 %></h2>
+                <div style="color: #64748b; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Total Work Order (<%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>)</div>
+                <div style="display: flex; align-items: baseline; gap: 8px;">
+                    <h2 style="font-size: 1.7rem; font-weight: 800; color: #0f172a; margin: 0;"><%= typeof grandTotalWos !== 'undefined' ? grandTotalWos : 0 %></h2>
                     <span style="font-size: 0.75rem; color: #64748b;">
                         WO: <strong style="color:#2563eb;"><%= typeof grandTotalWo !== 'undefined' ? grandTotalWo : 0 %></strong> | FAB: <strong style="color:#8b5cf6;"><%= typeof grandTotalFab !== 'undefined' ? grandTotalFab : 0 %></strong>
                     </span>
                 </div>
             </div>
 
-            <!-- 2. Stasiun Kritis / Hotspot -->
+            <!-- 2. Rasio Proaktif PM vs BD -->
+            <div style="background: #ffffff; border-radius: 8px; padding: 14px 16px; border: 1px solid #e2e8f0; border-left: 4px solid <%= (typeof bdRate !== 'undefined' && bdRate > 20) ? '#ef4444' : '#10b981' %>; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
+                <div style="color: #64748b; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Rasio Pemeliharaan (PMR vs BD)</div>
+                <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+                    <span style="font-size: 1.15rem; font-weight: 800; color: #2563eb;"><%= typeof pmrRate !== 'undefined' ? pmrRate : 0 %>% PM</span>
+                    <span style="font-size: 0.8rem; color: #94a3b8;">vs</span>
+                    <span style="font-size: 1.15rem; font-weight: 800; color: <%= (typeof bdRate !== 'undefined' && bdRate > 15) ? '#ef4444' : '#10b981' %>;"><%= typeof bdRate !== 'undefined' ? bdRate : 0 %>% BD</span>
+                </div>
+                <div style="font-size: 0.7rem; color: #64748b; margin-top: 3px;">
+                    PM: <strong><%= typeof monOrderTypeCounts !== 'undefined' ? monOrderTypeCounts.Preventive : 0 %></strong> | BD: <strong><%= typeof monOrderTypeCounts !== 'undefined' ? monOrderTypeCounts.Breakdown : 0 %></strong>
+                </div>
+            </div>
+
+            <!-- 3. Stasiun Kritis / Hotspot -->
             <div style="background: #ffffff; border-radius: 8px; padding: 14px 16px; border: 1px solid #e2e8f0; border-left: 4px solid #ef4444; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                <div style="color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Stasiun Terbanyak WO (Hotspot)</div>
+                <div style="color: #64748b; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Stasiun Terbanyak WO (Hotspot)</div>
                 <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
-                    <h3 style="font-size: 1.25rem; font-weight: 800; color: #ef4444; margin: 0;"><%= (typeof topStationObj !== 'undefined' && topStationObj.name) ? topStationObj.name : '-' %></h3>
-                    <span class="badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.75rem; font-weight: 700;"><%= (typeof topStationObj !== 'undefined') ? topStationObj.count : 0 %> WO</span>
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #ef4444; margin: 0;"><%= (typeof topStationObj !== 'undefined' && topStationObj.name) ? topStationObj.name : '-' %></h3>
+                    <span class="badge" style="background: #fee2e2; color: #b91c1c; font-size: 0.72rem; font-weight: 700;"><%= (typeof topStationObj !== 'undefined') ? topStationObj.count : 0 %> WO</span>
                 </div>
+                <% if (typeof topBreakdownStationObj !== 'undefined' && topBreakdownStationObj.count > 0) { %>
+                    <div style="font-size: 0.7rem; color: #dc2626; margin-top: 3px;">
+                        <i class="fas fa-bolt mr-1"></i> BD Hotspot: <strong><%= topBreakdownStationObj.name %></strong> (<%= topBreakdownStationObj.count %> BD)
+                    </div>
+                <% } %>
             </div>
 
-            <!-- 3. Bulan Puncak -->
+            <!-- 4. Bulan Puncak -->
             <div style="background: #ffffff; border-radius: 8px; padding: 14px 16px; border: 1px solid #e2e8f0; border-left: 4px solid #f59e0b; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                <div style="color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Bulan Puncak Beban WO</div>
+                <div style="color: #64748b; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Bulan Puncak Beban WO</div>
                 <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
-                    <h3 style="font-size: 1.25rem; font-weight: 800; color: #b45309; margin: 0;"><%= (typeof peakMonthObj !== 'undefined' && peakMonthObj.name) ? peakMonthObj.name : '-' %></h3>
-                    <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.75rem; font-weight: 700;"><%= (typeof peakMonthObj !== 'undefined') ? peakMonthObj.count : 0 %> WO</span>
+                    <h3 style="font-size: 1.15rem; font-weight: 800; color: #b45309; margin: 0;"><%= (typeof peakMonthObj !== 'undefined' && peakMonthObj.name) ? peakMonthObj.name : '-' %></h3>
+                    <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.72rem; font-weight: 700;"><%= (typeof peakMonthObj !== 'undefined') ? peakMonthObj.count : 0 %> WO</span>
                 </div>
+                <% if (typeof peakMonthObj !== 'undefined' && peakMonthObj.breakdownCount > 0) { %>
+                    <div style="font-size: 0.7rem; color: #b45309; margin-top: 3px;">
+                        Insiden BD Puncak: <strong><%= peakMonthObj.breakdownCount %> BD</strong>
+                    </div>
+                <% } %>
             </div>
 
-            <!-- 4. Tingkat Penyelesaian -->
+            <!-- 5. Tingkat Penyelesaian -->
             <div style="background: #ffffff; border-radius: 8px; padding: 14px 16px; border: 1px solid #e2e8f0; border-left: 4px solid #10b981; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
-                <div style="color: #64748b; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Tingkat Selesai (Closed)</div>
-                <div style="display: flex; align-items: baseline; gap: 10px;">
-                    <h2 style="font-size: 1.8rem; font-weight: 800; color: #059669; margin: 0;"><%= typeof completionRatePct !== 'undefined' ? completionRatePct : 0 %>%</h2>
-                    <span style="font-size: 0.75rem; color: #64748b;">
-                        Selesai: <strong style="color: #059669;"><%= typeof grandTotalClosed !== 'undefined' ? grandTotalClosed : 0 %></strong> | Open: <strong style="color: #d97706;"><%= typeof grandTotalOpen !== 'undefined' ? grandTotalOpen : 0 %></strong>
+                <div style="color: #64748b; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">Tingkat Selesai (Closed)</div>
+                <div style="display: flex; align-items: baseline; gap: 8px;">
+                    <h2 style="font-size: 1.7rem; font-weight: 800; color: #059669; margin: 0;"><%= typeof completionRatePct !== 'undefined' ? completionRatePct : 0 %>%</h2>
+                    <span style="font-size: 0.72rem; color: #64748b;">
+                        Closed: <strong style="color: #059669;"><%= typeof grandTotalClosed !== 'undefined' ? grandTotalClosed : 0 %></strong> | Open: <strong style="color: #d97706;"><%= typeof grandTotalOpen !== 'undefined' ? grandTotalOpen : 0 %></strong>
                     </span>
                 </div>
             </div>
         </div>
 
-        <!-- Monthly Visual Trend Bar & Distribution -->
-        <div class="card mb-4" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 16px; border-radius: 8px;">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-                <h5 style="margin: 0; font-size: 0.95rem; font-weight: 700; color: #1e293b;">
-                    <i class="fas fa-chart-column text-blue-600 mr-1"></i> Tren Volume Work Order 12 Bulan (Tahun <%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>)
-                </h5>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap; font-size: 0.75rem;">
-                    <% if (typeof monOrderCategoryCounts !== 'undefined') { %>
-                        <span class="badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe;">Mech: <%= monOrderCategoryCounts.Mechanical || 0 %></span>
-                        <span class="badge" style="background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;">Elec: <%= monOrderCategoryCounts.Electrical || 0 %></span>
-                        <span class="badge" style="background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe;">Fab: <%= monOrderCategoryCounts.Fabrication || 0 %></span>
-                        <span class="badge" style="background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;">Civil: <%= monOrderCategoryCounts.Civil || 0 %></span>
-                        <span class="badge" style="background: #fffbeb; color: #b45309; border: 1px solid #fde68a;">Inst: <%= monOrderCategoryCounts.Instrument || 0 %></span>
-                    <% } %>
+        <!-- 1. TREN VOLUME WORK ORDER 12 BULAN & KATEGORI (RESTORED CLASSIC VIEW) -->
+        <div class="card mb-4" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 18px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-2" style="border-bottom: 1px solid #f1f5f9;">
+                <div>
+                    <h5 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">
+                        <i class="fas fa-chart-column text-blue-600 mr-2"></i> Tren Volume Work Order 12 Bulan (Tahun <%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>)
+                    </h5>
+                    <span style="font-size: 0.78rem; color: #64748b;">Distribusi kuantitas order per bulan dan proporsi kategori pekerjaan</span>
+                </div>
+                <!-- Category Badges Breakdown -->
+                <div class="d-flex gap-2 flex-wrap">
+                    <span class="badge" style="background: #dbeafe; color: #1e40af; font-size: 0.78rem; font-weight: 700; padding: 5px 10px; border-radius: 6px; border: 1px solid #bfdbfe;">
+                        Mech: <%= (typeof monOrderCategoryCounts !== 'undefined' && monOrderCategoryCounts.Mechanical) || 0 %>
+                    </span>
+                    <span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.78rem; font-weight: 700; padding: 5px 10px; border-radius: 6px; border: 1px solid #fecaca;">
+                        Elec: <%= (typeof monOrderCategoryCounts !== 'undefined' && monOrderCategoryCounts.Electrical) || 0 %>
+                    </span>
+                    <span class="badge" style="background: #ede9fe; color: #5b21b6; font-size: 0.78rem; font-weight: 700; padding: 5px 10px; border-radius: 6px; border: 1px solid #ddd6fe;">
+                        Fab: <%= (typeof monOrderCategoryCounts !== 'undefined' && monOrderCategoryCounts.Fabrication) || 0 %>
+                    </span>
+                    <span class="badge" style="background: #dcfce7; color: #166534; font-size: 0.78rem; font-weight: 700; padding: 5px 10px; border-radius: 6px; border: 1px solid #bbf7d0;">
+                        Civil: <%= (typeof monOrderCategoryCounts !== 'undefined' && monOrderCategoryCounts.Civil) || 0 %>
+                    </span>
+                    <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.78rem; font-weight: 700; padding: 5px 10px; border-radius: 6px; border: 1px solid #fde68a;">
+                        Inst: <%= (typeof monOrderCategoryCounts !== 'undefined' && monOrderCategoryCounts.Instrument) || 0 %>
+                    </span>
                 </div>
             </div>
 
-            <!-- CSS Bar Chart for 12 Months -->
+            <!-- Volume Bar Chart -->
             <% 
-                let maxMonthVal = 1;
+                let maxMonthVol = 1;
                 if (typeof monthlyOrderTotals !== 'undefined') {
-                    monthlyOrderTotals.forEach(m => { if (m.count > maxMonthVal) maxMonthVal = m.count; });
+                    monthlyOrderTotals.forEach(m => { if (m.count > maxMonthVol) maxMonthVol = m.count; });
                 }
             %>
-            <div style="display: flex; align-items: flex-end; gap: 10px; height: 140px; padding: 15px 5px 5px 5px; border-bottom: 2px solid #e2e8f0; background: #fafafa; border-radius: 6px;">
+            <div style="display: flex; align-items: flex-end; gap: 8px; height: 160px; padding: 15px 8px 8px 8px; border-bottom: 2px solid #e2e8f0; background: #fafcff; border-radius: 6px;">
                 <% if (typeof monthlyOrderTotals !== 'undefined') { %>
                     <% monthlyOrderTotals.forEach((m, idx) => { 
-                        const barHeightPct = Math.max(8, Math.round((m.count / maxMonthVal) * 100));
-                        const isPeak = m.count === maxMonthVal && maxMonthVal > 0;
-                        const barColor = isPeak ? '#ef4444' : (m.count > 0 ? '#3b82f6' : '#cbd5e1');
+                        const totalH = Math.max(6, Math.round((m.count / maxMonthVol) * 100));
+                        const isPeak = m.count === maxMonthVol && maxMonthVol > 0;
+                        const barColor = isPeak ? '#ef4444' : (m.count > 0 ? '#3b82f6' : '#e2e8f0');
                     %>
-                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;" title="<%= m.monthFullName %>: <%= m.count %> Work Orders (WO: <%= m.woCount %>, FAB: <%= m.fabCount %>)">
-                            <span style="font-size: 0.72rem; font-weight: 700; color: <%= barColor %>; margin-bottom: 4px;">
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;" 
+                            title="<%= m.monthFullName %>: <%= m.count %> WO (WO: <%= m.woCount %>, FAB: <%= m.fabCount %>)">
+                            
+                            <span style="font-size: 0.75rem; font-weight: 800; color: <%= isPeak ? '#ef4444' : '#2563eb' %>; margin-bottom: 4px;">
                                 <%= m.count > 0 ? m.count : '' %>
                             </span>
-                            <div style="width: 100%; max-width: 38px; height: <%= barHeightPct %>%; background: <%= barColor %>; border-radius: 4px 4px 0 0; transition: all 0.3s; opacity: <%= m.count > 0 ? '0.9' : '0.4' %>;"></div>
+
+                            <div style="width: 100%; max-width: 36px; height: <%= totalH %>%; background-color: <%= barColor %>; border-radius: 4px 4px 0 0; transition: all 0.2s; opacity: <%= m.count > 0 ? '1' : '0.4' %>;"></div>
+
                             <span style="font-size: 0.72rem; font-weight: 600; color: #64748b; margin-top: 6px;">
                                 <%= m.monthName %>
                             </span>
@@ -1022,8 +1191,246 @@
             </div>
         </div>
 
-        <!-- Matrix Table Container -->
-        <div class="card" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <!-- 2. DISTRIBUSI & TREN QTY WORK ORDER BERDASARKAN TYPE KERUSAKAN -->
+        <div class="card mb-4" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 18px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2 pb-2" style="border-bottom: 1px solid #f1f5f9;">
+                <div>
+                    <h5 style="margin: 0; font-size: 1rem; font-weight: 700; color: #1e293b;">
+                        <i class="fas fa-shield-halved text-blue-600 mr-2"></i> Distribusi & Tren Qty Work Order Berdasarkan Type Kerusakan (Tahun <%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>)
+                    </h5>
+                    <span style="font-size: 0.78rem; color: #64748b;">Pemetaan rasio kerusakan preventif, breakdown, improvement, dan safety untuk evaluasi keandalan pabrik</span>
+                </div>
+                <!-- Toggle View Buttons -->
+                <div class="btn-group btn-group-sm" role="group">
+                    <button type="button" id="btnViewStackedChart" onclick="toggleDamageTypeView('chart')" class="btn btn-primary btn-sm" style="font-size: 0.78rem; font-weight: 600;">
+                        <i class="fas fa-chart-column mr-1"></i> Grafik Komposisi Bertumpuk
+                    </button>
+                    <button type="button" id="btnViewTrendTable" onclick="toggleDamageTypeView('table')" class="btn btn-outline-secondary btn-sm" style="font-size: 0.78rem; font-weight: 600;">
+                        <i class="fas fa-table-cells mr-1"></i> Tabel Rekap Tipe
+                    </button>
+                </div>
+            </div>
+
+            <!-- Damage Type Summary Cards Grid -->
+            <% if (typeof monOrderTypeCounts !== 'undefined') { 
+                const totWos = typeof grandTotalWos !== 'undefined' && grandTotalWos > 0 ? grandTotalWos : 1;
+                const prevPct = Math.round((monOrderTypeCounts.Preventive / totWos) * 100);
+                const bdPct = Math.round((monOrderTypeCounts.Breakdown / totWos) * 100);
+                const impPct = Math.round((monOrderTypeCounts.Improvement / totWos) * 100);
+                const safePct = Math.round((monOrderTypeCounts.Safety / totWos) * 100);
+                const othPct = Math.round((monOrderTypeCounts.Other / totWos) * 100);
+            %>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px;">
+                    <!-- Preventive -->
+                    <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 12px 14px; position: relative; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #1e40af; text-transform: uppercase;">
+                                <i class="fas fa-shield-halved mr-1"></i> Preventive (PM)
+                            </span>
+                            <span class="badge" style="background: #dbeafe; color: #1e40af; font-size: 0.72rem; font-weight: 700;"><%= prevPct %>%</span>
+                        </div>
+                        <div style="display: flex; align-items: baseline; gap: 6px;">
+                            <h3 style="font-size: 1.5rem; font-weight: 800; color: #1d4ed8; margin: 0;"><%= monOrderTypeCounts.Preventive %></h3>
+                            <span style="font-size: 0.72rem; color: #64748b;">WO</span>
+                        </div>
+                        <div style="font-size: 0.68rem; color: #3b82f6; margin-top: 4px; font-weight: 600;">
+                            <%= prevPct >= 80 ? '⭐ Standar Prima (>=80%)' : '⚠️ Perlu Ditingkatkan (<80%)' %>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown -->
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px 14px; position: relative; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #991b1b; text-transform: uppercase;">
+                                <i class="fas fa-bolt mr-1"></i> Breakdown (BD)
+                            </span>
+                            <span class="badge" style="background: #fee2e2; color: #991b1b; font-size: 0.72rem; font-weight: 700;"><%= bdPct %>%</span>
+                        </div>
+                        <div style="display: flex; align-items: baseline; gap: 6px;">
+                            <h3 style="font-size: 1.5rem; font-weight: 800; color: #b91c1c; margin: 0;"><%= monOrderTypeCounts.Breakdown %></h3>
+                            <span style="font-size: 0.72rem; color: #64748b;">WO</span>
+                        </div>
+                        <div style="font-size: 0.68rem; color: <%= bdPct > 15 ? '#dc2626' : '#16a34a' %>; margin-top: 4px; font-weight: 600;">
+                            <%= bdPct > 20 ? '⚡ Kritis / Reaktif Tinggi' : (bdPct > 10 ? '⚠️ Waspada (>10%)' : '✅ Terkendali (<10%)') %>
+                        </div>
+                    </div>
+
+                    <!-- Improvement -->
+                    <div style="background: #f5f3ff; border: 1px solid #ddd6fe; border-radius: 8px; padding: 12px 14px; position: relative; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #5b21b6; text-transform: uppercase;">
+                                <i class="fas fa-rocket mr-1"></i> Improvement
+                            </span>
+                            <span class="badge" style="background: #ede9fe; color: #5b21b6; font-size: 0.72rem; font-weight: 700;"><%= impPct %>%</span>
+                        </div>
+                        <div style="display: flex; align-items: baseline; gap: 6px;">
+                            <h3 style="font-size: 1.5rem; font-weight: 800; color: #6d28d9; margin: 0;"><%= monOrderTypeCounts.Improvement %></h3>
+                            <span style="font-size: 0.72rem; color: #64748b;">WO</span>
+                        </div>
+                        <div style="font-size: 0.68rem; color: #7c3aed; margin-top: 4px; font-weight: 600;">
+                            Kaizen & Modifikasi Mesin
+                        </div>
+                    </div>
+
+                    <!-- Safety -->
+                    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 14px; position: relative; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #92400e; text-transform: uppercase;">
+                                <i class="fas fa-person-shelter mr-1"></i> Safety (K3)
+                            </span>
+                            <span class="badge" style="background: #fef3c7; color: #92400e; font-size: 0.72rem; font-weight: 700;"><%= safePct %>%</span>
+                        </div>
+                        <div style="display: flex; align-items: baseline; gap: 6px;">
+                            <h3 style="font-size: 1.5rem; font-weight: 800; color: #b45309; margin: 0;"><%= monOrderTypeCounts.Safety %></h3>
+                            <span style="font-size: 0.72rem; color: #64748b;">WO</span>
+                        </div>
+                        <div style="font-size: 0.68rem; color: #d97706; margin-top: 4px; font-weight: 600;">
+                            Prioritas Zero Accident
+                        </div>
+                    </div>
+
+                    <!-- Others / Non-WO -->
+                    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; position: relative; overflow: hidden;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase;">
+                                <i class="fas fa-gears mr-1"></i> Others / Fab
+                            </span>
+                            <span class="badge" style="background: #e2e8f0; color: #475569; font-size: 0.72rem; font-weight: 700;"><%= othPct %>%</span>
+                        </div>
+                        <div style="display: flex; align-items: baseline; gap: 6px;">
+                            <h3 style="font-size: 1.5rem; font-weight: 800; color: #334155; margin: 0;"><%= monOrderTypeCounts.Other %></h3>
+                            <span style="font-size: 0.72rem; color: #64748b;">WO</span>
+                        </div>
+                        <div style="font-size: 0.68rem; color: #64748b; margin-top: 4px; font-weight: 600;">
+                            Pekerjaan Fabrikasi / Umum
+                        </div>
+                    </div>
+                </div>
+            <% } %>
+
+            <!-- Interactive 12-Month Stacked Visual Trend Chart View -->
+            <div id="damageTypeChartView" style="display: block;">
+                <!-- Legend -->
+                <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <span style="font-size: 0.8rem; font-weight: 700; color: #334155;">
+                        <i class="fas fa-chart-column text-blue-600 mr-1"></i> Komposisi Tipe Kerusakan per Bulan (Jan - Des <%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>)
+                    </span>
+                    <div class="d-flex gap-2 flex-wrap" style="font-size: 0.72rem;">
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #3b82f6; border-radius: 2px;"></span> Preventive</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #ef4444; border-radius: 2px;"></span> Breakdown</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #8b5cf6; border-radius: 2px;"></span> Improvement</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #f59e0b; border-radius: 2px;"></span> Safety</span>
+                        <span style="display: inline-flex; align-items: center; gap: 4px;"><span style="width: 10px; height: 10px; background: #94a3b8; border-radius: 2px;"></span> Others</span>
+                    </div>
+                </div>
+
+                <!-- Visual Stacked Bar Chart -->
+                <div style="display: flex; align-items: flex-end; gap: 8px; height: 160px; padding: 15px 8px 8px 8px; border-bottom: 2px solid #e2e8f0; background: #fafcff; border-radius: 6px;">
+                    <% if (typeof monthlyOrderTypeTrends !== 'undefined') { %>
+                        <% monthlyOrderTypeTrends.forEach((m, idx) => { 
+                            const totalH = Math.max(6, Math.round((m.count / maxMonthVol) * 100));
+                            const isPeak = m.count === maxMonthVol && maxMonthVol > 0;
+                            const prevPctM = m.count > 0 ? (m.preventive / m.count) * 100 : 0;
+                            const bdPctM = m.count > 0 ? (m.breakdown / m.count) * 100 : 0;
+                            const impPctM = m.count > 0 ? (m.improvement / m.count) * 100 : 0;
+                            const safePctM = m.count > 0 ? (m.safety / m.count) * 100 : 0;
+                            const othPctM = m.count > 0 ? (m.other / m.count) * 100 : 0;
+                        %>
+                            <div style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end;" 
+                                title="<%= m.monthFullName %>: Total <%= m.count %> WO &#013;• Preventive: <%= m.preventive %> (<%= m.pmrPct %>%) &#013;• Breakdown: <%= m.breakdown %> (<%= m.bdPct %>%) &#013;• Improvement: <%= m.improvement %> &#013;• Safety: <%= m.safety %> &#013;• Others: <%= m.other %>">
+                                
+                                <span style="font-size: 0.72rem; font-weight: 800; color: <%= isPeak ? '#ef4444' : '#1e293b' %>; margin-bottom: 4px;">
+                                    <%= m.count > 0 ? m.count : '' %>
+                                </span>
+
+                                <!-- Stacked Bar Container -->
+                                <div style="width: 100%; max-width: 36px; height: <%= totalH %>%; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; background: <%= m.count > 0 ? '#e2e8f0' : '#f1f5f9' %>; transition: all 0.2s;">
+                                    <% if (m.count > 0) { %>
+                                        <% if (m.preventive > 0) { %><div style="height: <%= prevPctM %>%; background-color: #3b82f6;" title="Preventive: <%= m.preventive %>"></div><% } %>
+                                        <% if (m.breakdown > 0) { %><div style="height: <%= bdPctM %>%; background-color: #ef4444;" title="Breakdown: <%= m.breakdown %>"></div><% } %>
+                                        <% if (m.improvement > 0) { %><div style="height: <%= impPctM %>%; background-color: #8b5cf6;" title="Improvement: <%= m.improvement %>"></div><% } %>
+                                        <% if (m.safety > 0) { %><div style="height: <%= safePctM %>%; background-color: #f59e0b;" title="Safety: <%= m.safety %>"></div><% } %>
+                                        <% if (m.other > 0) { %><div style="height: <%= othPctM %>%; background-color: #94a3b8;" title="Others: <%= m.other %>"></div><% } %>
+                                    <% } else { %>
+                                        <div style="height: 100%; background: #e2e8f0; opacity: 0.5;"></div>
+                                    <% } %>
+                                </div>
+
+                                <span style="font-size: 0.72rem; font-weight: 600; color: #64748b; margin-top: 6px;">
+                                    <%= m.monthName %>
+                                </span>
+                            </div>
+                        <% }); %>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Monthly Breakdown Table View (Toggled) -->
+            <div id="damageTypeTableView" style="display: none; margin-top: 10px;">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm m-0 text-center align-middle" style="font-size: 0.78rem;">
+                        <thead style="background: #1e293b; color: white;">
+                            <tr>
+                                <th style="text-align: left; padding: 6px 10px;">Bulan</th>
+                                <th style="background: #1d4ed8; color: white;">🛡️ Preventive</th>
+                                <th style="background: #b91c1c; color: white;">⚡ Breakdown</th>
+                                <th style="background: #6d28d9; color: white;">🚀 Improvement</th>
+                                <th style="background: #b45309; color: white;">🦺 Safety</th>
+                                <th style="background: #475569; color: white;">⚙️ Others</th>
+                                <th style="background: #0f172a; color: #facc15; font-weight: 800;">Total</th>
+                                <th>Rasio PMR (%)</th>
+                                <th>Rasio BD (%)</th>
+                                <th>Evaluasi Keandalan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (typeof monthlyOrderTypeTrends !== 'undefined') { %>
+                                <% monthlyOrderTypeTrends.forEach((m, idx) => { 
+                                    let statusText = 'Normal';
+                                    let statusBg = '#f1f5f9';
+                                    let statusColor = '#475569';
+                                    if (m.count === 0) {
+                                        statusText = 'Nir Beban';
+                                    } else if (m.bdPct > 20) {
+                                        statusText = '⚡ Kritis (BD Tinggi)';
+                                        statusBg = '#fee2e2';
+                                        statusColor = '#991b1b';
+                                    } else if (m.pmrPct >= 80) {
+                                        statusText = '⭐ Proaktif Prima';
+                                        statusBg = '#dcfce7';
+                                        statusColor = '#15803d';
+                                    } else if (m.bdPct > 10) {
+                                        statusText = '⚠️ Waspada BD';
+                                        statusBg = '#fef3c7';
+                                        statusColor = '#92400e';
+                                    }
+                                %>
+                                    <tr>
+                                        <td style="text-align: left; font-weight: 700; color: #1e293b; padding: 6px 10px;"><%= m.monthFullName %></td>
+                                        <td style="font-weight: 600; color: #1d4ed8;"><%= m.preventive %></td>
+                                        <td style="font-weight: 700; color: #b91c1c;"><%= m.breakdown %></td>
+                                        <td style="font-weight: 600; color: #6d28d9;"><%= m.improvement %></td>
+                                        <td style="font-weight: 600; color: #b45309;"><%= m.safety %></td>
+                                        <td style="color: #64748b;"><%= m.other %></td>
+                                        <td style="font-weight: 800; background: #fef9c3; color: #854d0e;"><%= m.count %></td>
+                                        <td style="font-weight: 700; color: <%= m.pmrPct >= 80 ? '#16a34a' : '#d97706' %>;"><%= m.count > 0 ? m.pmrPct + '%' : '-' %></td>
+                                        <td style="font-weight: 700; color: <%= m.bdPct > 15 ? '#dc2626' : '#16a34a' %>;"><%= m.count > 0 ? m.bdPct + '%' : '-' %></td>
+                                        <td>
+                                            <span class="badge" style="background: <%= statusBg %>; color: <%= statusColor %>; font-size: 0.72rem; font-weight: 700;">
+                                                <%= statusText %>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MATRIKS WORK ORDER BULANAN PER STASIUN -->
+        <div class="card mb-4" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
             <div style="padding: 12px 16px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
                 <span style="font-size: 0.85rem; font-weight: 700; color: #1e293b;">
                     <i class="fas fa-table mr-1 text-muted"></i> Matriks Work Order Bulanan per Stasiun (<%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>)
@@ -1039,21 +1446,21 @@
                     <thead style="position: sticky; top: 0; z-index: 10;">
                         <tr style="background-color: #facc15; color: #000000; font-weight: 800; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;">
                             <th style="width: 45px; min-width: 45px; padding: 10px 4px; background-color: #facc15; color: #000000; position: sticky; left: 0; z-index: 11; border: 1px solid #ca8a04; box-shadow: 1px 0 0 #ca8a04;">NO</th>
-                            <th style="width: 220px; min-width: 220px; text-align: left; padding: 10px 12px; background-color: #facc15; color: #000000; position: sticky; left: 45px; z-index: 11; border: 1px solid #ca8a04; box-shadow: 2px 0 0 #ca8a04;">STASIUN</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">JAN</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">FEB</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">MAR</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">APR</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">MAY</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">JUN</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">JUL</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">AUG</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">SEP</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">OCT</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">NOV</th>
-                            <th style="width: 60px; min-width: 60px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">DEC</th>
+                            <th style="width: 230px; min-width: 230px; text-align: left; padding: 10px 12px; background-color: #facc15; color: #000000; position: sticky; left: 45px; z-index: 11; border: 1px solid #ca8a04; box-shadow: 2px 0 0 #ca8a04;">STASIUN & PROFIL TIPE</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">JAN</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">FEB</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">MAR</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">APR</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">MAY</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">JUN</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">JUL</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">AUG</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">SEP</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">OCT</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">NOV</th>
+                            <th style="width: 58px; min-width: 58px; padding: 10px 3px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">DEC</th>
                             <th style="width: 75px; min-width: 75px; padding: 10px 6px; background-color: #eab308; color: #000000; border: 1px solid #ca8a04; font-weight: 900;">TOTAL</th>
-                            <th style="width: 90px; min-width: 90px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">TREN</th>
+                            <th style="width: 85px; min-width: 85px; padding: 10px 4px; background-color: #facc15; color: #000000; border: 1px solid #ca8a04;">TREN</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1068,10 +1475,19 @@
                                         <%= row.no %>
                                     </td>
                                     <!-- Station Column (Sticky Left) -->
-                                    <td style="text-align: left; font-weight: 700; color: #1e293b; position: sticky; left: 45px; z-index: 2; background-color: inherit; box-shadow: 2px 0 0 #e2e8f0; border-color: #e2e8f0; padding-left: 12px;">
-                                        <%= row.stationName %>
-                                        <% if (row.isMainStation) { %>
-                                            <span style="font-size: 0.65rem; color: #2563eb; background: #eff6ff; padding: 1px 4px; border-radius: 3px; margin-left: 4px;">Main</span>
+                                    <td style="text-align: left; font-weight: 700; color: #1e293b; position: sticky; left: 45px; z-index: 2; background-color: inherit; box-shadow: 2px 0 0 #e2e8f0; border-color: #e2e8f0; padding-left: 10px;">
+                                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                                            <span><%= row.stationName %></span>
+                                            <% if (row.isMainStation) { %>
+                                                <span style="font-size: 0.62rem; color: #2563eb; background: #eff6ff; padding: 1px 4px; border-radius: 3px;">Main</span>
+                                            <% } %>
+                                        </div>
+                                        <% if (typeof row.typeCounts !== 'undefined' && row.totalYear > 0) { %>
+                                            <div style="font-size: 0.68rem; color: #64748b; margin-top: 2px; font-weight: 500;">
+                                                <span style="color: #2563eb;" title="Preventive">PM: <%= row.typeCounts.Preventive %></span> &bull; 
+                                                <span style="color: <%= row.typeCounts.Breakdown > 0 ? '#dc2626' : '#94a3b8' %>; font-weight: <%= row.typeCounts.Breakdown > 0 ? '700' : '500' %>;" title="Breakdown">BD: <%= row.typeCounts.Breakdown %></span> &bull; 
+                                                <span style="color: #7c3aed;" title="Improvement">IMP: <%= row.typeCounts.Improvement %></span>
+                                            </div>
                                         <% } %>
                                     </td>
 
@@ -1096,10 +1512,10 @@
                                         <td style="padding: 4px; border-color: #e2e8f0;">
                                             <% if (m.count > 0) { %>
                                                 <button type="button" 
-                                                    onclick="showMonthlyOrderDrilldown('<%= row.stationName.replace(/'/g, "\\'") %>', '<%= m.monthFullName %>', '<%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>', <%= encodeURIComponent(JSON.stringify(m.wos)) %>)"
-                                                    style="border: 1px solid <%= isHigh ? '#fca5a5' : 'transparent' %>; background: <%= cellBadgeBg %>; color: <%= cellBadgeColor %>; font-weight: 700; font-size: 0.85rem; padding: 4px 8px; border-radius: 5px; cursor: pointer; width: 100%; transition: all 0.15s;"
+                                                    onclick="openMonthlyCellDrilldown(<%= rIdx %>, <%= mIdx %>)"
+                                                    style="border: 1px solid <%= isHigh ? '#fca5a5' : 'transparent' %>; background: <%= cellBadgeBg %>; color: <%= cellBadgeColor %>; font-weight: 700; font-size: 0.85rem; padding: 4px 6px; border-radius: 5px; cursor: pointer; width: 100%; transition: all 0.15s;"
                                                     class="hover:scale-105"
-                                                    title="<%= row.stationName %> (<%= m.monthFullName %>): <%= m.count %> WO (Klik untuk lihat detail)">
+                                                    title="<%= row.stationName %> (<%= m.monthFullName %>): <%= m.count %> WO (PM: <%= m.preventiveCount %>, BD: <%= m.breakdownCount %>, IMP: <%= m.improvementCount %>, Safe: <%= m.safetyCount %>)">
                                                     <%= m.count %>
                                                 </button>
                                             <% } else { %>
@@ -1152,9 +1568,9 @@
                                     <td style="padding: 10px 4px; background-color: #1e293b; color: #ffffff;">
                                         <% if (m.count > 0) { %>
                                             <button type="button" 
-                                                onclick="showMonthlyOrderDrilldown('Semua Stasiun', '<%= m.monthFullName %>', '<%= typeof monOrderYear !== 'undefined' ? monOrderYear : '' %>', <%= encodeURIComponent(JSON.stringify(m.wos)) %>)"
+                                                onclick="openMonthlySummaryDrilldown(<%= idx %>)"
                                                 style="border: none; background: #334155; color: #f8fafc; font-weight: 800; font-size: 0.85rem; padding: 3px 6px; border-radius: 4px; cursor: pointer; width: 100%;"
-                                                title="Total <%= m.monthFullName %>: <%= m.count %> WO">
+                                                title="Total <%= m.monthFullName %>: <%= m.count %> WO (PM: <%= m.preventiveCount %>, BD: <%= m.breakdownCount %>, IMP: <%= m.improvementCount %>, Safe: <%= m.safetyCount %>)">
                                                 <%= m.count %>
                                             </button>
                                         <% } else { %>
@@ -1179,6 +1595,7 @@
                                     let gColor = '#64748b';
                                     if (g.pct > 0) gColor = '#dc2626'; // Red if WO increasing
                                     else if (g.pct < 0) gColor = '#16a34a'; // Green if WO decreasing
+                                    else if (g.pct === 0 && g.text !== '-') gColor = '#64748b';
                                 %>
                                     <td style="padding: 6px 2px; color: <%= gColor %>; font-weight: 700;">
                                         <%= g.text %>
@@ -1190,6 +1607,163 @@
                         </tr>
                     </tfoot>
                 </table>
+            </div>
+        </div>
+
+        <!-- NEW COMPONENT: HASIL ANALISA & REKOMENDASI SMART SESUAI STANDAR TEKNIK PABRIK KELAPA SAWIT -->
+        <div id="diagnosaSection" class="card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); margin-bottom: 25px;">
+            
+            <!-- Quick Month / Year Selector Tabs Bar -->
+            <div style="background: #f8fafc; padding: 8px 12px; border-radius: 8px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: 700; color: #334155;">
+                    <i class="fas fa-sliders text-blue-600"></i> Pilihan Periode Review:
+                </div>
+                <div style="display: flex; gap: 4px; flex-wrap: wrap; align-items: center;">
+                    <% 
+                        const monthShortList = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                        const currentMonthSel = (typeof monOrderMonth !== 'undefined') ? monOrderMonth : 'ALL';
+                    %>
+                    <button type="button" 
+                        onclick="switchDiagnosaPeriod('ALL')" 
+                        style="border: 1px solid <%= currentMonthSel === 'ALL' ? '#1e40af' : '#cbd5e1' %>; border-radius: 6px; padding: 5px 12px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.15s; background: <%= currentMonthSel === 'ALL' ? '#1e40af' : '#ffffff' %>; color: <%= currentMonthSel === 'ALL' ? '#ffffff' : '#334155' %>; box-shadow: <%= currentMonthSel === 'ALL' ? '0 2px 4px rgba(30,64,175,0.25)' : 'none' %>;">
+                        <i class="fas fa-calendar mr-1"></i> 1 Tahun (<%= monOrderYear %>)
+                    </button>
+                    <% monthShortList.forEach((mShort, idx) => { 
+                        const isAct = (currentMonthSel !== 'ALL' && currentMonthSel == idx);
+                    %>
+                        <button type="button" 
+                            onclick="switchDiagnosaPeriod('<%= idx %>')" 
+                            style="border: 1px solid <%= isAct ? '#2563eb' : '#cbd5e1' %>; border-radius: 6px; padding: 5px 10px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: all 0.15s; background: <%= isAct ? '#2563eb' : '#ffffff' %>; color: <%= isAct ? '#ffffff' : '#475569' %>; box-shadow: <%= isAct ? '0 2px 4px rgba(37,99,235,0.25)' : 'none' %>;">
+                            <%= mShort %>
+                        </button>
+                    <% }); %>
+                </div>
+            </div>
+
+            <!-- Header with Maintenance Health Indicator -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 pb-3" style="border-bottom: 2px solid #f1f5f9;">
+                <div>
+                    <h4 style="margin: 0; color: #0f172a; font-size: 1.15rem; font-weight: 800; display: flex; align-items: center; gap: 8px;">
+                        <i class="fas fa-microchip text-blue-600"></i> HASIL DIAGNOSA & REKOMENDASI SMART STANDAR TEKNIK PABRIK
+                    </h4>
+                    <div style="font-size: 0.8rem; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <span>Analisa keandalan mesin (*Asset Reliability*), mitigasi hotspot, dan rencana tindakan sesuai standar ISO 55000 / TPM / SMRP</span>
+                        <span class="badge" style="background: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; border: 1px solid #c7d2fe;">
+                            <i class="fas fa-clock mr-1"></i> Periode: <strong><%= typeof diagnosaPeriodLabel !== 'undefined' ? diagnosaPeriodLabel : ('Tahun ' + monOrderYear) %></strong>
+                        </span>
+                    </div>
+                </div>
+                <div>
+                    <span class="badge" style="background: <%= typeof healthBgColor !== 'undefined' ? healthBgColor : '#ecfdf5' %>; color: <%= typeof healthBadgeColor !== 'undefined' ? healthBadgeColor : '#10b981' %>; border: 1px solid <%= typeof healthBadgeColor !== 'undefined' ? healthBadgeColor : '#10b981' %>; font-size: 0.82rem; padding: 6px 12px; font-weight: 700; border-radius: 20px;">
+                        <i class="<%= typeof healthIcon !== 'undefined' ? healthIcon : 'fas fa-circle-check' %> mr-1"></i> <%= typeof healthTitle !== 'undefined' ? healthTitle : 'Kondisi Proaktif Terkendali' %>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Analytical Summary Findings (Temuan Kunci Hasil Olah Data) -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+                <h5 style="margin: 0 0 12px 0; font-size: 0.92rem; font-weight: 700; color: #1e293b; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
+                    <span><i class="fas fa-magnifying-glass-chart text-blue-600 mr-2"></i> Rangkuman Temuan & Diagnosa Teknik Kritis:</span>
+                    <span style="font-size: 0.75rem; font-weight: 600; color: #64748b;">Total WO Periode Ini: <strong style="color: #2563eb;"><%= typeof diagTotalWos !== 'undefined' ? diagTotalWos : 0 %> WO</strong></span>
+                </h5>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+                    <!-- Finding 1: Rasio Proaktif vs Reaktif -->
+                    <div style="background: #ffffff; border-radius: 6px; padding: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">
+                            1. Evaluasi PM Ratio (PMR vs BD)
+                        </div>
+                        <p style="font-size: 0.82rem; color: #1e293b; margin: 0; line-height: 1.4;">
+                            Rasio PMR periode ini adalah <strong><%= typeof diagPmrRate !== 'undefined' ? diagPmrRate : 0 %>%</strong> (Preventive: <%= typeof diagPrevCount !== 'undefined' ? diagPrevCount : 0 %> WO) berbanding <strong><%= typeof diagBdRate !== 'undefined' ? diagBdRate : 0 %>%</strong> Breakdown (<%= typeof diagBdCount !== 'undefined' ? diagBdCount : 0 %> WO). 
+                            <% if (typeof diagPmrRate !== 'undefined' && diagPmrRate >= 80) { %>
+                                <span style="color: #16a34a; font-weight: 600;">Status keandalan tergolong Proaktif World-Class (&ge; 80%).</span>
+                            <% } else { %>
+                                <span style="color: #d97706; font-weight: 600;">Perlu peningkatan disiplin PM untuk menekan insiden breakdown ke bawah ambang 15%.</span>
+                            <% } %>
+                        </p>
+                    </div>
+
+                    <!-- Finding 2: Hotspot Stasiun -->
+                    <div style="background: #ffffff; border-radius: 6px; padding: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">
+                            2. Hotspot Kerusakan & Bottleneck
+                        </div>
+                        <p style="font-size: 0.82rem; color: #1e293b; margin: 0; line-height: 1.4;">
+                            Stasiun <strong><%= (typeof diagTopStation !== 'undefined' && diagTopStation.name) ? diagTopStation.name : '-' %></strong> merupakan area beban tertinggi dengan <strong><%= typeof diagTopStation !== 'undefined' ? diagTopStation.count : 0 %> WO</strong>.
+                            <% if (typeof diagTopBdStation !== 'undefined' && diagTopBdStation.count > 0) { %>
+                                Stasiun <strong><%= diagTopBdStation.name %></strong> mencatatkan insiden breakdown terbanyak (<strong><%= diagTopBdStation.count %> BD WO</strong>) yang memerlukan intervensi condition assessment segera.
+                            <% } %>
+                        </p>
+                    </div>
+
+                    <!-- Finding 3: Pola Musiman & MoM Growth -->
+                    <div style="background: #ffffff; border-radius: 6px; padding: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">
+                            3. <%= typeof isMonthlyDiagnosa !== 'undefined' && isMonthlyDiagnosa ? 'Tren Pertumbuhan Beban (MoM)' : 'Pola Musiman & Puncak Beban' %>
+                        </div>
+                        <p style="font-size: 0.82rem; color: #1e293b; margin: 0; line-height: 1.4;">
+                            <%= typeof diagMoMGrowth !== 'undefined' ? diagMoMGrowth.text : '-' %>. 
+                            <% if (!(typeof isMonthlyDiagnosa !== 'undefined' && isMonthlyDiagnosa)) { %>
+                                Program overhaul terencana wajib diselesaikan 1-2 bulan sebelum bulan puncak panen guna mencegah bottle-neck throughput olah TBS.
+                            <% } %>
+                        </p>
+                    </div>
+
+                    <!-- Finding 4: Backlog & Kesiapan Eksekusi -->
+                    <div style="background: #ffffff; border-radius: 6px; padding: 12px; border: 1px solid #e2e8f0;">
+                        <div style="font-size: 0.75rem; font-weight: 700; color: #475569; margin-bottom: 4px; text-transform: uppercase;">
+                            4. Kecepatan Penyelesaian (Closure Rate)
+                        </div>
+                        <p style="font-size: 0.82rem; color: #1e293b; margin: 0; line-height: 1.4;">
+                            Tingkat penyelesaian mencapai <strong><%= typeof diagCompletionRate !== 'undefined' ? diagCompletionRate : 0 %>%</strong> (Closed: <%= typeof diagTotalClosed !== 'undefined' ? diagTotalClosed : 0 %> WO) dengan sisa <strong><%= typeof diagTotalOpen !== 'undefined' ? diagTotalOpen : 0 %> WO Open</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4 Strategic Actionable Recommendations Pillars -->
+            <h5 style="margin: 0 0 14px 0; font-size: 0.95rem; font-weight: 700; color: #1e293b;">
+                <i class="fas fa-list-check text-blue-600 mr-2"></i> 4 Pilar Tindakan Rekomendasi Teknik (<%= typeof diagnosaShortLabel !== 'undefined' ? diagnosaShortLabel : '' %>):
+            </h5>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px;">
+                <% if (typeof smartRecommendations !== 'undefined' && smartRecommendations.length > 0) { %>
+                    <% smartRecommendations.forEach((rec, idx) => { %>
+                        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-top: 4px solid <%= rec.color %>; border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 8px;">
+                                    <span style="font-size: 0.88rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 6px;">
+                                        <i class="<%= rec.icon %>" style="color: <%= rec.color %>;"></i> <%= rec.pillar %>
+                                    </span>
+                                    <span class="badge" style="background: <%= rec.priorityClass === 'badge-danger' ? '#fee2e2' : (rec.priorityClass === 'badge-primary' ? '#dbeafe' : '#ede9fe') %>; color: <%= rec.color %>; font-size: 0.7rem; font-weight: 700;">
+                                        <%= rec.priority %>
+                                    </span>
+                                </div>
+
+                                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 8px;">
+                                    <strong>Target:</strong> <span style="color: #1e293b; font-weight: 600;"><%= rec.target %></span> &bull; <strong>PIC:</strong> <span style="color: #2563eb; font-weight: 600;"><%= rec.owner %></span>
+                                </div>
+
+                                <div style="background: #f8fafc; border-radius: 6px; padding: 10px; margin-bottom: 10px; border-left: 3px solid <%= rec.color %>;">
+                                    <div style="font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 2px;">Masalah Terdeteksi:</div>
+                                    <div style="font-size: 0.8rem; color: #334155; line-height: 1.35;"><%= rec.problem %></div>
+                                </div>
+
+                                <div>
+                                    <div style="font-size: 0.75rem; font-weight: 700; color: #0f172a; margin-bottom: 3px;">
+                                        <i class="fas fa-wrench mr-1 text-muted"></i> Tindakan Rekomendasi Teknik:
+                                    </div>
+                                    <p style="font-size: 0.82rem; color: #334155; line-height: 1.45; margin: 0;">
+                                        <%= rec.action %>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dashed #e2e8f0; font-size: 0.72rem; color: #64748b; display: flex; justify-content: space-between; align-items: center;">
+                                <span><i class="fas fa-certificate text-amber-500 mr-1"></i> Standar Acuan: <strong><%= rec.standard %></strong></span>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
             </div>
         </div>
     </div>
@@ -1404,15 +1978,79 @@
 
     document.getElementById('assignGlobalPicForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const woId = document.getElementById('activeWoId').value;
+        if (!woId) {
+            alert('ID Work Order tidak ditemukan.');
+            return;
+        }
+
         const formData = new FormData(e.target);
         const picIds = formData.getAll('pic_ids');
-        const woId = document.getElementById('activeWoId').value;
 
         if (picIds.length > 4) {
             alert('Maksimal hanya 4 pekerja yang dapat dipilih.');
             return;
         }
 
+        // 1. OPTIMISTIC UI: Read selected employee names immediately from modal
+        const checkedBoxes = Array.from(document.querySelectorAll('.global-pic-checkbox:checked'));
+        const selectedNames = checkedBoxes.map(cb => {
+            const item = cb.closest('.global-pic-item') || cb.parentElement;
+            return item ? item.innerText.split('(')[0].trim() : '';
+        }).filter(Boolean);
+
+        const newPicsArray = checkedBoxes.map(cb => {
+            const item = cb.closest('.global-pic-item') || cb.parentElement;
+            return {
+                id: parseInt(cb.value),
+                name: item ? item.innerText.split('(')[0].trim() : ''
+            };
+        });
+
+        // 2. OPTIMISTIC UI: Update Candidate Table cell immediately in 0.01 seconds
+        const cell = document.getElementById(`pic-cell-${woId}`);
+        const draftCell = document.getElementById(`draft-pic-cell-${woId}`);
+        const candidateRow = document.getElementById(`candidate-row-${woId}`);
+        let oldHtml = '';
+
+        const namesHtml = selectedNames.length > 0 
+            ? `<span style="font-size: 0.8rem; font-weight: 600; color: #2563eb;">${selectedNames.join(', ')}</span>`
+            : `<span class="text-muted italic" style="font-size: 0.8rem;">Belum ada</span>`;
+
+        if (cell) {
+            const textDiv = cell.querySelector('.pic-names-text');
+            if (textDiv) {
+                oldHtml = textDiv.innerHTML;
+                textDiv.innerHTML = namesHtml;
+            }
+            const btn = cell.querySelector('.btn-assign-pic');
+            if (btn) {
+                btn.setAttribute('onclick', `openGlobalPicModal(${woId}, ${JSON.stringify(picIds.map(Number))})`);
+            }
+        }
+
+        if (candidateRow) {
+            candidateRow.setAttribute('data-pics', JSON.stringify(newPicsArray));
+        }
+
+        // Update Draft table cell & state if present
+        if (draftWosMap.has(parseInt(woId))) {
+            const item = draftWosMap.get(parseInt(woId));
+            item.pics = newPicsArray;
+            if (draftCell) {
+                const draftTextDiv = draftCell.querySelector('.pic-names-text');
+                if (draftTextDiv) draftTextDiv.innerHTML = namesHtml;
+                const draftBtn = draftCell.querySelector('.btn-assign-pic');
+                if (draftBtn) {
+                    draftBtn.setAttribute('onclick', `openGlobalPicModal(${woId}, ${JSON.stringify(picIds.map(Number))})`);
+                }
+            }
+        }
+
+        // 3. OPTIMISTIC UI: Close modal instantly without waiting!
+        closeGlobalPicModal();
+
+        // 4. Send background fetch to persist to database
         try {
             const res = await fetch(`/api/work-orders/${woId}/pics`, {
                 method: 'POST',
@@ -1420,17 +2058,439 @@
                 body: JSON.stringify({ pic_ids: picIds })
             });
 
-            if (res.ok) window.location.reload();
-            else {
+            if (res.ok) {
+                const data = await res.json();
+                const pics = (data.wo && data.wo.pics) ? data.wo.pics : newPicsArray;
+                const finalNamesHtml = pics.length > 0 
+                    ? `<span style="font-size: 0.8rem; font-weight: 500;">${pics.map(p => p.name).join(', ')}</span>`
+                    : `<span class="text-muted italic" style="font-size: 0.8rem;">Belum ada</span>`;
+
+                if (cell) {
+                    const textDiv = cell.querySelector('.pic-names-text');
+                    if (textDiv) textDiv.innerHTML = finalNamesHtml;
+                }
+                if (draftCell) {
+                    const draftTextDiv = draftCell.querySelector('.pic-names-text');
+                    if (draftTextDiv) draftTextDiv.innerHTML = finalNamesHtml;
+                }
+            } else {
                 const err = await res.json();
                 alert(err.error || 'Terjadi kesalahan saat menyimpan PIC');
+                // Revert on failure
+                if (cell && oldHtml) {
+                    const textDiv = cell.querySelector('.pic-names-text');
+                    if (textDiv) textDiv.innerHTML = oldHtml;
+                }
             }
         } catch (error) {
             console.error(error);
-            alert('Error connecting to server.');
+            alert('Kesalahan koneksi saat menyimpan PIC.');
+            if (cell && oldHtml) {
+                const textDiv = cell.querySelector('.pic-names-text');
+                if (textDiv) textDiv.innerHTML = oldHtml;
+            }
         }
     });
+
+    // --- DRAFT DAILY MAINTENANCE WORK STATE & HANDLERS ---
+    const draftWosMap = new Map();
+
+    function initDraftDate() {
+        const dateInput = document.getElementById('draftPlanDate');
+        if (dateInput && !dateInput.value) {
+            const today = new Date();
+            const yyyy = today.getFullYear();
+            const mm = String(today.getMonth() + 1).padStart(2, '0');
+            const dd = String(today.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
+        }
+    }
+
+    function setDraftDateQuick(mode) {
+        const dateInput = document.getElementById('draftPlanDate');
+        if (!dateInput) return;
+        const d = new Date();
+        if (mode === 'tomorrow') {
+            d.setDate(d.getDate() + 1);
+        }
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function onCandidateCheckboxChange(checkbox) {
+        const woId = parseInt(checkbox.value);
+        const row = document.getElementById(`candidate-row-${woId}`);
+        if (!row) return;
+
+        if (checkbox.checked) {
+            const woData = {
+                id: woId,
+                wo_no: row.getAttribute('data-wo-no') || '',
+                created_at: row.getAttribute('data-created-at') || '',
+                station: row.getAttribute('data-station') || '-',
+                equipment: row.getAttribute('data-equipment') || '-',
+                description: row.getAttribute('data-description') || '-',
+                category: row.getAttribute('data-category') || 'Mechanical',
+                pics: JSON.parse(row.getAttribute('data-pics') || '[]')
+            };
+            draftWosMap.set(woId, woData);
+            row.style.backgroundColor = '#eff6ff'; // Soft blue highlight
+        } else {
+            draftWosMap.delete(woId);
+            row.style.backgroundColor = '';
+        }
+        renderDraftTable();
+    }
+
+    function toggleAllCandidates(source) {
+        const checkboxes = document.querySelectorAll('.candidate-wo-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = source.checked;
+            onCandidateCheckboxChange(cb);
+        });
+    }
+
+    function removeDraftItem(woId) {
+        draftWosMap.delete(woId);
+        const cb = document.querySelector(`.candidate-wo-checkbox[value="${woId}"]`);
+        if (cb) cb.checked = false;
+        const row = document.getElementById(`candidate-row-${woId}`);
+        if (row) row.style.backgroundColor = '';
+        renderDraftTable();
+    }
+
+    function clearAllDrafts() {
+        if (draftWosMap.size === 0) return;
+        draftWosMap.clear();
+        const checkboxes = document.querySelectorAll('.candidate-wo-checkbox');
+        checkboxes.forEach(cb => {
+            cb.checked = false;
+        });
+        const rows = document.querySelectorAll('.candidate-wo-row');
+        rows.forEach(r => r.style.backgroundColor = '');
+        const checkAll = document.getElementById('checkAllCandidates');
+        if (checkAll) checkAll.checked = false;
+        renderDraftTable();
+    }
+
+    function renderDraftTable() {
+        const emptyState = document.getElementById('draftEmptyState');
+        const tableContainer = document.getElementById('draftTableContainer');
+        const tableBody = document.getElementById('draftTableBody');
+        const countBadge = document.getElementById('draftCountBadge');
+        const count = draftWosMap.size;
+
+        if (countBadge) {
+            countBadge.innerText = `${count} Pekerjaan Terpilih`;
+            countBadge.style.background = count > 0 ? '#22c55e' : '#ffffff';
+            countBadge.style.color = count > 0 ? '#ffffff' : '#1e3a8a';
+        }
+
+        if (count === 0) {
+            if (emptyState) emptyState.style.display = 'block';
+            if (tableContainer) tableContainer.style.display = 'none';
+            if (tableBody) tableBody.innerHTML = '';
+            return;
+        }
+
+        if (emptyState) emptyState.style.display = 'none';
+        if (tableContainer) tableContainer.style.display = 'block';
+
+        let html = '';
+        let no = 1;
+        draftWosMap.forEach((item, woId) => {
+            const picsHtml = (item.pics && item.pics.length > 0)
+                ? `<span style="font-size: 0.8rem; font-weight: 600; color: #1e3a8a;">${item.pics.map(p => p.name).join(', ')}</span>`
+                : `<span class="text-muted italic" style="font-size: 0.78rem;">Belum ada</span>`;
+            
+            const picIds = (item.pics || []).map(p => p.id);
+
+            html += `
+                <tr id="draft-row-${woId}" style="border-bottom: 1px solid #e2e8f0; transition: background-color 0.15s;">
+                    <td style="text-align: center; font-weight: 700; color: #475569; padding: 6px 6px;">${no++}</td>
+                    <td style="padding: 6px 8px; font-weight: 500; color: #64748b;">${item.created_at}</td>
+                    <td style="padding: 6px 8px; font-weight: 600; color: #1e293b;">${item.station}</td>
+                    <td style="padding: 6px 8px; color: #334155;">${item.equipment}</td>
+                    <td style="padding: 6px 8px; white-space: normal; color: #0f172a;">${item.description}</td>
+                    <td style="padding: 6px 8px;">
+                        <span class="badge" style="background: #e2e8f0; color: #334155; font-size: 0.72rem; padding: 3px 6px;">${item.category}</span>
+                    </td>
+                    <td style="padding: 6px 8px;" id="draft-pic-cell-${woId}">
+                        <div class="pic-names-text">${picsHtml}</div>
+                        <div class="mt-1">
+                            <button type="button" class="btn btn-sm btn-assign-pic" style="background-color: #f1f5f9; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.7rem; font-weight: 600; padding: 1px 5px;" onclick="openGlobalPicModal(${woId}, ${JSON.stringify(picIds)})">+ Assign PIC</button>
+                        </div>
+                    </td>
+                    <td style="text-align: center; padding: 6px 6px;">
+                        <button type="button" class="btn btn-sm text-danger" style="background: #fee2e2; border: 1px solid #fca5a5; border-radius: 4px; padding: 2px 6px; font-size: 0.78rem; cursor: pointer;" onclick="removeDraftItem(${woId})" title="Batalkan / Hapus dari Draft">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        if (tableBody) tableBody.innerHTML = html;
+    }
+
+    async function submitDraftDailyPlan() {
+        if (draftWosMap.size === 0) {
+            alert('Silakan pilih minimal 1 Work Order untuk dimasukkan ke program kerja harian.');
+            return;
+        }
+
+        const dateInput = document.getElementById('draftPlanDate');
+        const planDate = dateInput ? dateInput.value : '';
+        if (!planDate) {
+            alert('Tanggal program kerja harian harus diisi.');
+            if (dateInput) dateInput.focus();
+            return;
+        }
+
+        const saveBtn = document.getElementById('btnSaveDailyDraft');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Menyimpan...';
+        }
+
+        const woIds = Array.from(draftWosMap.keys());
+
+        try {
+            const res = await fetch('/api/weekly-plan/bulk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    wo_ids: woIds,
+                    planned_day: planDate
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                
+                // Show floating success toast
+                showSuccessToast(`Program Kerja Harian tanggal ${planDate} berhasil disimpan & diterbitkan!`);
+
+                // Dynamically remove planned rows from candidate table
+                woIds.forEach(id => {
+                    const row = document.getElementById(`candidate-row-${id}`);
+                    if (row) {
+                        row.style.transition = 'all 0.3s';
+                        row.style.opacity = '0';
+                        row.style.transform = 'scale(0.95)';
+                        setTimeout(() => row.remove(), 300);
+                    }
+                });
+
+                // Dynamically prepend new record to Record Program Kerja table
+                prependRecordTable(planDate);
+
+                // Clear draft
+                draftWosMap.clear();
+                renderDraftTable();
+            } else {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || 'Terjadi kesalahan saat menyimpan program kerja.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Terjadi kesalahan koneksi saat menyimpan program kerja.');
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save mr-1"></i> Simpan & Terbitkan';
+            }
+        }
+    }
+
+    function showSuccessToast(message) {
+        const toast = document.createElement('div');
+        toast.style.position = 'fixed';
+        toast.style.bottom = '30px';
+        toast.style.right = '30px';
+        toast.style.backgroundColor = '#10b981';
+        toast.style.color = '#ffffff';
+        toast.style.padding = '14px 22px';
+        toast.style.borderRadius = '8px';
+        toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+        toast.style.zIndex = '99999';
+        toast.style.fontWeight = '600';
+        toast.style.fontSize = '0.92rem';
+        toast.style.display = 'flex';
+        toast.style.alignItems = 'center';
+        toast.style.gap = '10px';
+        toast.innerHTML = `<i class="fas fa-check-circle" style="font-size: 1.2rem;"></i> <span>${message}</span>`;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.transition = 'opacity 0.5s, transform 0.5s';
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            setTimeout(() => toast.remove(), 500);
+        }, 3500);
+    }
+
+    function prependRecordTable(dateStr) {
+        const recordTableBody = document.getElementById('recordProgramKerjaBody');
+        if (!recordTableBody) return;
+
+        // Check if date row already exists to PREVENT DUPLICATES
+        const existingRow = document.getElementById(`record-row-${dateStr}`) || recordTableBody.querySelector(`tr[data-date="${dateStr}"]`);
+        if (existingRow) {
+            existingRow.style.transition = 'all 0.5s';
+            existingRow.style.backgroundColor = '#ecfdf5';
+            setTimeout(() => {
+                existingRow.style.backgroundColor = '';
+            }, 3000);
+            return;
+        }
+
+        const dt = new Date(dateStr);
+        const optionsDate = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+        const formattedDate = dt.toLocaleDateString('id-ID', optionsDate);
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const monthStr = `${monthNames[dt.getMonth()]}-${dt.getFullYear().toString().slice(-2)}`;
+
+        let printBasePath = "/weekly-plan/print";
+        <% if (typeof isProcessing !== 'undefined' && isProcessing) { %> printBasePath = "/weekly-plan/processing/print"; <% } %>
+        <% if (typeof isCivil !== 'undefined' && isCivil) { %> printBasePath = "/weekly-plan/civil/print"; <% } %>
+        <% if (typeof isOffice !== 'undefined' && isOffice) { %> printBasePath = "/weekly-plan/office/print"; <% } %>
+
+        let deptName = "Maintenance";
+        <% if (typeof isProcessing !== 'undefined' && isProcessing) { %> deptName = "Process"; <% } %>
+        <% if (typeof isCivil !== 'undefined' && isCivil) { %> deptName = "Civil"; <% } %>
+        <% if (typeof isOffice !== 'undefined' && isOffice) { %> deptName = "Office"; <% } %>
+
+        // If table had "Belum ada dokumen" or "No planned work", clear it
+        if (recordTableBody.innerText.includes('Belum ada dokumen') || recordTableBody.innerText.includes('No planned work')) {
+            recordTableBody.innerHTML = '';
+        }
+
+        const newRow = document.createElement('tr');
+        newRow.id = `record-row-${dateStr}`;
+        newRow.setAttribute('data-date', dateStr);
+        newRow.style.backgroundColor = '#ecfdf5';
+        newRow.style.transition = 'all 0.5s';
+
+        newRow.innerHTML = `
+            <td style="text-align: center; font-weight: 700; color: #475569;">1</td>
+            <td style="text-align: center;">
+                <span class="badge" style="background: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 0.78rem; padding: 4px 8px; border-radius: 4px;">${monthStr}</span>
+            </td>
+            <td>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+                    <span style="font-weight: 600; color: #1e40af; font-size: 0.9rem;">
+                        <i class="fas fa-file-invoice text-blue-600 mr-2"></i> Program Kerja Harian ${deptName} - ${formattedDate}
+                    </span>
+                    <span class="badge" style="background: #eff6ff; color: #2563eb; font-size: 0.72rem; border: 1px solid #bfdbfe; padding: 3px 8px; border-radius: 4px; font-weight: 600;">
+                        <i class="fas fa-eye mr-1"></i> Preview & Cetak
+                    </span>
+                </div>
+            </td>
+            <td style="text-align: center;">
+                <span class="badge" style="background: #f1f5f9; color: #334155; font-weight: 700; font-size: 0.78rem; padding: 4px 8px; border-radius: 12px; border: 1px solid #cbd5e1;">
+                    Baru Terbit
+                </span>
+            </td>
+            <td style="text-align: center;">
+                <span class="badge" style="background: #dcfce7; color: #15803d; font-weight: 600; font-size: 0.75rem; padding: 4px 8px; border-radius: 12px;">
+                    <i class="fas fa-check-circle mr-1"></i> Terbit
+                </span>
+            </td>
+        `;
+        newRow.style.cursor = 'pointer';
+        newRow.setAttribute('onclick', `openDailyPlanPreviewModal('${printBasePath}?day=${dateStr}', '${formattedDate}', '${deptName}')`);
+        newRow.setAttribute('title', 'Klik untuk preview dan cetak dokumen');
+        recordTableBody.insertBefore(newRow, recordTableBody.firstChild);
+
+        // Re-number rows
+        const rows = recordTableBody.querySelectorAll('tr');
+        rows.forEach((r, idx) => {
+            const firstTd = r.querySelector('td');
+            if (firstTd && !isNaN(parseInt(firstTd.innerText))) {
+                firstTd.innerText = idx + 1;
+            }
+        });
+    }
+
+    function openDailyPlanPreviewModal(url, formattedDate, deptName) {
+        const modal = document.getElementById('dailyPlanPreviewModal');
+        const iframe = document.getElementById('previewDocIframe');
+        const spinner = document.getElementById('previewLoadingSpinner');
+        const title = document.getElementById('previewModalTitle');
+        const subtitle = document.getElementById('previewModalSubtitle');
+
+        if (title) title.innerText = `Program Kerja Harian ${deptName || 'Maintenance'} - ${formattedDate}`;
+        if (subtitle) subtitle.innerText = `Tinjau dokumen lembar kerja sebelum mencetak ke printer atau menyimpan PDF`;
+
+        if (spinner) spinner.style.display = 'flex';
+        if (iframe) {
+            iframe.onload = function() {
+                if (spinner) spinner.style.display = 'none';
+            };
+            iframe.src = url;
+        }
+
+        if (modal) modal.style.display = 'block';
+    }
+
+    function closeDailyPlanPreviewModal() {
+        const modal = document.getElementById('dailyPlanPreviewModal');
+        if (modal) modal.style.display = 'none';
+        const iframe = document.getElementById('previewDocIframe');
+        if (iframe) iframe.src = 'about:blank';
+    }
+
+    function printFromPreviewModal() {
+        const iframe = document.getElementById('previewDocIframe');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        initDraftDate();
+    });
 </script>
+
+<!-- MODAL POPUP PREVIEW DOKUMEN SIAP CETAK -->
+<div id="dailyPlanPreviewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); z-index: 100000; backdrop-filter: blur(4px);">
+    <div style="margin: 20px auto; max-width: 960px; width: 95%; height: calc(100vh - 40px); background: #ffffff; border-radius: 10px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #cbd5e1;">
+        <!-- Modal Header -->
+        <div style="background: #1e293b; color: #ffffff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #3b82f6;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="background: #2563eb; width: 34px; height: 34px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #ffffff;">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div>
+                    <h4 id="previewModalTitle" style="margin: 0; font-size: 1.05rem; font-weight: 700; color: #ffffff;">
+                        Preview Dokumen Program Kerja Harian
+                    </h4>
+                    <div id="previewModalSubtitle" style="font-size: 0.78rem; color: #94a3b8; margin-top: 1px;">
+                        Tinjau lembar kerja sebelum mencetak ke kertas atau PDF
+                    </div>
+                </div>
+            </div>
+            <button type="button" onclick="closeDailyPlanPreviewModal()" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #ffffff; width: 32px; height: 32px; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Modal Body (Iframe Container) -->
+        <div style="flex: 1; position: relative; background: #e2e8f0; overflow: hidden; display: flex; justify-content: center; align-items: center;">
+            <div id="previewLoadingSpinner" style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #ffffff; z-index: 5;">
+                <div class="spinner-border text-primary" role="status" style="width: 2.5rem; height: 2.5rem;"></div>
+                <div style="margin-top: 12px; font-weight: 600; color: #475569; font-size: 0.9rem;">Memuat lembar dokumen program kerja...</div>
+            </div>
+            <iframe id="previewDocIframe" style="width: 100%; height: 100%; border: none; background: #ffffff; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"></iframe>
+        </div>
+    </div>
+</div>
 
 <!-- Add Non-WO Job Modal -->
 <div id="nonWoModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 10000;">
@@ -1725,6 +2785,7 @@
         form.appendChild(plannedWeekInput);
         form.appendChild(plannedDayInput);
 
+        closeSortirModal();
         form.submit();
     }
 </script>
@@ -1813,14 +2874,15 @@
             <table class="table table-sm table-hover" id="drilldownTable" style="font-size: 0.82rem; margin: 0;">
                 <thead style="position: sticky; top: 0; background: #1e293b; color: #ffffff; z-index: 5;">
                     <tr>
-                        <th style="width: 40px; text-align: center; color: white;">NO</th>
-                        <th style="width: 140px; color: white;">WO No</th>
-                        <th style="width: 90px; color: white;">Tanggal</th>
-                        <th style="width: 130px; color: white;">Unit Mesin</th>
-                        <th style="width: 100px; color: white;">Kategori</th>
+                        <th style="width: 35px; text-align: center; color: white;">NO</th>
+                        <th style="width: 135px; color: white;">WO No</th>
+                        <th style="width: 85px; color: white;">Tanggal</th>
+                        <th style="width: 125px; color: white;">Unit Mesin</th>
+                        <th style="width: 90px; color: white;">Kategori</th>
+                        <th style="width: 105px; color: white;">Type Kerusakan</th>
                         <th style="color: white; min-width: 180px;">Keterangan Pekerjaan</th>
-                        <th style="width: 110px; color: white;">PIC</th>
-                        <th style="width: 90px; text-align: center; color: white;">Status</th>
+                        <th style="width: 105px; color: white;">PIC</th>
+                        <th style="width: 85px; text-align: center; color: white;">Status</th>
                     </tr>
                 </thead>
                 <tbody id="drilldownTableBody">
@@ -1839,9 +2901,46 @@
 
 <script>
     const monthlyWosData = <%- JSON.stringify(typeof wos !== 'undefined' && wos ? wos : []) %>;
+    const monthlyMatrixData = <%- JSON.stringify(typeof monthlyOrderMatrix !== 'undefined' ? monthlyOrderMatrix : []) %>;
+    const monthlyTotalsData = <%- JSON.stringify(typeof monthlyOrderTotals !== 'undefined' ? monthlyOrderTotals : []) %>;
     let currentDrilldownWos = [];
 
+    function toggleDamageTypeView(view) {
+        const chartEl = document.getElementById('damageTypeChartView');
+        const tableEl = document.getElementById('damageTypeTableView');
+        const btnChart = document.getElementById('btnViewStackedChart');
+        const btnTable = document.getElementById('btnViewTrendTable');
+
+        if (view === 'chart') {
+            if (chartEl) chartEl.style.display = 'block';
+            if (tableEl) tableEl.style.display = 'none';
+            if (btnChart) {
+                btnChart.className = 'btn btn-primary btn-sm';
+            }
+            if (btnTable) {
+                btnTable.className = 'btn btn-outline-secondary btn-sm';
+            }
+        } else {
+            if (chartEl) chartEl.style.display = 'none';
+            if (tableEl) tableEl.style.display = 'block';
+            if (btnChart) {
+                btnChart.className = 'btn btn-outline-secondary btn-sm';
+            }
+            if (btnTable) {
+                btnTable.className = 'btn btn-primary btn-sm';
+            }
+        }
+    }
+
     function switchCategoryTab(tabName) {
+        const currentActiveTab = '<%= typeof activeTab !== "undefined" ? activeTab : "plan" %>';
+        if (tabName !== currentActiveTab) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('tab', tabName);
+            window.location.href = url.toString();
+            return;
+        }
+
         const tabPlanBtn = document.getElementById('cat-tab-btn-plan');
         const tabUpdateBtn = document.getElementById('cat-tab-btn-update');
         const tabMonBtn = document.getElementById('cat-tab-btn-monitoring');
@@ -1928,7 +3027,22 @@
         }
     });
 
-    // Drilldown Modal Functions for Monthly Monitoring Order
+    // Drilldown Modal Opener Functions for Monthly Monitoring Order
+    function openMonthlyCellDrilldown(rowIdx, monthIdx) {
+        if (!monthlyMatrixData || !monthlyMatrixData[rowIdx] || !monthlyMatrixData[rowIdx].months || !monthlyMatrixData[rowIdx].months[monthIdx]) return;
+        const row = monthlyMatrixData[rowIdx];
+        const m = row.months[monthIdx];
+        const year = '<%= typeof monOrderYear !== "undefined" ? monOrderYear : "" %>';
+        showMonthlyOrderDrilldown(row.stationName, m.monthFullName, year, m.wos);
+    }
+
+    function openMonthlySummaryDrilldown(monthIdx) {
+        if (!monthlyTotalsData || !monthlyTotalsData[monthIdx]) return;
+        const m = monthlyTotalsData[monthIdx];
+        const year = '<%= typeof monOrderYear !== "undefined" ? monOrderYear : "" %>';
+        showMonthlyOrderDrilldown('Semua Stasiun', m.monthFullName, year, m.wos);
+    }
+
     function showMonthlyOrderDrilldown(stationName, monthName, year, wosEncoded) {
         let wos = [];
         if (typeof wosEncoded === 'string') {
@@ -1970,7 +3084,7 @@
         if (countLabel) countLabel.innerText = `Total: ${wos.length} WO`;
 
         if (!wos || wos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">Tidak ada Work Order pada periode ini.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">Tidak ada Work Order pada periode ini.</td></tr>';
             return;
         }
 
@@ -1979,9 +3093,37 @@
             const isInProg = wo.status === 'IN_PROGRESS';
             const statusBg = isClosed ? '#10b981' : (isInProg ? '#f59e0b' : '#3b82f6');
 
+            const t = (wo.type || '').trim();
+            let typeBadgeBg = '#eff6ff';
+            let typeBadgeColor = '#1d4ed8';
+            let typeBorder = '#bfdbfe';
+            let typeIcon = 'fas fa-shield-halved';
+
+            if (t === 'Breakdown' || t === 'Corrective') {
+                typeBadgeBg = '#fef2f2';
+                typeBadgeColor = '#b91c1c';
+                typeBorder = '#fecaca';
+                typeIcon = 'fas fa-bolt';
+            } else if (t === 'Improvement') {
+                typeBadgeBg = '#f5f3ff';
+                typeBadgeColor = '#6d28d9';
+                typeBorder = '#ddd6fe';
+                typeIcon = 'fas fa-rocket';
+            } else if (t === 'Safety') {
+                typeBadgeBg = '#fffbeb';
+                typeBadgeColor = '#b45309';
+                typeBorder = '#fde68a';
+                typeIcon = 'fas fa-person-shelter';
+            } else if (t !== 'Preventive') {
+                typeBadgeBg = '#f8fafc';
+                typeBadgeColor = '#475569';
+                typeBorder = '#e2e8f0';
+                typeIcon = 'fas fa-gears';
+            }
+
             const tr = document.createElement('tr');
             tr.className = 'drilldown-row';
-            tr.setAttribute('data-search', `${wo.wo_no} ${wo.equipment_name || ''} ${wo.category || ''} ${wo.description || ''} ${wo.pic_name || ''} ${wo.status || ''}`.toLowerCase());
+            tr.setAttribute('data-search', `${wo.wo_no} ${wo.equipment_name || ''} ${wo.category || ''} ${wo.type || ''} ${wo.description || ''} ${wo.pic_name || ''} ${wo.status || ''}`.toLowerCase());
             
             tr.innerHTML = `
                 <td style="text-align: center; font-weight: 500;">${idx + 1}</td>
@@ -1993,6 +3135,11 @@
                 <td>${wo.formatted_date || '-'}</td>
                 <td style="font-weight: 600; color: #1e293b;">${wo.equipment_name || '-'}</td>
                 <td><span class="badge" style="background: #f1f5f9; color: #475569; font-size: 0.72rem; border: 1px solid #cbd5e1;">${wo.category || '-'}</span></td>
+                <td>
+                    <span class="badge" style="background: ${typeBadgeBg}; color: ${typeBadgeColor}; border: 1px solid ${typeBorder}; font-size: 0.72rem; font-weight: 700;">
+                        <i class="${typeIcon} mr-1"></i>${wo.type || 'Preventive'}
+                    </span>
+                </td>
                 <td style="white-space: normal; max-width: 260px;">${wo.description || '-'}</td>
                 <td style="font-size: 0.8rem; font-weight: 500;">${wo.pic_name || '-'}</td>
                 <td style="text-align: center;">
@@ -2055,6 +3202,19 @@
 
     function printMonthlyOrders() {
         window.print();
+    }
+
+    function switchDiagnosaPeriod(monthVal) {
+        const selectMonth = document.getElementById('selectMonOrderMonth');
+        if (selectMonth && selectMonth.form) {
+            selectMonth.value = monthVal;
+            selectMonth.form.submit();
+        } else {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('tab', 'monthly-monitoring-orders');
+            urlParams.set('monOrderMonth', monthVal);
+            window.location.search = urlParams.toString();
+        }
     }
 
     // Material Modal Scripts for Sub Sheet 4 (Monthly Plan)

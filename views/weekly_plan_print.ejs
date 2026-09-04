@@ -48,7 +48,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 24px;
+            font-size: 18px;
         }
 
         th,
@@ -117,10 +117,24 @@
 </head>
 
 <body>
-    <div class="print-controls no-print">
-        <button onclick="window.print()" class="btn">🖨️ Print Page</button>
-        <button onclick="window.close()" class="btn btn-secondary">Close</button>
+    <div class="print-controls no-print" style="margin-bottom: 15px; text-align: right; display: flex; justify-content: flex-end; gap: 8px;">
+        <button type="button" onclick="window.print()" class="btn" style="font-weight: 600; padding: 6px 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+            🖨️ Cetak Dokumen
+        </button>
+        <button type="button" onclick="handleClose()" class="btn btn-secondary" style="font-weight: 600; padding: 6px 14px; font-size: 13px;">
+            Tutup
+        </button>
     </div>
+
+    <script>
+        function handleClose() {
+            if (window.parent && typeof window.parent.closeDailyPlanPreviewModal === 'function') {
+                window.parent.closeDailyPlanPreviewModal();
+            } else {
+                window.close();
+            }
+        }
+    </script>
 
     <div class="header" style="position: relative;">
         <h2><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan')) %></h2>
@@ -157,7 +171,7 @@
                 <% if (Object.keys(groupedPlans).length > 0) { %>
                     <% for (const category in groupedPlans) { %>
                         <tr style="background-color: #d1ecf1; border-top: 2px solid #333;">
-                            <td colspan="<%= (typeof isProcessing === 'undefined' || !isProcessing) ? 3 : 2 %>" style="font-weight: bold; font-size: 24px; text-transform: uppercase;">
+                            <td colspan="<%= (typeof isProcessing === 'undefined' || !isProcessing) ? 3 : 2 %>" style="font-weight: bold; font-size: 18px; text-transform: uppercase;">
                                 KATEGORI: <%= category %>
                             </td>
                         </tr>
@@ -198,11 +212,6 @@
             <p>( __________________ )</p>
         </div>
     </div>
-
-    <script>
-        // Optional auto-print trigger if they opened this page meant to be printed
-        // window.onload = function() { window.print(); }
-    </script>
 </body>
 
 </html>

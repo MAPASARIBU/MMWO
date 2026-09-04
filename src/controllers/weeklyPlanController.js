@@ -28,85 +28,69 @@ const upsertPlan = async (req, res) => {
 
 const bulkPlan = async (req, res) => {
     try {
-        const { wo_ids, planned_week, planned_day } = req.body;
-        const planner_id = req.session.user.id;
+        let { wo_ids, planned_week, planned_day } = req.body;
+        const planner_id = req.session && req.session.user ? req.session.user.id : 1;
 
-        // wo_ids is expected to be an array of strings/numbers
-        if (!wo_ids || !Array.isArray(wo_ids) || wo_ids.length === 0) {
+        let rawIds = wo_ids || req.body['wo_ids[]'] || req.body.woIds;
+        if (!rawIds) {
             return res.status(400).send("No Work Orders selected");
         }
+        if (!Array.isArray(rawIds)) {
+            rawIds = [rawIds];
+        }
 
-        // Use sequential upserts to prevent overwhelming serverless DB connections
-        
-        let millIdToDelete = req.session.user.mill_id;
-        const firstWo = await prisma.workOrder.findUnique({ where: { id: parseInt(wo_ids[0]) } });
-        if (firstWo) {
-            millIdToDelete = firstWo.mill_id;
+        const intWoIds = rawIds.map(id => parseInt(id)).filter(id => !isNaN(id) && id > 0);
+        if (intWoIds.length === 0) {
+            return res.status(400).send("Invalid Work Order IDs");
+        }
+
+        // Calculate ISO week if planned_day is present but planned_week is missing
+        if (!planned_week && planned_day) {
+            const date = new Date(planned_day);
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const year = d.getUTCFullYear();
+            const weekNo = Math.ceil((((d - new Date(Date.UTC(year, 0, 1))) / 86400000) + 1) / 7);
+            planned_week = `${year}-W${String(weekNo).padStart(2, '0')}`;
+        }
+
+        // Execute bulk upsert as an atomic delete + create transaction
+        await prisma.$transaction([
+            prisma.weeklyPlan.deleteMany({
+                where: { wo_id: { in: intWoIds } }
+            }),
+            prisma.weeklyPlan.createMany({
+                data: intWoIds.map(wo_id => ({
+                    wo_id,
+                    planned_week: planned_week || '',
+                    planned_day: planned_day || '',
+                    planned_by: planner_id
+                }))
+            })
+        ]);
+
+        if (req.xhr || req.headers.accept?.includes('application/json') || req.is('json') || req.headers['content-type']?.includes('application/json')) {
+            return res.json({
+                success: true,
+                count: intWoIds.length,
+                planned_day: planned_day || '',
+                planned_week: planned_week || '',
+                wo_ids: intWoIds
+            });
         }
 
         const referer = req.get('Referer') || '';
-        let categoryWhere;
-        if (referer.includes('/processing')) {
-            categoryWhere = { category: 'Processing' };
-        } else if (referer.includes('/civil')) {
-            categoryWhere = { category: 'Civil' };
-        } else if (referer.includes('/office')) {
-            categoryWhere = { category: 'Office' };
-        } else {
-            categoryWhere = { category: { notIn: ['Processing', 'Civil', 'Office'] } };
-        }
-
-        if (planned_day && millIdToDelete) {
-            // Find existing plans safely
-            const plansToDelete = await prisma.weeklyPlan.findMany({
-                where: {
-                    planned_day,
-                    wo: {
-                        ...categoryWhere,
-                        mill_id: millIdToDelete
-                    }
-                },
-                select: { id: true }
-            });
-
-            const planIdsToDelete = plansToDelete.map(p => p.id);
-            if (planIdsToDelete.length > 0) {
-                await prisma.weeklyPlan.deleteMany({
-                    where: { id: { in: planIdsToDelete } }
-                });
-            }
-        }
-
-        for (const id of wo_ids) {
-            await prisma.weeklyPlan.upsert({
-                where: { wo_id: parseInt(id) },
-                update: {
-                    planned_week,
-                    planned_day,
-                    planned_by: planner_id
-                },
-                create: {
-                    wo_id: parseInt(id),
-                    planned_week,
-                    planned_day,
-                    planned_by: planner_id
-                }
-            });
-        }
-
-        // Redirect back to the page the user came from (Civil, Processing, or Maintenance)
         if (referer) {
             res.redirect(referer);
         } else {
-            let redirectUrl = `/weekly-plan?week=${planned_week}`;
-            if (planned_day) {
-                redirectUrl += `&day=${planned_day}`;
-            }
+            let redirectUrl = `/weekly-plan?tab=plan`;
+            if (planned_week) redirectUrl += `&week=${planned_week}`;
             res.redirect(redirectUrl);
         }
     } catch (error) {
-        console.error(error);
-        res.status(500).send(error.message);
+        console.error("bulkPlan Error:", error);
+        res.status(500).send("Error saving weekly plan: " + error.message);
     }
 };
 

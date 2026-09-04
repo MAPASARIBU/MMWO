@@ -90,7 +90,8 @@ const runHMChecks = async () => {
 };
 
 const startHMCron = () => {
-    cron.schedule('0 * * * *', runHMChecks);
+    // Staggered to run at minute 15
+    cron.schedule('15 * * * *', runHMChecks);
 };
 
 module.exports = { startHMCron, runHMChecks };

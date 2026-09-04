@@ -588,30 +588,40 @@ const deleteWorkOrder = async (req, res) => {
 
 const assignPics = async (req, res) => {
     try {
-        const { id } = req.params;
+        const woId = parseInt(req.params.id);
+        if (isNaN(woId) || woId <= 0) {
+            return res.status(400).json({ error: 'ID Work Order tidak valid.' });
+        }
+
         const { pic_ids } = req.body;
-        
         if (!Array.isArray(pic_ids)) {
-            return res.status(400).json({ error: 'Invalid data format' });
+            return res.status(400).json({ error: 'Format data tidak valid (pic_ids harus array).' });
         }
         
         if (pic_ids.length > 4) {
-             return res.status(400).json({ error: 'Maksimal 4 mekanik/PIC yang dapat dipilih.' });
+            return res.status(400).json({ error: 'Maksimal 4 mekanik/PIC yang dapat dipilih.' });
         }
 
+        const cleanIds = pic_ids.map(pid => parseInt(pid)).filter(pid => !isNaN(pid) && pid > 0);
+
+        // Single atomic update with direct relation assignment
         const wo = await prisma.workOrder.update({
-            where: { id: parseInt(id) },
+            where: { id: woId },
             data: {
                 pics: {
-                    set: pic_ids.map(pid => ({ id: parseInt(pid) }))
+                    set: cleanIds.map(id => ({ id }))
                 }
+            },
+            select: {
+                id: true,
+                pics: { select: { id: true, name: true } }
             }
         });
         
-        res.json({ success: true, wo });
+        return res.json({ success: true, wo });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Terjadi kesalahan sistem saat menyimpan PIC.' });
+        console.error("assignPics error:", error);
+        return res.status(500).json({ error: 'Terjadi kesalahan sistem saat menyimpan PIC: ' + (error.message || error) });
     }
 };
 
@@ -636,7 +646,6 @@ const addMaterial = async (req, res) => {
             }
         });
 
-        // Add audit log
         await prisma.auditLog.create({
             data: {
                 wo_id: woId,
