@@ -33,6 +33,7 @@
 
     <div id="cat-content-plan" style="display: block;">
     <% if (user && user.role !== 'SENIOR_MANAGER') { %>
+    <% if (hasPermission(planTitle, 'can_input')) { %>
     <div class="card mb-3" style="border-left: 4px solid #17a2b8; padding: 10px 15px;">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -186,6 +187,9 @@
     </div>
 
     <!-- DRAFT DAILY MAINTENANCE WORK (STAGING PANEL) -->
+    <% } %>
+
+    <% if (hasPermission(planTitle, 'can_input')) { %>
     <div id="draftDailyPlanCard" class="card mb-4" style="border: 2px solid #2563eb; border-radius: 8px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.12); background: #ffffff; overflow: hidden;">
         <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 10px;">
@@ -274,6 +278,8 @@
     <% } %>
 
     <!-- RECORD PROGRAM KERJA HARIAN FINAL -->
+    <% } %>
+
     <div class="card mb-4" style="border: 1px solid #cbd5e1; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; background: #ffffff;">
         <div style="background: #1e293b; color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 10px;">

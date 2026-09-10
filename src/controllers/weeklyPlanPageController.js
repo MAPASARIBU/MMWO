@@ -1270,9 +1270,11 @@ const getWeeklyPlanPage = async (req, res) => {
                 rcaDistribution,
                 criticalityStats,
                 mills,
-                selectedMillId: targetMillId
+                selectedMillId: targetMillId,
+                hasPermission: res.locals.hasPermission,
+                currentPlanTitle
             }),
-            user: req.session.user,
+            user: req.session.user, hasPermission: res.locals.hasPermission, currentPlanTitle,
             path: isProcessing ? '/weekly-plan/processing' : (isCivil ? '/weekly-plan/civil' : (isOffice ? '/weekly-plan/office' : '/weekly-plan'))
         });
     } catch (error) {
@@ -1362,7 +1364,7 @@ const getWeeklyPlanPrint = async (req, res) => {
         res.render('weekly_plan_print', {
             groupedPlans,
             query: req.query,
-            user: req.session.user,
+            user: req.session.user, hasPermission: res.locals.hasPermission, currentPlanTitle,
             today,
             isProcessing,
             isCivil,
