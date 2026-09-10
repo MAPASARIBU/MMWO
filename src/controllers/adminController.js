@@ -23,7 +23,7 @@ const getUsersPage = async (req, res) => {
 
         res.render('layout', {
             title: 'User Management',
-            body: await renderView('admin/users', { users, mills }),
+            body: await renderView('admin/users', { users, mills, hasPermission: res.locals.hasPermission }),
             user: req.session.user,
             path: '/admin/users'
         });
@@ -67,7 +67,7 @@ const getMasterDataPage = async (req, res) => {
 
         res.render('layout', {
             title: 'Master Data',
-            body: await renderView('admin/master', { mills, processingPlans, officePlans, user: req.session.user }),
+            body: await renderView('admin/master', { mills, processingPlans, officePlans, user: req.session.user, hasPermission: res.locals.hasPermission }),
             user: req.session.user,
             path: '/admin/master'
         });
@@ -106,7 +106,7 @@ const getEmployeesPage = async (req, res) => {
 
         res.render('layout', {
             title: 'Master Labour Employees',
-            body: await renderView('admin/employees', { employees, mills, stations, user: req.session.user }),
+            body: await renderView('admin/employees', { employees, mills, stations, user: req.session.user, hasPermission: res.locals.hasPermission }),
             user: req.session.user,
             path: '/admin/employees'
         });

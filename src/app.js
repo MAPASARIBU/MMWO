@@ -146,8 +146,8 @@ app.delete('/api/monthly-plan/materials/:material_id', ensureAuthenticated, mont
 app.patch('/api/monthly-plan/:id/materials/:material_id/toggle', ensureAuthenticated, monthlyPlanController.toggleMaterialComplete);
 
 const adminController = require('./controllers/adminController');
-app.get('/admin/users', ensureRole(['ADMIN']), adminController.getUsersPage);
-app.get('/admin/master', ensureRole(['ADMIN', 'SPV', 'OAA', 'MANAGER', 'SENIOR_MANAGER', 'MTC', 'PROC']), adminController.getMasterDataPage);
+app.get('/admin/users', ensurePermission('User Management', 'can_view'), adminController.getUsersPage);
+app.get('/admin/master', ensurePermission('Master Data', 'can_view'), adminController.getMasterDataPage);
 
 const employeeRoutes = require('./routes/employees');
 app.use('/auth', authRoutes);
@@ -164,12 +164,12 @@ app.use('/office-plans', officePlanRoutes);
 app.use('/analytics', analyticsRoutes);
 
 // Admin Pages
-app.get('/admin/employees', ensureRole(['ADMIN']), adminController.getEmployeesPage);
+app.get('/admin/employees', ensurePermission('Labour Employees', 'can_view'), adminController.getEmployeesPage);
 app.get('/admin/auth-matrix', ensureRole(['ADMIN']), adminController.getAuthMatrixPage);
 app.post('/admin/api/auth-matrix', ensureRole(['ADMIN']), adminController.saveAuthMatrix);
 
 const whatsappController = require('./controllers/whatsappController');
-app.get('/admin/whatsapp', ensureRole(['ADMIN']), whatsappController.getAdminPage);
+app.get('/admin/whatsapp', ensurePermission('WhatsApp Bot', 'can_view'), whatsappController.getAdminPage);
 app.get('/api/whatsapp/status', ensureRole(['ADMIN']), whatsappController.getStatusApi);
 app.post('/api/whatsapp/reset', ensureRole(['ADMIN']), whatsappController.resetSession);
 
