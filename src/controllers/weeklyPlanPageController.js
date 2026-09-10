@@ -244,6 +244,7 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const stationsPromise = prisma.station.findMany({
             where: stationWhere,
+            include: { equipment: { where: { is_active: true } } },
             orderBy: { order_index: 'asc' }
         });
 
@@ -720,10 +721,15 @@ const getWeeklyPlanPage = async (req, res) => {
                 closedCount: 0,
                 openCount: 0,
                 preventiveCount: 0,
+                preventiveClosed: 0,
                 breakdownCount: 0,
+                breakdownClosed: 0,
                 improvementCount: 0,
+                improvementClosed: 0,
                 safetyCount: 0,
+                safetyClosed: 0,
                 otherCount: 0,
+                otherClosed: 0,
                 wos: []
             }));
 
@@ -754,20 +760,26 @@ const getWeeklyPlanPage = async (req, res) => {
                         }
 
                         const t = (wo.type || '').trim();
+                        const isWoClosed = (wo.status === 'CLOSED' || wo.status === 'COMPLETED');
                         if (t === 'Preventive') {
                             months[m].preventiveCount++;
+                            if (isWoClosed) months[m].preventiveClosed++;
                             typeCounts.Preventive++;
                         } else if (t === 'Breakdown' || t === 'Corrective') {
                             months[m].breakdownCount++;
+                            if (isWoClosed) months[m].breakdownClosed++;
                             typeCounts.Breakdown++;
                         } else if (t === 'Improvement') {
                             months[m].improvementCount++;
+                            if (isWoClosed) months[m].improvementClosed++;
                             typeCounts.Improvement++;
                         } else if (t === 'Safety') {
                             months[m].safetyCount++;
+                            if (isWoClosed) months[m].safetyClosed++;
                             typeCounts.Safety++;
                         } else {
                             months[m].otherCount++;
+                            if (isWoClosed) months[m].otherClosed++;
                             typeCounts.Other++;
                         }
 
@@ -833,10 +845,15 @@ const getWeeklyPlanPage = async (req, res) => {
             let closedCount = 0;
             let openCount = 0;
             let preventiveCount = 0;
+            let preventiveClosed = 0;
             let breakdownCount = 0;
+            let breakdownClosed = 0;
             let improvementCount = 0;
+            let improvementClosed = 0;
             let safetyCount = 0;
+            let safetyClosed = 0;
             let otherCount = 0;
+            let otherClosed = 0;
             let wos = [];
 
             monthlyOrderMatrix.forEach(row => {
@@ -847,10 +864,15 @@ const getWeeklyPlanPage = async (req, res) => {
                 closedCount += m.closedCount;
                 openCount += m.openCount;
                 preventiveCount += m.preventiveCount;
+                preventiveClosed += m.preventiveClosed || 0;
                 breakdownCount += m.breakdownCount;
+                breakdownClosed += m.breakdownClosed || 0;
                 improvementCount += m.improvementCount;
+                improvementClosed += m.improvementClosed || 0;
                 safetyCount += m.safetyCount;
+                safetyClosed += m.safetyClosed || 0;
                 otherCount += m.otherCount;
+                otherClosed += m.otherClosed || 0;
                 wos = wos.concat(m.wos);
             });
 
@@ -864,10 +886,15 @@ const getWeeklyPlanPage = async (req, res) => {
                 closedCount,
                 openCount,
                 preventiveCount,
+                preventiveClosed,
                 breakdownCount,
+                breakdownClosed,
                 improvementCount,
+                improvementClosed,
                 safetyCount,
+                safetyClosed,
                 otherCount,
+                otherClosed,
                 pmrPct: count > 0 ? Math.round((preventiveCount / count) * 100) : 0,
                 bdPct: count > 0 ? Math.round((breakdownCount / count) * 100) : 0,
                 wos
@@ -932,10 +959,15 @@ const getWeeklyPlanPage = async (req, res) => {
             monthFullName: m.monthFullName,
             count: m.count,
             preventive: m.preventiveCount,
+            preventiveClosed: m.preventiveClosed,
             breakdown: m.breakdownCount,
+            breakdownClosed: m.breakdownClosed,
             improvement: m.improvementCount,
+            improvementClosed: m.improvementClosed,
             safety: m.safetyCount,
+            safetyClosed: m.safetyClosed,
             other: m.otherCount,
+            otherClosed: m.otherClosed,
             pmrPct: m.pmrPct,
             bdPct: m.bdPct
         }));

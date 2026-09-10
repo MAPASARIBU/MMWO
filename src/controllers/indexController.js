@@ -126,7 +126,80 @@ const getDashboard = async (req, res) => {
             stationWhere.mill_id = { in: user.accessible_mills || [] };
         }
 
-        // Parallelize all dashboard queries in a single roundtrip!
+        // Add a simple in-memory cache to prevent hitting NeonDB (US East) repeatedly for the dashboard
+        if (!global.dashboardCache) {
+            global.dashboardCache = new Map();
+        }
+        
+        const cacheKey = `dashboard_${millId}_${JSON.stringify(filterWhere)}`;
+        let dashboardData = global.dashboardCache.get(cacheKey);
+
+        if (!dashboardData || (Date.now() - dashboardData.timestamp > 15000)) { // 15 seconds cache
+            // Parallelize all dashboard queries in a single roundtrip!
+            const results = await Promise.all([
+                // 1. Recent WOs
+                prisma.workOrder.findMany(queryOptions),
+                // 2. Total WOs
+                prisma.workOrder.count({ where: statsWhere }),
+                // 3. Completed WOs
+                prisma.workOrder.count({
+                    where: { ...statsWhere, status: { in: ['COMPLETED', 'VERIFIED', 'CLOSED'] } }
+                }),
+                // 4. Pending WOs
+                prisma.workOrder.count({
+                    where: { ...statsWhere, status: { in: ['OPEN', 'PLANNED', 'ASSIGNED', 'IN_PROGRESS'] } }
+                }),
+                // 5. High Priority WOs
+                prisma.workOrder.count({
+                    where: { ...statsWhere, priority: 'P1', status: { not: 'CLOSED' } }
+                }),
+                // 6. Type Stats Chart
+                prisma.workOrder.groupBy({
+                    by: ['type'],
+                    where: filterWhere,
+                    _count: { type: true }
+                }),
+                // 7. Category Stats Chart
+                prisma.workOrder.groupBy({
+                    by: ['category'],
+                    where: filterWhere,
+                    _count: { category: true }
+                }),
+                // 8. Station Counts Chart
+                prisma.workOrder.groupBy({
+                    by: ['station_id'],
+                    where: filterWhere,
+                    _count: { id: true }
+                }),
+                // 9. Station Names Mapping
+                prisma.station.findMany({
+                    where: stationWhere,
+                    select: { id: true, name: true },
+                    orderBy: { name: 'asc' }
+                }),
+                // 10. Data Aggregation for Tables
+                prisma.workOrder.findMany({
+                    where: filterWhere,
+                    select: {
+                        id: true,
+                        status: true,
+                        category: true,
+                        description: true,
+                        created_at: true,
+                        completed_at: true,
+                        closed_at: true,
+                        parts: { select: { id: true } }
+                    }
+                })
+            ]);
+
+            dashboardData = {
+                data: results,
+                timestamp: Date.now()
+            };
+            global.dashboardCache.set(cacheKey, dashboardData);
+        }
+
         const [
             recentWos,
             totalWOs,
@@ -138,62 +211,7 @@ const getDashboard = async (req, res) => {
             stationCounts,
             statStations,
             allWosForTables
-        ] = await Promise.all([
-            // 1. Recent WOs
-            prisma.workOrder.findMany(queryOptions),
-            // 2. Total WOs
-            prisma.workOrder.count({ where: statsWhere }),
-            // 3. Completed WOs
-            prisma.workOrder.count({
-                where: { ...statsWhere, status: { in: ['COMPLETED', 'VERIFIED', 'CLOSED'] } }
-            }),
-            // 4. Pending WOs
-            prisma.workOrder.count({
-                where: { ...statsWhere, status: { in: ['OPEN', 'PLANNED', 'ASSIGNED', 'IN_PROGRESS'] } }
-            }),
-            // 5. High Priority WOs
-            prisma.workOrder.count({
-                where: { ...statsWhere, priority: 'P1', status: { not: 'CLOSED' } }
-            }),
-            // 6. Type Stats Chart
-            prisma.workOrder.groupBy({
-                by: ['type'],
-                where: filterWhere,
-                _count: { type: true }
-            }),
-            // 7. Category Stats Chart
-            prisma.workOrder.groupBy({
-                by: ['category'],
-                where: filterWhere,
-                _count: { category: true }
-            }),
-            // 8. Station Counts Chart
-            prisma.workOrder.groupBy({
-                by: ['station_id'],
-                where: filterWhere,
-                _count: { id: true }
-            }),
-            // 9. Station Names Mapping
-            prisma.station.findMany({
-                where: stationWhere,
-                select: { id: true, name: true },
-                orderBy: { name: 'asc' }
-            }),
-            // 10. Data Aggregation for Tables
-            prisma.workOrder.findMany({
-                where: filterWhere,
-                select: {
-                    id: true,
-                    status: true,
-                    category: true,
-                    description: true,
-                    created_at: true,
-                    completed_at: true,
-                    closed_at: true,
-                    parts: { select: { id: true } }
-                }
-            })
-        ]);
+        ] = dashboardData.data;
 
         const realCompletionRate = totalWOs > 0 ? Math.round((completedWos / totalWOs) * 100) : 0;
         const stats = {

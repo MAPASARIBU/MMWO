@@ -116,19 +116,33 @@
         <div class="sidebar-header">
             MMWO System
         </div>
+        
+<%
+  const hasAccess = (moduleName) => {
+      if (typeof user === 'undefined' || !user) return false;
+      if (user.role === 'ADMIN') return true;
+      if (typeof rolePerms !== 'undefined' && rolePerms) {
+          const p = rolePerms.find(x => x.module === moduleName);
+          return p && p.can_view === true;
+      }
+      return false;
+  };
+%>
         <ul class="nav-links">
-            <% if (user && user.role !== 'OPERATOR') { %>
+            <% if (hasAccess('Dashboard')) { %>
             <li class="nav-item">
                 <a href="/dashboard" style="display: block; color: #fff; padding: 15px;">
                     Dashboard
                 </a>
             </li>
+            <% } %>
+            <% if (hasAccess("Work Orders")) { %>
             <li class="nav-item">
                 <a href="/work-orders" style="display: block; color: #fff; padding: 15px;">
                     Work Orders
                 </a>
             </li>
-            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'MTC'].includes(user.role)) { %>
+            <% if (hasAccess('Maintenance Weekly Plan')) { %>
             <li class="nav-item">
                 <a href="/weekly-plan" style="display: block; color: #fff; padding: 15px;">
                     Maintenance Weekly Plan
@@ -136,7 +150,7 @@
             </li>
             <% } %>
 
-            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'PROC'].includes(user.role)) { %>
+            <% if (hasAccess('Processing Weekly Plan')) { %>
             <li class="nav-item">
                 <a href="/weekly-plan/processing" style="display: block; color: #fff; padding: 15px;">
                     Processing Weekly Plan
@@ -144,7 +158,7 @@
             </li>
             <% } %>
 
-            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'MTC'].includes(user.role)) { %>
+            <% if (hasAccess('Civil Weekly Plan')) { %>
             <li class="nav-item">
                 <a href="/weekly-plan/civil" style="display: block; color: #fff; padding: 15px;">
                     Civil Weekly Plan
@@ -152,7 +166,7 @@
             </li>
             <% } %>
 
-            <% if (['ADMIN', 'SENIOR_MANAGER', 'MANAGER', 'SPV', 'OAA'].includes(user.role)) { %>
+            <% if (hasAccess('Office Weekly Plan')) { %>
             <li class="nav-item">
                 <a href="/weekly-plan/office" style="display: block; color: #fff; padding: 15px;">
                     Office Weekly Plan
@@ -160,31 +174,42 @@
             </li>
             <% } %>
             <% } %>
-            <% if (user && ['ADMIN', 'OAA', 'MTC', 'PROC'].includes(user.role)) { %>
+            <% if (hasAccess('Master Data')) { %>
                 <li class="nav-item">
                     <a href="/admin/master" style="display: block; color: #fff; padding: 15px;">
                         Master Data
                     </a>
                 </li>
             <% } %>
-            <% if (user && user.role==='ADMIN' ) { %>
+            <% if (hasAccess('User Management')) { %>
                 <li class="nav-item">
                     <a href="/admin/users" style="display: block; color: #fff; padding: 15px;">
                         User Management
                     </a>
                 </li>
+<% } %>
+<% if (hasAccess('Labour Employees')) { %>
                 <li class="nav-item">
                     <a href="/admin/employees" style="display: block; color: #fff; padding: 15px;">
                         Labour Employees
                     </a>
                 </li>
+<% } %>
+<% if (user.role === 'ADMIN') { %>
+                <li class="nav-item">
+                    <a href="/admin/auth-matrix" style="display: block; color: #fff; padding: 15px; border-left: 4px solid #f59e0b;">
+                        Matriks Otorisasi
+                    </a>
+                </li>
+<% } %>
+<% if (hasAccess('WhatsApp Bot')) { %>
                 <li class="nav-item">
                     <a href="/admin/whatsapp" style="display: block; color: #fff; padding: 15px;">
                         WhatsApp Bot
                     </a>
                 </li>
-            <% } %>
-            <% if (user && (user.role==='ADMIN' || user.role==='PROC' || user.role==='OPERATOR')) { %>
+<% } %>
+            <% if (hasAccess('INPUT HM')) { %>
                 <li class="nav-item" style="padding: 0 15px 15px 15px;">
                     <a href="/input-hm" style="display: block; color: #fff; padding: 10px 15px; background-color: #4a7acc; border: 1px solid #3961a3; text-decoration: none; font-size: 0.9em; letter-spacing: 0.5px;">
                         INPUT HM

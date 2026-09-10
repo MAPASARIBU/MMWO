@@ -1,0 +1,175 @@
+<div class="card mb-4" style="background: #fff;">
+    <div class="flex justify-between items-center mb-3">
+        <div>
+            <h3 style="margin:0;"><i class="fas fa-user-shield"></i> Matriks Otorisasi Hak Akses Role</h3>
+            <p class="text-secondary" style="margin: 5px 0 0 0; font-size: 0.9em;">
+                Atur hak akses Display (Buka Menu), Input Form, Edit Data, dan Hapus Data per Role & Modul secara dinamis.
+            </p>
+        </div>
+        <div>
+            <button class="btn btn-secondary" onclick="window.location.reload()"><i class="fas fa-sync"></i> Reset Default</button>
+            <button class="btn btn-success" onclick="savePermissions()"><i class="fas fa-save"></i> Simpan Otorisasi</button>
+        </div>
+    </div>
+    <hr>
+    
+    <div class="flex items-center mb-3 mt-3" style="gap: 15px;">
+        <div>
+            <label class="form-label" style="display:inline-block; margin-right: 10px;">Filter Role:</label>
+            <select id="roleFilter" class="form-control" style="display:inline-block; width: 250px;" onchange="filterTable()">
+                <option value="">-- Tampilkan Semua Role --</option>
+                <% const roles = ['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'MANAGER', 'ENGINEERING', 'SPV', 'MTC', 'PROC', 'OPERATOR', 'OAA']; %>
+                <% roles.forEach(r => { %>
+                    <option value="<%= r %>"><%= r %></option>
+                <% }) %>
+            </select>
+        </div>
+        <div style="flex-grow: 1;">
+            <input type="text" id="searchInput" class="form-control" placeholder="Cari role / modul..." onkeyup="filterTable()">
+        </div>
+        <div class="flex items-center" style="gap: 5px;">
+            <span class="text-secondary" style="font-size: 0.85em; font-weight:bold; margin-right: 5px;">Preset Cepat:</span>
+            <button class="btn btn-sm btn-primary" onclick="setPreset('full')">Full Access</button>
+            <button class="btn btn-sm btn-warning" onclick="setPreset('view')">Display Only (Read-Only)</button>
+            <button class="btn btn-sm btn-secondary" onclick="setPreset('checkAll')">Centang Semua</button>
+            <button class="btn btn-sm btn-danger" onclick="setPreset('uncheckAll')">Batal Semua</button>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover" id="matrixTable" style="font-size: 0.9em; border: 1px solid #ddd;">
+            <thead style="background: #1e293b; color: white;">
+                <tr>
+                    <th width="50" class="text-center">NO</th>
+                    <th width="150">ROLE PENGGUNA</th>
+                    <th width="300">MODUL / FITUR APLIKASI</th>
+                    <th width="100" class="text-center"><i class="fas fa-eye text-info"></i> BUKA / DISPLAY</th>
+                    <th width="100" class="text-center"><i class="fas fa-plus-circle text-success"></i> INPUT / TAMBAH</th>
+                    <th width="100" class="text-center"><i class="fas fa-edit text-warning"></i> EDIT / UBAH</th>
+                    <th width="100" class="text-center"><i class="fas fa-trash text-danger"></i> HAPUS</th>
+                    <th width="100" class="text-center">AKSI CEPAT</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% 
+                const modules = [
+                    'Dashboard',
+                    'Work Orders',
+                    'Maintenance Weekly Plan',
+                    'Processing Weekly Plan',
+                    'Civil Weekly Plan',
+                    'Office Weekly Plan',
+                    'Master Data',
+                    'User Management',
+                    'Labour Employees',
+                    'WhatsApp Bot',
+                    'INPUT HM'
+                ];
+                let no = 1;
+                roles.forEach(role => {
+                    modules.forEach(mod => {
+                        // Find existing perm
+                        let perm = permissions.find(p => p.role === role && p.module === mod);
+                        if (!perm) {
+                            perm = { can_view: false, can_input: false, can_edit: false, can_delete: false };
+                        }
+                        const rowId = role.replace(/ /g, '_') + '_' + mod.replace(/ /g, '_');
+                %>
+                <tr class="matrix-row" data-role="<%= role %>" data-mod="<%= mod %>">
+                    <td class="text-center"><%= no++ %></td>
+                    <td style="font-weight: 600; color: #ef4444;"><%= role %></td>
+                    <td style="font-weight: 500;"><%= mod %></td>
+                    <td class="text-center"><input type="checkbox" class="chk-view" <%= perm.can_view ? 'checked' : '' %>></td>
+                    <td class="text-center"><input type="checkbox" class="chk-input" <%= perm.can_input ? 'checked' : '' %>></td>
+                    <td class="text-center"><input type="checkbox" class="chk-edit" <%= perm.can_edit ? 'checked' : '' %>></td>
+                    <td class="text-center"><input type="checkbox" class="chk-delete" <%= perm.can_delete ? 'checked' : '' %>></td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary" style="padding: 2px 5px; font-size: 0.7em;" onclick="quickActionRow(this, true)">Semua</button>
+                        <button class="btn btn-sm btn-outline-secondary" style="padding: 2px 5px; font-size: 0.7em;" onclick="quickActionRow(this, false)">Off</button>
+                    </td>
+                </tr>
+                <% }); }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    function filterTable() {
+        const filterRole = document.getElementById('roleFilter').value.toLowerCase();
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const rows = document.querySelectorAll('.matrix-row');
+
+        rows.forEach(row => {
+            const role = row.getAttribute('data-role').toLowerCase();
+            const mod = row.getAttribute('data-mod').toLowerCase();
+            
+            const matchRole = filterRole === '' || role === filterRole;
+            const matchSearch = search === '' || role.includes(search) || mod.includes(search);
+            
+            if (matchRole && matchSearch) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+
+    function setPreset(type) {
+        const rows = document.querySelectorAll('.matrix-row');
+        rows.forEach(row => {
+            if (row.style.display === 'none') return; // Only apply to visible
+            
+            const cbView = row.querySelector('.chk-view');
+            const cbInput = row.querySelector('.chk-input');
+            const cbEdit = row.querySelector('.chk-edit');
+            const cbDel = row.querySelector('.chk-delete');
+
+            if (type === 'full' || type === 'checkAll') {
+                cbView.checked = true; cbInput.checked = true; cbEdit.checked = true; cbDel.checked = true;
+            } else if (type === 'view') {
+                cbView.checked = true; cbInput.checked = false; cbEdit.checked = false; cbDel.checked = false;
+            } else if (type === 'uncheckAll') {
+                cbView.checked = false; cbInput.checked = false; cbEdit.checked = false; cbDel.checked = false;
+            }
+        });
+    }
+
+    function quickActionRow(btn, state) {
+        const row = btn.closest('tr');
+        row.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.checked = state);
+    }
+
+    async function savePermissions() {
+        const rows = document.querySelectorAll('.matrix-row');
+        const data = [];
+        
+        rows.forEach(row => {
+            data.push({
+                role: row.getAttribute('data-role'),
+                module: row.getAttribute('data-mod'),
+                can_view: row.querySelector('.chk-view').checked,
+                can_input: row.querySelector('.chk-input').checked,
+                can_edit: row.querySelector('.chk-edit').checked,
+                can_delete: row.querySelector('.chk-delete').checked
+            });
+        });
+
+        try {
+            const res = await fetch('/admin/api/auth-matrix', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ permissions: data })
+            });
+
+            if (res.ok) {
+                alert('Otorisasi berhasil disimpan!');
+            } else {
+                alert('Gagal menyimpan otorisasi');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error network');
+        }
+    }
+</script>

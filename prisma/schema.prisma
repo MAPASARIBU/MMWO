@@ -320,3 +320,17 @@ model WhatsAppSession {
 
   @@map("whatsapp_sessions")
 }
+
+model RolePermission {
+  id          Int      @id @default(autoincrement())
+  role        String
+  module      String
+  can_view    Boolean  @default(false)
+  can_input   Boolean  @default(false)
+  can_edit    Boolean  @default(false)
+  can_delete  Boolean  @default(false)
+
+  @@unique([role, module])
+  @@map("mmwo_role_permissions")
+}
+

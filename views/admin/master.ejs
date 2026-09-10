@@ -40,7 +40,9 @@
         <div>
             <div class="flex justify-between items-center mb-2">
                 <h4>Stations</h4>
-                <!-- Optional: Add Station Button could go here -->
+                <% if (user.role === 'ADMIN') { %>
+                <button class="btn btn-sm btn-primary" id="addStationBtn" style="display: none;" onclick="openAddStationModal()">+ Add Station</button>
+                <% } %>
             </div>
 
             <div id="noSelection" class="text-center text-secondary p-4"
@@ -57,22 +59,25 @@
                             <% } %>
                             <% m.stations.forEach(s=> { %>
                                 <li style="padding: 0.75rem 1rem; border-bottom: 1px solid #eee;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <span style="font-weight: 500;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; padding: 4px 0;" onclick="toggleEquipment(<%= s.id %>)">
+                                        <span style="font-weight: 600; font-size: 1.05em; color: #1e293b;">
+                                            <i id="icon-station-<%= s.id %>" class="fas fa-chevron-right text-secondary" style="margin-right: 8px; font-size: 0.9em; transition: transform 0.2s;"></i>
                                             <%= s.name %>
+                                            <span class="badge" style="background: #e2e8f0; color: #475569; font-size: 0.75rem; margin-left: 8px; vertical-align: middle;"><%= s.equipment ? s.equipment.length : 0 %></span>
                                         </span>
-                                        <% if (user.role === 'ADMIN') { %>
-                                        <button class="btn btn-sm btn-secondary"
-                                            onclick="openBulkModal(<%= s.id %>, '<%= s.name %>')">
-                                            + Add Equip
-                                        </button>
-                                        <% } %>
+                                        <div>
+                                            <% if (user.role === 'ADMIN') { %>
+                                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); openBulkModal(<%= s.id %>, '<%= s.name %>')">
+                                                + Add Equip
+                                            </button>
+                                            <% } %>
+                                        </div>
                                     </div>
                                     <!-- List equipment for this station if available -->
-                                    <% if(s.equipment && s.equipment.length > 0) { %>
-                                        <div class="mt-2 pl-4 border-l-2 border-primary ml-2">
+                                    <div id="equip-list-<%= s.id %>" class="mt-3 pl-4 border-l-2 border-primary ml-2" style="display: none; padding-bottom: 8px;">
+                                        <% if(s.equipment && s.equipment.length > 0) { %>
                                             <% s.equipment.forEach(e => { %>
-                                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; margin-bottom: 2px; border-bottom: 1px dashed #e2e8f0;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; margin-bottom: 2px; border-bottom: 1px dashed #e2e8f0;">
                                                     <a href="/equipment/<%= e.id %>" style="color: #0369a1; text-decoration: none; font-size: 0.9em;">
                                                         <span style="font-family: monospace; background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 0.85em; margin-right: 5px;"><%= e.code || 'EQ-' + e.id %></span> <span id="equip-name-<%= e.id %>"><%= e.name %></span>
                                                     </a>
@@ -84,8 +89,10 @@
                                                     <% } %>
                                                 </div>
                                             <% }); %>
-                                        </div>
-                                    <% } %>
+                                        <% } else { %>
+                                            <div style="color: #94a3b8; font-size: 0.85rem; padding: 4px 0;">Belum ada unit mesin.</div>
+                                        <% } %>
+                                    </div>
                                 </li>
                             <% }); %>
                         </ul>
@@ -376,6 +383,8 @@
         // Hide all
         document.querySelectorAll('.station-group').forEach(el => el.style.display = 'none');
         document.getElementById('noSelection').style.display = 'none';
+        const addBtn = document.getElementById('addStationBtn');
+        if (addBtn) addBtn.style.display = 'none';
 
         if (!millId) {
             document.getElementById('noSelection').style.display = 'block';
@@ -387,6 +396,7 @@
         if (group) {
             group.style.display = 'block';
         }
+        if (addBtn) addBtn.style.display = 'inline-block';
     }
 
     // --- Office Plan Scripts ---
@@ -506,6 +516,24 @@
 
 </script>
 
+<!-- Add Station Modal -->
+<div id="addStationModal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
+    <div class="card" style="margin: 50px auto; max-width: 400px;">
+        <h3>Add New Station</h3>
+        <form id="addStationForm">
+            <input type="hidden" name="mill_id" id="stationMillId">
+            <div class="form-group">
+                <label class="form-label">Station Name</label>
+                <input type="text" name="name" class="form-control" required placeholder="e.g. Sterilizer, Pressing...">
+            </div>
+            <div class="flex justify-between mt-4">
+                <button type="button" onclick="closeModal('addStationModal')" class="btn btn-secondary">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Station</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Bulk Add Modal -->
 <div id="bulkModal"
     style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
@@ -538,6 +566,43 @@
         document.getElementById('modalStationName').innerText = stationName;
         openModal('bulkModal');
     }
+
+    function openAddStationModal() {
+        const millId = document.getElementById('millSelector').value;
+        if (!millId) {
+            alert('Please select a Mill first.');
+            return;
+        }
+        document.getElementById('stationMillId').value = millId;
+        document.getElementById('addStationForm').reset();
+        document.getElementById('stationMillId').value = millId; // reset clears hidden fields sometimes depending on browser
+        openModal('addStationModal');
+    }
+
+    document.getElementById('addStationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const data = Object.fromEntries(formData.entries());
+
+        try {
+            const res = await fetch('/api/stations', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                closeModal('addStationModal');
+                window.location.reload();
+            } else {
+                const err = await res.json();
+                alert(err.error || 'Error adding station');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error connecting to server');
+        }
+    });
 
     document.getElementById('bulkForm').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -801,6 +866,20 @@
         } catch (error) {
             console.error(error);
             alert('Error connecting to server');
+        }
+    }
+
+    function toggleEquipment(stationId) {
+        const list = document.getElementById('equip-list-' + stationId);
+        const icon = document.getElementById('icon-station-' + stationId);
+        if (!list) return;
+
+        if (list.style.display === 'none') {
+            list.style.display = 'block';
+            if (icon) icon.style.transform = 'rotate(90deg)';
+        } else {
+            list.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(0deg)';
         }
     }
 </script>

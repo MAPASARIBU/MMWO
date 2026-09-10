@@ -1450,15 +1450,15 @@
                         <thead style="background: #1e293b; color: white;">
                             <tr>
                                 <th style="text-align: left; padding: 6px 10px;">Bulan</th>
-                                <th style="background: #1d4ed8; color: white;">🛡️ Preventive</th>
-                                <th style="background: #b91c1c; color: white;">⚡ Breakdown</th>
-                                <th style="background: #6d28d9; color: white;">🚀 Improvement</th>
-                                <th style="background: #b45309; color: white;">🦺 Safety</th>
-                                <th style="background: #475569; color: white;">⚙️ Others</th>
-                                <th style="background: #0f172a; color: #facc15; font-weight: 800;">Total</th>
-                                <th>Rasio PMR (%)</th>
-                                <th>Rasio BD (%)</th>
-                                <th>Evaluasi Keandalan</th>
+                                <th style="background: #1d4ed8; color: white; padding: 6px 4px; line-height: 1.2;">🛡️ Preventive<br><span style="font-size: 0.65rem; font-weight: 400; color: #bfdbfe;">Req (✓ Cls | ! Gap)</span></th>
+                                <th style="background: #b91c1c; color: white; padding: 6px 4px; line-height: 1.2;">⚡ Breakdown<br><span style="font-size: 0.65rem; font-weight: 400; color: #fecaca;">Req (✓ Cls | ! Gap)</span></th>
+                                <th style="background: #6d28d9; color: white; padding: 6px 4px; line-height: 1.2;">🚀 Improvement<br><span style="font-size: 0.65rem; font-weight: 400; color: #ddd6fe;">Req (✓ Cls | ! Gap)</span></th>
+                                <th style="background: #b45309; color: white; padding: 6px 4px; line-height: 1.2;">🦺 Safety<br><span style="font-size: 0.65rem; font-weight: 400; color: #fde68a;">Req (✓ Cls | ! Gap)</span></th>
+                                <th style="background: #475569; color: white; padding: 6px 4px; line-height: 1.2;">⚙️ Others<br><span style="font-size: 0.65rem; font-weight: 400; color: #e2e8f0;">Req (✓ Cls | ! Gap)</span></th>
+                                <th style="background: #0f172a; color: #facc15; font-weight: 800; vertical-align: middle;">Total</th>
+                                <th style="vertical-align: middle;">Rasio PMR (%)</th>
+                                <th style="vertical-align: middle;">Rasio BD (%)</th>
+                                <th style="vertical-align: middle;">Evaluasi Keandalan</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1484,12 +1484,57 @@
                                     }
                                 %>
                                     <tr>
-                                        <td style="text-align: left; font-weight: 700; color: #1e293b; padding: 6px 10px;"><%= m.monthFullName %></td>
-                                        <td style="font-weight: 600; color: #1d4ed8;"><%= m.preventive %></td>
-                                        <td style="font-weight: 700; color: #b91c1c;"><%= m.breakdown %></td>
-                                        <td style="font-weight: 600; color: #6d28d9;"><%= m.improvement %></td>
-                                        <td style="font-weight: 600; color: #b45309;"><%= m.safety %></td>
-                                        <td style="color: #64748b;"><%= m.other %></td>
+                                        <td style="text-align: left; font-weight: 700; color: #1e293b; padding: 6px 10px; vertical-align: middle;"><%= m.monthFullName %></td>
+                                        <td style="color: #1d4ed8; vertical-align: middle;">
+                                            <div style="font-weight: 700; font-size: 0.95rem;"><%= m.preventive %></div>
+                                            <% if (m.preventive > 0) { const gap = m.preventive - (m.preventiveClosed || 0); %>
+                                                <div style="font-size: 0.7rem; font-weight: 600; margin-top: 2px;">
+                                                    <span style="color: #16a34a;" title="Closed">✓ <%= m.preventiveClosed || 0 %></span>
+                                                    <span style="margin: 0 3px; color: #cbd5e1;">|</span>
+                                                    <span style="color: <%= gap > 0 ? '#dc2626' : '#64748b' %>;" title="Gap">! <%= gap %></span>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                        <td style="color: #b91c1c; vertical-align: middle;">
+                                            <div style="font-weight: 700; font-size: 0.95rem;"><%= m.breakdown %></div>
+                                            <% if (m.breakdown > 0) { const gap = m.breakdown - (m.breakdownClosed || 0); %>
+                                                <div style="font-size: 0.7rem; font-weight: 600; margin-top: 2px;">
+                                                    <span style="color: #16a34a;" title="Closed">✓ <%= m.breakdownClosed || 0 %></span>
+                                                    <span style="margin: 0 3px; color: #cbd5e1;">|</span>
+                                                    <span style="color: <%= gap > 0 ? '#dc2626' : '#64748b' %>;" title="Gap">! <%= gap %></span>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                        <td style="color: #6d28d9; vertical-align: middle;">
+                                            <div style="font-weight: 700; font-size: 0.95rem;"><%= m.improvement %></div>
+                                            <% if (m.improvement > 0) { const gap = m.improvement - (m.improvementClosed || 0); %>
+                                                <div style="font-size: 0.7rem; font-weight: 600; margin-top: 2px;">
+                                                    <span style="color: #16a34a;" title="Closed">✓ <%= m.improvementClosed || 0 %></span>
+                                                    <span style="margin: 0 3px; color: #cbd5e1;">|</span>
+                                                    <span style="color: <%= gap > 0 ? '#dc2626' : '#64748b' %>;" title="Gap">! <%= gap %></span>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                        <td style="color: #b45309; vertical-align: middle;">
+                                            <div style="font-weight: 700; font-size: 0.95rem;"><%= m.safety %></div>
+                                            <% if (m.safety > 0) { const gap = m.safety - (m.safetyClosed || 0); %>
+                                                <div style="font-size: 0.7rem; font-weight: 600; margin-top: 2px;">
+                                                    <span style="color: #16a34a;" title="Closed">✓ <%= m.safetyClosed || 0 %></span>
+                                                    <span style="margin: 0 3px; color: #cbd5e1;">|</span>
+                                                    <span style="color: <%= gap > 0 ? '#dc2626' : '#64748b' %>;" title="Gap">! <%= gap %></span>
+                                                </div>
+                                            <% } %>
+                                        </td>
+                                        <td style="color: #475569; vertical-align: middle;">
+                                            <div style="font-weight: 700; font-size: 0.95rem;"><%= m.other %></div>
+                                            <% if (m.other > 0) { const gap = m.other - (m.otherClosed || 0); %>
+                                                <div style="font-size: 0.7rem; font-weight: 600; margin-top: 2px;">
+                                                    <span style="color: #16a34a;" title="Closed">✓ <%= m.otherClosed || 0 %></span>
+                                                    <span style="margin: 0 3px; color: #cbd5e1;">|</span>
+                                                    <span style="color: <%= gap > 0 ? '#dc2626' : '#64748b' %>;" title="Gap">! <%= gap %></span>
+                                                </div>
+                                            <% } %>
+                                        </td>
                                         <td style="font-weight: 800; background: #fef9c3; color: #854d0e;"><%= m.count %></td>
                                         <td style="font-weight: 700; color: <%= m.pmrPct >= 80 ? '#16a34a' : '#d97706' %>;"><%= m.count > 0 ? m.pmrPct + '%' : '-' %></td>
                                         <td style="font-weight: 700; color: <%= m.bdPct > 15 ? '#dc2626' : '#16a34a' %>;"><%= m.count > 0 ? m.bdPct + '%' : '-' %></td>

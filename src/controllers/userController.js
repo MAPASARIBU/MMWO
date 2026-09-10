@@ -27,7 +27,7 @@ const createUser = async (req, res) => {
         const password_hash = await bcrypt.hash(password, 10);
 
         let accessibleMillsStr = null;
-        if (role === 'SENIOR_MANAGER' && Array.isArray(accessible_mills)) {
+        if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(role) && Array.isArray(accessible_mills)) {
             accessibleMillsStr = JSON.stringify(accessible_mills);
         }
 
@@ -72,7 +72,7 @@ const updateUser = async (req, res) => {
         const { name, role, phone, mill_id, accessible_mills } = req.body;
 
         let accessibleMillsStr = null;
-        if (role === 'SENIOR_MANAGER' && Array.isArray(accessible_mills)) {
+        if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(role) && Array.isArray(accessible_mills)) {
             accessibleMillsStr = JSON.stringify(accessible_mills);
         }
 

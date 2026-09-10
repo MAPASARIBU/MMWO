@@ -105,24 +105,13 @@ const listWorkOrders = async (req, res) => {
 const createWorkOrderPage = async (req, res) => {
     try {
         const user = req.session.user;
-        let mills = [];
+        const targetMillId = user.current_mill_id || user.mill_id;
+        mills = await prisma.mill.findMany({
+            where: { id: targetMillId },
+            include: { stations: true }
+        });
 
-        // Admin gets all mills, Senior Manager gets accessible mills, User gets only their own
-        if (user.role === 'ADMIN') {
-            mills = await prisma.mill.findMany({ include: { stations: true } });
-        } else if (user.role === 'SENIOR_MANAGER') {
-            mills = await prisma.mill.findMany({ 
-                where: { id: { in: user.accessible_mills || [] } },
-                include: { stations: true } 
-            });
-        } else {
-            mills = await prisma.mill.findMany({
-                where: { id: user.mill_id },
-                include: { stations: true }
-            });
-        }
-
-        const stations = await prisma.station.findMany(); // Optimization: could filter by mill too
+        const stations = await prisma.station.findMany({ where: { mill_id: targetMillId } });
 
         let prefillPart = null;
         if (req.query.part_id) {

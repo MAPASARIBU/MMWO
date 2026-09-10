@@ -60,11 +60,41 @@ app.use(session({
     }
 }));
 
-// Make user available to all views
-app.use((req, res, next) => {
-    res.locals.user = req.session.user || null;
+// Auth Middleware & Session injection
+app.use(async (req, res, next) => {
+    res.locals.user = req.session.user;
+    res.locals.rolePerms = [];
+    if (req.session.user && req.session.user.role) {
+        try {
+            const prisma = require('./prisma');
+            res.locals.rolePerms = await prisma.rolePermission.findMany({
+                where: { role: req.session.user.role }
+            });
+        } catch (e) {
+            console.error("Error loading permissions:", e);
+        }
+    }
     next();
 });
+
+// Middleware for checking dynamic permissions
+const ensurePermission = (moduleName, action = 'can_view') => {
+    return (req, res, next) => {
+        if (!req.session.user) return res.redirect('/auth/login');
+        if (req.session.user.role === 'ADMIN') return next(); // Admin always allowed bypass
+        
+        const perms = res.locals.rolePerms;
+        if (!perms || perms.length === 0) return res.status(403).send('Forbidden: No permissions loaded');
+        
+        const modPerm = perms.find(p => p.module === moduleName);
+        if (modPerm && modPerm[action] === true) {
+            return next();
+        }
+        res.status(403).send('Forbidden: Insufficient privileges for this module');
+    };
+};
+// Attach to app for routes to use if needed
+app.locals.ensurePermission = ensurePermission;
 
 const indexController = require('./controllers/indexController');
 
@@ -126,6 +156,8 @@ app.use('/analytics', analyticsRoutes);
 
 // Admin Pages
 app.get('/admin/employees', ensureRole(['ADMIN']), adminController.getEmployeesPage);
+app.get('/admin/auth-matrix', ensureRole(['ADMIN']), adminController.getAuthMatrixPage);
+app.post('/admin/api/auth-matrix', ensureRole(['ADMIN']), adminController.saveAuthMatrix);
 
 const whatsappController = require('./controllers/whatsappController');
 app.get('/admin/whatsapp', ensureRole(['ADMIN']), whatsappController.getAdminPage);

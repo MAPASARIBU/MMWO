@@ -4,13 +4,20 @@ const { renderView } = require('./indexController');
 
 let cachedMills = [];
 
+let lastMillFetch = 0;
 // Helper to fetch mills with retry and fallback
 async function getMillsWithRetry(retries = 3, delayMs = 800) {
+    // Return cache if it's less than 1 hour old
+    if (cachedMills.length > 0 && (Date.now() - lastMillFetch) < 3600000) {
+        return cachedMills;
+    }
+
     for (let i = 0; i < retries; i++) {
         try {
             const mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
             if (mills && mills.length > 0) {
                 cachedMills = mills;
+                lastMillFetch = Date.now();
                 return mills;
             }
         } catch (err) {
@@ -73,7 +80,7 @@ const login = async (req, res) => {
 
         // Validate Mill Access
         let accessible_mills = [];
-        if (user.role === 'SENIOR_MANAGER') {
+        if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(user.role)) {
             try {
                 accessible_mills = user.accessible_mills ? JSON.parse(user.accessible_mills) : [];
             } catch (e) {
@@ -99,7 +106,7 @@ const login = async (req, res) => {
             id: user.id,
             username: user.username,
             name: user.name,
-            role: user.role,
+            role: user.role ? user.role.toUpperCase() : 'UNKNOWN',
             mill_id: user.mill_id,
             accessible_mills: accessible_mills,
             current_mill_id: selectedMillId, // The mill they logged into
