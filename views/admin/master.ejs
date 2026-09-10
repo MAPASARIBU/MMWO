@@ -40,7 +40,7 @@
         <div>
             <div class="flex justify-between items-center mb-2">
                 <h4>Stations</h4>
-                <% if (user.role === 'ADMIN') { %>
+                <% if (hasPermission('Master Data', 'can_input')) { %>
                 <button class="btn btn-sm btn-primary" id="addStationBtn" style="display: none;" onclick="openAddStationModal()">+ Add Station</button>
                 <% } %>
             </div>
@@ -66,8 +66,9 @@
                                             <span class="badge" style="background: #e2e8f0; color: #475569; font-size: 0.75rem; margin-left: 8px; vertical-align: middle;"><%= s.equipment ? s.equipment.length : 0 %></span>
                                         </span>
                                         <div>
-                                            <% if (user.role === 'ADMIN') { %>
-                                            <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); openBulkModal(<%= s.id %>, '<%= s.name %>')">
+                                            <% if (hasPermission('Master Data', 'can_input')) { %>
+                                            <button class="btn btn-sm btn-secondary" 
+                                                onclick="event.stopPropagation(); openBulkModal(<%= s.id %>, '<%= s.name %>')">
                                                 + Add Equip
                                             </button>
                                             <% } %>
@@ -81,10 +82,14 @@
                                                     <a href="/equipment/<%= e.id %>" style="color: #0369a1; text-decoration: none; font-size: 0.9em;">
                                                         <span style="font-family: monospace; background: #f1f5f9; padding: 2px 4px; border-radius: 4px; font-size: 0.85em; margin-right: 5px;"><%= e.code || 'EQ-' + e.id %></span> <span id="equip-name-<%= e.id %>"><%= e.name %></span>
                                                     </a>
-                                                    <% if (user.role === 'ADMIN') { %>
+                                                    <% if (hasPermission('Master Data', 'can_edit') || hasPermission('Master Data', 'can_delete')) { %>
                                                     <div>
+                                                        <% if (hasPermission('Master Data', 'can_edit')) { %>
                                                         <button onclick="editEquipment(<%= e.id %>)" class="btn btn-sm btn-secondary" style="padding: 2px 6px; font-size: 0.75rem; margin-right: 4px;">Edit</button>
+                                                        <% } %>
+                                                        <% if (hasPermission('Master Data', 'can_delete')) { %>
                                                         <button onclick="deleteEquipment(<%= e.id %>)" class="btn btn-sm btn-danger" style="padding: 2px 6px; font-size: 0.75rem; background-color: #ef4444; color: white; border: none; border-radius: 4px;">Delete</button>
+                                                        <% } %>
                                                     </div>
                                                     <% } %>
                                                 </div>

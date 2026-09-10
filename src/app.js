@@ -74,6 +74,15 @@ app.use(async (req, res, next) => {
             console.error("Error loading permissions:", e);
         }
     }
+    
+    // Global EJS Helper for dynamic UI permissions
+    res.locals.hasPermission = (moduleName, action = 'can_view') => {
+        if (!res.locals.user) return false;
+        if (res.locals.user.role === 'ADMIN') return true;
+        const p = res.locals.rolePerms.find(x => x.module === moduleName);
+        return p && p[action] === true;
+    };
+    
     next();
 });
 
