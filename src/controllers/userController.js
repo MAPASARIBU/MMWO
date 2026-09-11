@@ -50,6 +50,9 @@ const createUser = async (req, res) => {
         const { password_hash: _, ...userWithoutPassword } = user;
         res.status(201).json(userWithoutPassword);
     } catch (error) {
+        if (error.code === 'P2002' && error.meta && error.meta.target.includes('username')) {
+            return res.status(400).json({ error: 'Username tersebut sudah dipakai. Silakan gunakan username lain.' });
+        }
         res.status(500).json({ error: error.message });
     }
 };

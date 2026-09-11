@@ -161,7 +161,12 @@
                 const wo = await res.json();
                 window.location.href = '/work-orders';
             } else {
-                alert('Error creating WO');
+                let errorMsg = 'Error creating WO';
+                try {
+                    const errorData = await res.json();
+                    errorMsg = errorData.error || errorMsg;
+                } catch(e) {}
+                alert(errorMsg);
             }
         } catch (error) {
             console.error(error);

@@ -4,11 +4,15 @@ const { renderView } = require('./indexController');
 const getUsersPage = async (req, res) => {
     try {
         const activeMillId = req.session.user.current_mill_id || req.session.user.mill_id;
+<<<<<<< HEAD
         const mmwoRoles = ['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'MANAGER', 'ENGINEERING', 'SPV', 'MTC', 'PROC', 'OPERATOR', 'OAA'];
         
         let roleConditions = mmwoRoles.map(r => ({ role: { equals: r, mode: 'insensitive' } }));
         
         let userWhere = { OR: roleConditions };
+=======
+        let userWhere = {};
+>>>>>>> 7659d2ec1bb9b7223dd822056bc72a4854f4b82f
         if (activeMillId) {
             userWhere = {
                 AND: [
