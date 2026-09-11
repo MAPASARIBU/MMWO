@@ -4,9 +4,7 @@ const { renderView } = require('./indexController');
 const getUsersPage = async (req, res) => {
     try {
         const activeMillId = req.session.user.current_mill_id || req.session.user.mill_id;
-        const mmwoRoles = ['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'MANAGER', 'ENGINEERING', 'SPV', 'MTC', 'PROC', 'OPERATOR', 'OAA'];
-        
-        let userWhere = { role: { in: mmwoRoles } };
+        let userWhere = {};
         if (activeMillId) {
             userWhere.OR = [
                 { mill_id: activeMillId },
