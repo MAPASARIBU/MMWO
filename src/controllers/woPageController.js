@@ -10,7 +10,7 @@ const listWorkOrders = async (req, res) => {
 
         // Determine Mill Context
         let targetMillId = null;
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR MILL MANAGER') {
             targetMillId = user.current_mill_id || null;
         } else {
             targetMillId = user.mill_id;
@@ -61,7 +61,7 @@ const listWorkOrders = async (req, res) => {
         // Apply Mill Filter
         if (targetMillId) {
             where.mill_id = targetMillId;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             where.mill_id = { in: user.accessible_mills || [] };
         }
 
@@ -82,7 +82,7 @@ const listWorkOrders = async (req, res) => {
         let stationWhere = {};
         if (targetMillId) {
             stationWhere.mill_id = targetMillId;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             stationWhere.mill_id = { in: user.accessible_mills || [] };
         }
         const stations = await prisma.station.findMany({
@@ -163,7 +163,7 @@ const detailWorkOrderPage = async (req, res) => {
 
         // ACCESS CONTROL Check
         // If not admin/senior manager, and wo.mill_id != user.mill_id -> Forbidden
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR MILL MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).send('Access Denied: You cannot view Work Orders from another mill.');
         }
 
@@ -205,7 +205,7 @@ const printWORecap = async (req, res) => {
         const user = req.session.user;
         let targetMillId = null;
 
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR MILL MANAGER') {
             targetMillId = user.current_mill_id;
         } else {
             targetMillId = user.mill_id;

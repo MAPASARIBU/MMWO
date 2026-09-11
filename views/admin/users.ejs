@@ -67,7 +67,7 @@
     function getRoleBadgeStyle(role) {
         switch(role) {
             case 'ADMIN': return { bg: '#0f172a', color: '#ffffff', border: '#0f172a' };
-            case 'SENIOR_MANAGER': return { bg: '#1e3a8a', color: '#ffffff', border: '#3b82f6' };
+            case 'SENIOR MILL MANAGER': return { bg: '#1e3a8a', color: '#ffffff', border: '#3b82f6' };
             case 'MANAGER': return { bg: '#f3e8ff', color: '#6b21a8', border: '#d8b4fe' };
             case 'SPV': return { bg: '#cffafe', color: '#0e7490', border: '#a5f3fc' };
             case 'MTC': return { bg: '#dbeafe', color: '#1d4ed8', border: '#bfdbfe' };
@@ -518,7 +518,13 @@
 <script>
     let activeMillFilter = 'ALL';
 
-    function openModal(id) { document.getElementById(id).style.display = 'block'; }
+    function openModal(id) { 
+        document.getElementById(id).style.display = 'block'; 
+        if (id === 'createUserModal') {
+            document.getElementById('createUserForm').reset();
+            toggleMillSelect();
+        }
+    }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     function filterByMillTab(millKey, btnEl) {

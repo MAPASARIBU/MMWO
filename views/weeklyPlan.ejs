@@ -32,7 +32,7 @@
     </div>
 
     <div id="cat-content-plan" style="display: block;">
-    <% if (user && user.role !== 'SENIOR_MANAGER') { %>
+    <% if (user && user.role !== 'SENIOR MILL MANAGER') { %>
     <% if (hasPermission(planTitle, 'can_input')) { %>
     <div class="card mb-3" style="border-left: 4px solid #17a2b8; padding: 10px 15px;">
         <div class="flex justify-between items-center">
@@ -169,7 +169,7 @@
                                                 <span class="text-muted italic" style="font-size: 0.8rem;">Belum ada</span>
                                             <% } %>
                                         </div>
-                                        <% if (user && (user.role !== 'PROC' || (typeof isProcessing !== 'undefined' && isProcessing)) && user.role !== 'SENIOR_MANAGER') { %>
+                                        <% if (user && (user.role !== 'PROC' || (typeof isProcessing !== 'undefined' && isProcessing)) && user.role !== 'SENIOR MILL MANAGER') { %>
                                             <div class="mt-1 no-print">
                                                 <button type="button" class="btn btn-sm btn-assign-pic" style="background-color: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; font-size: 0.72rem; font-weight: 600; padding: 2px 6px;" onclick="openGlobalPicModal(<%= wo.id %>, <%= JSON.stringify((wo.pics || []).map(p => p.id)) %>)">+ Assign PICs</button>
                                             </div>

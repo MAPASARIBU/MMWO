@@ -19,7 +19,7 @@ const getOfficePlansPage = async (req, res) => {
         const user = req.session.user;
         let where = {};
         
-        if (user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'SENIOR MILL MANAGER') {
             where.mill_id = { in: user.accessible_mills || [] };
         } else if (user.role !== 'ADMIN') {
             where.mill_id = user.mill_id;
@@ -37,7 +37,7 @@ const getOfficePlansPage = async (req, res) => {
         const mills = await prisma.mill.findMany();
         
         let stationWhere = {};
-        if (user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'SENIOR MILL MANAGER') {
             stationWhere = { mill_id: { in: user.accessible_mills || [] } };
         } else if (user.role !== 'ADMIN') {
             stationWhere = { mill_id: user.mill_id };

@@ -4,7 +4,7 @@ const { renderView } = require('./indexController');
 const getAnalyticsDashboard = async (req, res) => {
     try {
         const user = req.session.user;
-        const millId = req.query.mill_id ? parseInt(req.query.mill_id) : (user.role !== 'SENIOR_MANAGER' && user.role !== 'ADMIN' ? user.mill_id : null);
+        const millId = req.query.mill_id ? parseInt(req.query.mill_id) : (user.role !== 'SENIOR MILL MANAGER' && user.role !== 'ADMIN' ? user.mill_id : null);
 
         // Fetch mills for dropdown
         const mills = await prisma.mill.findMany();

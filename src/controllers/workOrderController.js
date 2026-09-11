@@ -31,14 +31,14 @@ const createWorkOrder = async (req, res) => {
         const { mill_id, station_id, equipment_id, part_id, category, type, priority, description } = req.body;
         const user = req.session.user || req.user; // User from session or API token
 
-        if (user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'SENIOR MILL MANAGER') {
             return res.status(403).json({ error: 'Access Denied: Senior Manager is read-only.' });
         }
 
         let finalMillId = mill_id ? parseInt(mill_id) : null;
 
         // Security: Non-Admin forces their own mill_id
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR MILL MANAGER') {
             finalMillId = user.mill_id;
         } else {
             // Admin: if no mill_id provided, default to current selected mill?
@@ -119,12 +119,12 @@ const getWorkOrders = async (req, res) => {
         if (assignee_id) where.assignee_id = parseInt(assignee_id);
 
         // MILL ISOLATION
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER') {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR MILL MANAGER') {
             where.mill_id = user.mill_id;
         } else if (user.current_mill_id) {
             // Admin sees what they selected in context
             where.mill_id = user.current_mill_id;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             where.mill_id = { in: user.accessible_mills || [] };
         }
 
@@ -174,7 +174,7 @@ const getWorkOrderById = async (req, res) => {
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
         // Access Check
-        if (user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'SENIOR MILL MANAGER') {
             if (!user.accessible_mills || !user.accessible_mills.includes(wo.mill_id)) {
                 return res.status(403).json({ error: 'Access Denied: You do not have access to this mill.' });
             }
@@ -199,7 +199,7 @@ const updateStatus = async (req, res) => {
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
         // Access Check
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR MILL MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
@@ -340,7 +340,7 @@ const addAttachment = async (req, res) => {
         const wo = await prisma.workOrder.findUnique({ where: { id: parseInt(id) }, select: { mill_id: true } });
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR MILL MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
@@ -383,7 +383,7 @@ const addComment = async (req, res) => {
         const wo = await prisma.workOrder.findUnique({ where: { id: parseInt(id) }, select: { mill_id: true } });
         if (!wo) return res.status(404).json({ error: 'Work Order not found' });
 
-        if (user.role !== 'ADMIN' && user.role !== 'SENIOR_MANAGER' && wo.mill_id !== user.mill_id) {
+        if (user.role !== 'ADMIN' && user.role !== 'SENIOR MILL MANAGER' && wo.mill_id !== user.mill_id) {
             return res.status(403).json({ error: 'Access Denied' });
         }
 
@@ -407,7 +407,7 @@ const bulkCreateFromParts = async (req, res) => {
         const { part_ids } = req.body;
         const user = req.session.user || req.user;
 
-        if (user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'SENIOR MILL MANAGER') {
             return res.status(403).json({ error: 'Access Denied: Senior Manager is read-only.' });
         }
 
@@ -564,10 +564,6 @@ const deleteWorkOrder = async (req, res) => {
 
         if (!wo) {
             return res.status(404).json({ error: 'Work Order not found.' });
-        }
-
-        if (wo.status === 'COMPLETED' || wo.status === 'CLOSED') {
-            return res.status(400).json({ error: 'Tidak bisa menghapus Work Order yang sudah COMPLETED atau CLOSED.' });
         }
 
         await prisma.$transaction([

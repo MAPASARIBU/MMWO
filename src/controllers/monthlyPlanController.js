@@ -6,7 +6,7 @@ const getMonthlyPlanPage = async (req, res) => {
         const user = req.session.user;
         let targetMillId = null;
 
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR MILL MANAGER') {
             targetMillId = user.current_mill_id || null;
         } else {
             targetMillId = user.mill_id;
@@ -20,7 +20,7 @@ const getMonthlyPlanPage = async (req, res) => {
         // Apply Mill Filter
         if (targetMillId) {
             where.mill_id = targetMillId;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             where.mill_id = { in: user.accessible_mills || [] };
         }
 
@@ -46,7 +46,7 @@ const getMonthlyPlanPage = async (req, res) => {
 
         if (targetMillId) {
             historicalWhere.mill_id = targetMillId;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             historicalWhere.mill_id = { in: user.accessible_mills || [] };
         }
 

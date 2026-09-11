@@ -46,7 +46,7 @@ const getMonitoringPage = async (req, res) => {
 
         // Filter by user role/mill
         let where = {};
-        if (user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'SENIOR MILL MANAGER') {
             where.mill_id = { in: user.accessible_mills || [] };
         } else if (user.role !== 'ADMIN') {
             where.mill_id = user.mill_id;

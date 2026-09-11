@@ -3,7 +3,7 @@ const prisma = require('../prisma');
 
 const getUsers = async (req, res) => {
     try {
-        const users = await prisma.user.findMany({
+        let users = await prisma.user.findMany({
             select: {
                 id: true,
                 username: true,
@@ -14,6 +14,10 @@ const getUsers = async (req, res) => {
                 mill: true,
                 created_at: true
             }
+        });
+        users = users.map(u => {
+            u.role = (u.role || '').toUpperCase();
+            return u;
         });
         res.json(users);
     } catch (error) {

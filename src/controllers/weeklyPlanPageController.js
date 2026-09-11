@@ -97,7 +97,7 @@ const getWeeklyPlanPage = async (req, res) => {
         };
         
         let targetMillId = null;
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR MILL MANAGER') {
             if (req.query.millId) {
                 targetMillId = parseInt(req.query.millId);
             } else if (user.current_mill_id) {
@@ -110,7 +110,7 @@ const getWeeklyPlanPage = async (req, res) => {
         // Mill Isolation for Plans and Candidates
         if (targetMillId) {
             woFilter.mill_id = targetMillId;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             woFilter.mill_id = { in: user.accessible_mills || [] };
         }
 
@@ -185,7 +185,7 @@ const getWeeklyPlanPage = async (req, res) => {
 
         if (targetMillId) {
             candidateWhere.mill_id = targetMillId;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             candidateWhere.mill_id = { in: user.accessible_mills || [] };
         }
 
@@ -215,7 +215,7 @@ const getWeeklyPlanPage = async (req, res) => {
                 { mill_id: targetMillId },
                 { mill_id: null }
             ];
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             empWhere.OR = [
                 { mill_id: { in: user.accessible_mills || [] } },
                 { mill_id: null }
@@ -238,7 +238,7 @@ const getWeeklyPlanPage = async (req, res) => {
         let stationWhere = {};
         if (targetMillId) {
             stationWhere = { mill_id: targetMillId };
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             stationWhere = { mill_id: { in: user.accessible_mills || [] } };
         }
 
@@ -254,7 +254,7 @@ const getWeeklyPlanPage = async (req, res) => {
 
         let catWhere = {
             category: categoryFilter,
-            ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
+            ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR MILL MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
             ...(isProcessing ? {} : { wo_no: { not: { startsWith: 'PRC' } } }),
             OR: [
                 { status: { notIn: ['CLOSED', 'COMPLETED'] } },
@@ -321,7 +321,7 @@ const getWeeklyPlanPage = async (req, res) => {
 
         let monWhere = {
             category: categoryFilter,
-            ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
+            ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR MILL MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
             ...(isProcessing ? {} : { wo_no: { not: { startsWith: 'PRC' } } }),
             OR: [
                 {
@@ -368,7 +368,7 @@ const getWeeklyPlanPage = async (req, res) => {
         const isMaintenance = !isProcessing && !isCivil && !isOffice;
         const monthlyWosPromise = (isMaintenance && isNeedMonthlyPlan) ? prisma.workOrder.findMany({
             where: {
-                ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
+                ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR MILL MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
                 monthly_plan_status: 'MONTHLY',
                 status: { notIn: ['CLOSED', 'COMPLETED'] }
             },
@@ -382,7 +382,7 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const historicalMonthlyWosPromise = (isMaintenance && isNeedMonthlyPlan) ? prisma.workOrder.findMany({
             where: {
-                ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
+                ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR MILL MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
                 monthly_plan_status: 'MONTHLY_DONE',
                 status: { notIn: ['CLOSED', 'COMPLETED'] }
             },
@@ -397,7 +397,7 @@ const getWeeklyPlanPage = async (req, res) => {
         // 8. Analytics & KPI Data (Sub Sheet 5: only for Maintenance Weekly Plan)
         const analyticsWosPromise = (isMaintenance && isNeedAnalytics) ? prisma.workOrder.findMany({
             where: {
-                ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
+                ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR MILL MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {})),
                 created_at: { gte: sixtyDaysAgo }
             },
             select: {
@@ -429,7 +429,7 @@ const getWeeklyPlanPage = async (req, res) => {
                 gte: new Date(Date.UTC(monOrderYear, 0, 1, 0, 0, 0, 0)),
                 lte: new Date(Date.UTC(monOrderYear, 11, 31, 23, 59, 59, 999))
             },
-            ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR_MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {}))
+            ...(targetMillId ? { mill_id: targetMillId } : (user.role === 'SENIOR MILL MANAGER' ? { mill_id: { in: user.accessible_mills || [] } } : {}))
         };
 
         if (monOrderCategory && monOrderCategory !== 'ALL') {

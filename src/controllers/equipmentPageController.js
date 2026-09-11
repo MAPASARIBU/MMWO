@@ -46,7 +46,7 @@ const getInputHmPage = async (req, res) => {
         let millId = null;
         
         // Handle admin viewing different mills or their own
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+        if (user.role === 'ADMIN' || user.role === 'SENIOR MILL MANAGER') {
             if (req.query.millId) {
                 millId = parseInt(req.query.millId);
             } else if (user.current_mill_id) {
@@ -59,7 +59,7 @@ const getInputHmPage = async (req, res) => {
         let stationCondition = undefined;
         if (millId) {
             stationCondition = { mill_id: millId };
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             stationCondition = { mill_id: { in: user.accessible_mills || [] } };
         }
 
@@ -86,7 +86,7 @@ const getInputHmPage = async (req, res) => {
         let mills = [];
         if (user.role === 'ADMIN') {
             mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (user.role === 'SENIOR MILL MANAGER') {
             mills = await prisma.mill.findMany({ 
                 where: { id: { in: user.accessible_mills || [] } },
                 orderBy: { name: 'asc' } 

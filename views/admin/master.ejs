@@ -109,7 +109,7 @@
     <% } %>
 
     <!-- Processing Plans Section -->
-    <% if (['ADMIN', 'MANAGER', 'SENIOR_MANAGER', 'SPV', 'PROC'].includes(user.role)) { %>
+    <% if (['ADMIN', 'MANAGER', 'SENIOR MILL MANAGER', 'SPV', 'PROC'].includes(user.role)) { %>
     <hr class="my-4">
     <div class="flex justify-between items-center mb-3">
         <h3>Processing Plan Schedules</h3>
@@ -168,11 +168,11 @@
     <% } %>
 
     <!-- Office Plans Section -->
-    <% if (['ADMIN', 'MANAGER', 'SENIOR_MANAGER', 'OAA'].includes(user.role)) { %>
+    <% if (['ADMIN', 'MANAGER', 'SENIOR MILL MANAGER', 'OAA'].includes(user.role)) { %>
     <hr class="my-4">
     <div class="flex justify-between items-center mb-3">
         <h3>Office Plan Schedules</h3>
-        <% if (['ADMIN', 'MANAGER', 'SENIOR_MANAGER', 'OAA'].includes(user.role)) { %>
+        <% if (['ADMIN', 'MANAGER', 'SENIOR MILL MANAGER', 'OAA'].includes(user.role)) { %>
             <button class="btn btn-primary" onclick="openOfficeAddModal()">+ Add Schedule</button>
         <% } %>
     </div>
@@ -207,7 +207,7 @@
                                 <% } %>
                             </td>
                             <td>
-                                <% if (['ADMIN', 'MANAGER', 'SENIOR_MANAGER', 'OAA'].includes(user.role)) { %>
+                                <% if (['ADMIN', 'MANAGER', 'SENIOR MILL MANAGER', 'OAA'].includes(user.role)) { %>
                                     <button class="btn btn-sm btn-info text-white" onclick='openOfficeEditModal(<%- JSON.stringify(plan) %>)'>Edit</button>
                                     <button class="btn btn-sm btn-danger text-white" onclick="deleteOfficePlan(<%= plan.id %>)">Delete</button>
                                 <% } %>

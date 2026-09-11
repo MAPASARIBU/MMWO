@@ -6,18 +6,33 @@ const getUsersPage = async (req, res) => {
         const activeMillId = req.session.user.current_mill_id || req.session.user.mill_id;
         const mmwoRoles = ['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'MANAGER', 'ENGINEERING', 'SPV', 'MTC', 'PROC', 'OPERATOR', 'OAA'];
         
-        let userWhere = { role: { in: mmwoRoles } };
+        let roleConditions = mmwoRoles.map(r => ({ role: { equals: r, mode: 'insensitive' } }));
+        
+        let userWhere = { OR: roleConditions };
         if (activeMillId) {
-            userWhere.OR = [
-                { mill_id: activeMillId },
-                { mill_id: null } // Corporate users
-            ];
+            userWhere = {
+                AND: [
+                    { OR: roleConditions },
+                    {
+                        OR: [
+                            { mill_id: activeMillId },
+                            { mill_id: null } // Corporate users
+                        ]
+                    }
+                ]
+            };
         }
 
-        const users = await prisma.user.findMany({
+        let users = await prisma.user.findMany({
             where: userWhere,
             include: { mill: true },
             orderBy: { created_at: 'desc' }
+        });
+        
+        // Normalisasi role ke UPPERCASE agar konsisten di UI MMWO
+        users = users.map(u => {
+            u.role = (u.role || '').toUpperCase();
+            return u;
         });
         const mills = activeMillId ? await prisma.mill.findMany({ where: { id: activeMillId } }) : await prisma.mill.findMany();
 

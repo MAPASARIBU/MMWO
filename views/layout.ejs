@@ -241,11 +241,15 @@
                 <div class="page-title" style="margin-left: 0;">
                     <h2>
                         <%= typeof title !=='undefined' ? title : '' %>
-                            <% if (typeof user !=='undefined' && (user.current_mill_name || user.mill_id)) { %>
+                            <% if (typeof displayMillName !== 'undefined' && displayMillName) { %>
+                                <span style="font-size: 0.8em; color: #666; margin-left: 10px;">
+                                    - <%= displayMillName %>
+                                </span>
+                            <% } else if (typeof user !=='undefined' && (user.current_mill_name || user.mill_id)) { %>
                                 <span style="font-size: 0.8em; color: #666; margin-left: 10px;">
                                     - <%= user.current_mill_name || ('Mill ' + user.mill_id) %>
-                            </span>
-                                <% } %>
+                                </span>
+                            <% } %>
                     </h2>
                 </div>
                 <div class="actions" style="display: flex; gap: 10px;">

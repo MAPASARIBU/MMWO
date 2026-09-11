@@ -15,24 +15,39 @@ const getDashboard = async (req, res) => {
         let millName = "All Mills";
         let mills = [];
 
+        const multiMillRoles = ['ADMIN', 'SENIOR MILL MANAGER', 'DIRECTOR', 'ENGINEERING'];
+
         // Fetch mills based on role
         if (user.role === 'ADMIN') {
             mills = await prisma.mill.findMany({ orderBy: { name: 'asc' } });
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (multiMillRoles.includes(user.role)) {
             mills = await prisma.mill.findMany({
                 where: { id: { in: user.accessible_mills || [] } },
                 orderBy: { name: 'asc' }
             });
         }
 
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+        if (multiMillRoles.includes(user.role)) {
             // Allow to select mill via query param
-            if (req.query.millId) {
-                millId = parseInt(req.query.millId);
-                const selectedMill = mills.find(m => m.id === millId);
-                if (selectedMill) millName = selectedMill.name;
+            if (req.query.millId !== undefined) {
+                if (req.query.millId === '' || req.query.millId === 'all' || req.query.millId === 'null') {
+                    // Explicitly selected 'All Mills'
+                    millId = null;
+                    millName = "All Mills";
+                } else {
+                    const parsed = parseInt(req.query.millId);
+                    if (!isNaN(parsed)) {
+                        millId = parsed;
+                        const selectedMill = mills.find(m => m.id === millId);
+                        if (selectedMill) millName = selectedMill.name;
+                    } else {
+                        // Fallback to current mill if invalid
+                        millId = user.current_mill_id || null;
+                        millName = user.current_mill_name || "Unknown Mill";
+                    }
+                }
             } else if (user.current_mill_id) {
-                // Default to the mill selected at login
+                // Default to the mill selected at login when no query param is provided
                 millId = user.current_mill_id;
                 millName = user.current_mill_name || "Unknown Mill";
             }
@@ -49,10 +64,11 @@ const getDashboard = async (req, res) => {
         let baseWhere = {};
         if (millId) {
             baseWhere.mill_id = millId;
-        } else if (user.role === 'SENIOR_MANAGER') {
-            // If SENIOR_MANAGER and no specific mill is selected, show only accessible mills
+        } else if (multiMillRoles.includes(user.role) && user.role !== 'ADMIN') {
+            // If multi-mill role and no specific mill is selected, show only accessible mills
             baseWhere.mill_id = { in: user.accessible_mills || [] };
         }
+        console.log(`[DASHBOARD DEBUG] role=${user.role}, current_mill_id=${user.current_mill_id}, req_query_millId=${req.query.millId}, final_millId=${millId}, baseWhere=`, baseWhere);
 
         // Filters
         const { startDate, endDate, status, station_id } = req.query;
@@ -122,7 +138,7 @@ const getDashboard = async (req, res) => {
         let stationWhere = {};
         if (millId) {
             stationWhere.mill_id = millId;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (multiMillRoles.includes(user.role) && user.role !== 'ADMIN') {
             stationWhere.mill_id = { in: user.accessible_mills || [] };
         }
 
@@ -135,49 +151,40 @@ const getDashboard = async (req, res) => {
         let dashboardData = global.dashboardCache.get(cacheKey);
 
         if (!dashboardData || (Date.now() - dashboardData.timestamp > 15000)) { // 15 seconds cache
-            // Parallelize all dashboard queries in a single roundtrip!
-            const results = await Promise.all([
-                // 1. Recent WOs
+            // Run queries using $transaction to use EXACTLY 1 connection from the pool
+            // This prevents Neon connection exhaustion while maintaining speed
+            const results = await prisma.$transaction([
                 prisma.workOrder.findMany(queryOptions),
-                // 2. Total WOs
                 prisma.workOrder.count({ where: statsWhere }),
-                // 3. Completed WOs
                 prisma.workOrder.count({
                     where: { ...statsWhere, status: { in: ['COMPLETED', 'VERIFIED', 'CLOSED'] } }
                 }),
-                // 4. Pending WOs
                 prisma.workOrder.count({
                     where: { ...statsWhere, status: { in: ['OPEN', 'PLANNED', 'ASSIGNED', 'IN_PROGRESS'] } }
                 }),
-                // 5. High Priority WOs
                 prisma.workOrder.count({
                     where: { ...statsWhere, priority: 'P1', status: { not: 'CLOSED' } }
                 }),
-                // 6. Type Stats Chart
                 prisma.workOrder.groupBy({
                     by: ['type'],
                     where: filterWhere,
                     _count: { type: true }
                 }),
-                // 7. Category Stats Chart
                 prisma.workOrder.groupBy({
                     by: ['category'],
                     where: filterWhere,
                     _count: { category: true }
                 }),
-                // 8. Station Counts Chart
                 prisma.workOrder.groupBy({
                     by: ['station_id'],
                     where: filterWhere,
                     _count: { id: true }
                 }),
-                // 9. Station Names Mapping
                 prisma.station.findMany({
                     where: stationWhere,
                     select: { id: true, name: true },
                     orderBy: { name: 'asc' }
                 }),
-                // 10. Data Aggregation for Tables
                 prisma.workOrder.findMany({
                     where: filterWhere,
                     select: {
@@ -212,6 +219,11 @@ const getDashboard = async (req, res) => {
             statStations,
             allWosForTables
         ] = dashboardData.data;
+
+        console.log(`[DASHBOARD DEBUG ${user.role}] cacheKey=${cacheKey}`);
+        console.log(`[DASHBOARD DEBUG ${user.role}] millId=${millId}`);
+        console.log(`[DASHBOARD DEBUG ${user.role}] filterWhere=`, JSON.stringify(filterWhere));
+        console.log(`[DASHBOARD DEBUG ${user.role}] allWosLength=${allWosForTables.length}, totalWOs=${totalWOs}, pendingWos=${pendingWos}`);
 
         const realCompletionRate = totalWOs > 0 ? Math.round((completedWos / totalWOs) * 100) : 0;
         const stats = {
@@ -400,6 +412,7 @@ const getDashboard = async (req, res) => {
                 statusTableDetails
             }),
             user: req.session.user,
+            displayMillName: millName,
             path: '/dashboard'
         });
     } catch (error) {
@@ -413,11 +426,13 @@ const getPrintRecap = async (req, res) => {
         const userId = req.session.user.id;
         const user = req.session.user;
 
+        const multiMillRoles = ['ADMIN', 'SENIOR MILL MANAGER', 'DIRECTOR', 'ENGINEERING'];
+
         // Mill Handling
         let millId = null;
         let millName = "All Mills";
 
-        if (user.role === 'ADMIN' || user.role === 'SENIOR_MANAGER') {
+        if (multiMillRoles.includes(user.role)) {
             if (req.query.millId) {
                 millId = parseInt(req.query.millId);
                 const tm = await prisma.mill.findUnique({ where: { id: millId } });
@@ -443,7 +458,7 @@ const getPrintRecap = async (req, res) => {
         // Apply Mill Filter
         if (millId) {
             whereClause.mill_id = millId;
-        } else if (user.role === 'SENIOR_MANAGER') {
+        } else if (multiMillRoles.includes(user.role) && user.role !== 'ADMIN') {
             whereClause.mill_id = { in: user.accessible_mills || [] };
         }
 
