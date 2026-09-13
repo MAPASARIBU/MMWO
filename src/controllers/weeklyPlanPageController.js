@@ -1283,33 +1283,53 @@ const getWeeklyPlanPage = async (req, res) => {
     }
 };
 
-const getWeeklyPlanPrint = async (req, res) => {
-    try {
-        const { week, day } = req.query;
-        let where = {};
-        if (week) where.planned_week = week;
-        if (day) where.planned_day = day;
+    const getWeeklyPlanPrint = async (req, res) => {
+        try {
+            const { week, day } = req.query;
+            const user = req.session.user;
+            
+            let targetMillId = null;
+            if (user.role === 'ADMIN' || user.role === 'SENIOR MILL MANAGER') {
+                if (req.query.millId) {
+                    targetMillId = parseInt(req.query.millId);
+                } else if (user.current_mill_id) {
+                    targetMillId = user.current_mill_id;
+                }
+            } else {
+                targetMillId = user.mill_id;
+            }
 
-        const isProcessing = req.path.includes('/processing');
-        const isCivil = req.path.includes('/civil');
-        const isOffice = req.path.includes('/office');
-        
-        let categoryFilter;
-        if (isProcessing) {
-            categoryFilter = 'Processing';
-        } else if (isCivil) {
-            categoryFilter = 'Civil';
-        } else if (isOffice) {
-            categoryFilter = 'Office';
-        } else {
-            categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
-        }
+            let where = {};
+            if (week) where.planned_week = week;
+            if (day) where.planned_day = day;
 
-        const plans = await prisma.weeklyPlan.findMany({
-            where: {
-                ...where,
-                wo: { category: categoryFilter }
-            },
+            const isProcessing = req.path.includes('/processing');
+            const isCivil = req.path.includes('/civil');
+            const isOffice = req.path.includes('/office');
+            
+            let categoryFilter;
+            if (isProcessing) {
+                categoryFilter = 'Processing';
+            } else if (isCivil) {
+                categoryFilter = 'Civil';
+            } else if (isOffice) {
+                categoryFilter = 'Office';
+            } else {
+                categoryFilter = { notIn: ['Processing', 'Civil', 'Office'] };
+            }
+
+            let woFilter = { category: categoryFilter };
+            if (targetMillId) {
+                woFilter.mill_id = targetMillId;
+            } else if (user.role === 'SENIOR MILL MANAGER') {
+                woFilter.mill_id = { in: user.accessible_mills || [] };
+            }
+
+            const plans = await prisma.weeklyPlan.findMany({
+                where: {
+                    ...where,
+                    wo: woFilter
+                },
             select: {
                 id: true,
                 planned_week: true,
@@ -1360,6 +1380,8 @@ const getWeeklyPlanPrint = async (req, res) => {
                 return statA.localeCompare(statB);
             });
         }
+
+        const currentPlanTitle = isProcessing ? 'Processing Weekly Plan' : (isCivil ? 'Civil Weekly Plan' : (isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan'));
 
         res.render('weekly_plan_print', {
             groupedPlans,
