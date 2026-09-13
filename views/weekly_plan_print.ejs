@@ -157,7 +157,15 @@
             color: #000;
         }
 
+        @page {
+            size: A4 portrait;
+            margin: 0;
+        }
+
         @media print {
+            body {
+                padding: 1.5cm;
+            }
             .main-table th {
                 background-color: #e9ecef !important;
                 -webkit-print-color-adjust: exact;
@@ -168,9 +176,6 @@
             }
             .iso-header td, .iso-footer td, .main-table th, .main-table td {
                 border-color: #000 !important;
-            }
-            body {
-                padding: 0;
             }
             .no-print {
                 display: none;
