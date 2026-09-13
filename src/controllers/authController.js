@@ -57,18 +57,17 @@ const login = async (req, res) => {
         }
 
         const selectedMillId = parseInt(millId);
-        const selectedMill = await prisma.mill.findUnique({ where: { id: selectedMillId } });
+        
+        // Optimize: Run independent queries in parallel to save time
+        const [selectedMill, user, mills] = await Promise.all([
+            prisma.mill.findUnique({ where: { id: selectedMillId } }),
+            prisma.user.findUnique({ where: { username } }),
+            getMillsWithRetry()
+        ]);
 
         if (!selectedMill) {
-            const mills = await getMillsWithRetry();
             return res.render('login', { error: 'Invalid Mill selected', mills });
         }
-
-        const user = await prisma.user.findUnique({
-            where: { username },
-        });
-
-        const mills = await getMillsWithRetry(); // Re-fetch for error render
 
         if (!user) {
             return res.render('login', { error: 'Invalid username or password', mills });

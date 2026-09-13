@@ -46,8 +46,8 @@ try {
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '../public')));
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.use(express.static(path.join(__dirname, '../public'), { maxAge: '1d' }));
+app.use('/uploads', express.static(path.join(__dirname, '../uploads'), { maxAge: '1d' }));
 
 // Session setup
 app.use(session({

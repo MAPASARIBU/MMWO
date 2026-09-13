@@ -195,7 +195,7 @@ const getDashboard = async (req, res) => {
                         created_at: true,
                         completed_at: true,
                         closed_at: true,
-                        parts: { select: { id: true } }
+                        parts: { select: { id: true }, take: 1 }
                     }
                 })
             ]);

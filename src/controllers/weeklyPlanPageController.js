@@ -66,10 +66,21 @@ const sortProcessingWos = (woList) => {
     });
 };
 
-const getWeeklyPlanPage = async (req, res) => {
-    try {
-        const { week, day, candidateStation, candidateMonth } = req.query;
-        const user = req.session.user;
+    const getWeeklyPlanPage = async (req, res) => {
+        try {
+            const { week, day, candidateStation, candidateMonth, tab } = req.query;
+            const user = req.session.user;
+            
+            // Check cache
+            const cacheKey = `weeklyPlan_${user.role}_${user.mill_id}_${req.path}_${JSON.stringify(req.query)}`;
+            if (!global.weeklyPlanCache) global.weeklyPlanCache = new Map();
+            let cachedData = global.weeklyPlanCache.get(cacheKey);
+
+            // We will cache the PROMISES results to prevent hitting DB on fast tab switches
+            let useCache = false;
+            if (cachedData && (Date.now() - cachedData.timestamp < 10000)) {
+                useCache = true;
+            }
         // Default to current week logic if needed, or just let user filter
 
         let where = {};
@@ -500,6 +511,33 @@ const getWeeklyPlanPage = async (req, res) => {
         };
 
         // --- EXECUTE QUERIES IN 2 BALANCED BATCHES TO PREVENT CONNECTION POOL EXHAUSTION ---
+        let dbResults1, dbResults2;
+        if (useCache) {
+            dbResults1 = cachedData.data.dbResults1;
+            dbResults2 = cachedData.data.dbResults2;
+        } else {
+            dbResults1 = await Promise.all([
+                safeQuery(plansPromise, []),
+                safeQuery(candidateWosPromise, []),
+                safeQuery(workshopEmployeesPromise, []),
+                safeQuery(stationsPromise, []),
+                safeQuery(millsPromise, []),
+                safeQuery(allCategoryWosPromise, [])
+            ]);
+            dbResults2 = await Promise.all([
+                safeQuery(monWosPromise, []),
+                safeQuery(monthlyWosPromise, []),
+                safeQuery(historicalMonthlyWosPromise, []),
+                safeQuery(analyticsWosPromise, []),
+                safeQuery(monthlyOrderWosPromise, [])
+            ]);
+            
+            global.weeklyPlanCache.set(cacheKey, {
+                timestamp: Date.now(),
+                data: { dbResults1, dbResults2 }
+            });
+        }
+
         const [
             plans,
             candidateWos,
@@ -507,14 +545,7 @@ const getWeeklyPlanPage = async (req, res) => {
             stations,
             mills,
             allCategoryWos
-        ] = await Promise.all([
-            safeQuery(plansPromise, []),
-            safeQuery(candidateWosPromise, []),
-            safeQuery(workshopEmployeesPromise, []),
-            safeQuery(stationsPromise, []),
-            safeQuery(millsPromise, []),
-            safeQuery(allCategoryWosPromise, [])
-        ]);
+        ] = dbResults1;
 
         const [
             monWos,
@@ -522,13 +553,7 @@ const getWeeklyPlanPage = async (req, res) => {
             historicalMonthlyWos,
             analyticsWos,
             monthlyOrderWos
-        ] = await Promise.all([
-            safeQuery(monWosPromise, []),
-            safeQuery(monthlyWosPromise, []),
-            safeQuery(historicalMonthlyWosPromise, []),
-            safeQuery(analyticsWosPromise, []),
-            safeQuery(monthlyOrderWosPromise, [])
-        ]);
+        ] = dbResults2;
 
         if (isProcessing) {
             sortProcessingWos(candidateWos);
