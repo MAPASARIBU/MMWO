@@ -1383,11 +1383,41 @@ const getWeeklyPlanPage = async (req, res) => {
 
         const currentPlanTitle = isProcessing ? 'Processing Weekly Plan' : (isCivil ? 'Civil Weekly Plan' : (isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan'));
 
+        let formattedTanggal = req.query.day || today;
+        if (['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(req.query.day)) {
+            if (req.query.week && req.query.week.includes('-W')) {
+                const parts = req.query.week.split('-W');
+                const year = parseInt(parts[0]);
+                const week = parseInt(parts[1]);
+                const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+                const dow = simple.getUTCDay();
+                const ISOweekStart = simple;
+                if (dow <= 4)
+                    ISOweekStart.setUTCDate(simple.getUTCDate() - simple.getUTCDay() + 1);
+                else
+                    ISOweekStart.setUTCDate(simple.getUTCDate() + 8 - simple.getUTCDay());
+                const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+                const daysToAdd = days.indexOf(req.query.day);
+                const parsedDate = new Date(ISOweekStart);
+                parsedDate.setUTCDate(parsedDate.getUTCDate() + daysToAdd);
+                
+                const optionsDate = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                formattedTanggal = parsedDate.toLocaleDateString('id-ID', optionsDate);
+            }
+        } else if (req.query.day && req.query.day.includes('-')) {
+            const dt = new Date(req.query.day);
+            if (!isNaN(dt)) {
+                const optionsDate = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+                formattedTanggal = dt.toLocaleDateString('id-ID', optionsDate);
+            }
+        }
+
         res.render('weekly_plan_print', {
             groupedPlans,
             query: req.query,
             user: req.session.user, hasPermission: res.locals.hasPermission, currentPlanTitle,
             today,
+            formattedTanggal,
             isProcessing,
             isCivil,
             isOffice

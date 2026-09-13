@@ -222,7 +222,7 @@
         </tr>
         <tr>
             <td style="font-weight: bold; font-size: 12px;">Tanggal</td>
-            <td style="font-size: 12px;">: <%= query.day || new Date().toISOString().split('T')[0] %></td>
+            <td style="font-size: 12px;">: <%= typeof formattedTanggal !== 'undefined' ? formattedTanggal : (query.day || new Date().toISOString().split('T')[0]) %></td>
         </tr>
         <tr>
             <td style="font-weight: bold; font-size: 12px;">Halaman</td>
