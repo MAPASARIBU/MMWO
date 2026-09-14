@@ -3,7 +3,7 @@
         <h3>Master Labour Employees</h3>
     </div>
 
-    <% const departments = ["Workshop Employees", "Processing Employees I", "Processing Employees II", "Other Employees"]; %>
+    <% const departments = ["Workshop Employees", "Processing Employees I", "Processing Employees II", "Processing Employees III", "Other Employees"]; %>
 
     <!-- Tabs Navigation -->
     <div style="border-bottom: 1px solid #ddd; margin-bottom: 20px; display: flex; gap: 20px; flex-wrap: wrap;">
@@ -71,7 +71,10 @@
 <div id="createEmployeeModal"
     style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index: 100;">
     <div class="card" style="margin: 50px auto; max-width: 500px;">
-        <h3 id="modalTitle">Add Employee</h3>
+        <div class="flex justify-between items-center mb-3">
+            <h3 id="modalTitle" style="margin: 0;">Add Employee</h3>
+            <button type="button" onclick="closeEmployeeModal()" style="background: none; border: none; font-size: 1.5rem; font-weight: bold; cursor: pointer; color: #64748b; line-height: 1;">&times;</button>
+        </div>
         <form id="createEmployeeForm">
             <input type="hidden" name="department" id="empDepartment">
             
@@ -106,13 +109,15 @@
 
             <div class="flex justify-between mt-4">
                 <button type="submit" class="btn btn-primary" id="saveBtn">Tambah</button>
-                <button type="button" onclick="closeEmployeeModal()" class="btn btn-secondary">No</button>
+                <button type="button" onclick="closeEmployeeModal()" class="btn btn-secondary">Batal / Tutup</button>
             </div>
         </form>
     </div>
 </div>
 
 <script>
+    let employeeAdded = false;
+
     function switchTab(index) {
         document.querySelectorAll('.emp-tab-content').forEach(el => el.style.display = 'none');
         document.querySelectorAll('[id^="tab-btn-"]').forEach(el => {
@@ -135,8 +140,11 @@
     }
 
     function closeEmployeeModal() {
-        // Refresh page to show newly added employees
-        window.location.reload();
+        if (employeeAdded) {
+            window.location.reload();
+        } else {
+            document.getElementById('createEmployeeModal').style.display = 'none';
+        }
     }
 
     async function toggleActive(id, isActive) {
@@ -183,6 +191,7 @@
             });
 
             if (res.ok) {
+                employeeAdded = true;
                 // Success! Clear form fields but keep department
                 e.target.reset();
                 document.getElementById('empDepartment').value = data.department;

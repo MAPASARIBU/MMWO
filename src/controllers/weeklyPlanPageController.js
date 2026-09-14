@@ -234,7 +234,7 @@ const sortProcessingWos = (woList) => {
         }
         
         if (isProcessing) {
-            empWhere.department = { in: ['Processing Employees I', 'Processing Employees II'] };
+            empWhere.department = { in: ['Processing Employees I', 'Processing Employees II', 'Processing Employees III'] };
         } else {
             empWhere.department = { in: ['Workshop Employees', 'Labour Employees', 'Other Employees'] };
         }
