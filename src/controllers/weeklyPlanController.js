@@ -122,7 +122,7 @@ const addNonWoJob = async (req, res) => {
     try {
         const { jobs, category, station_id, equipment_id, description, planned_week, planned_day, pic_ids } = req.body;
         const planner_id = req.session.user.id;
-        const mill_id = req.session.user.mill_id || 1; // Assuming default if admin
+        const mill_id = req.session.user.current_mill_id || req.session.user.mill_id || 1; // Respect current mill context
         const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 
         if (jobs && Array.isArray(jobs)) {
