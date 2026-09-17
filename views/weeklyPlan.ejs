@@ -1927,7 +1927,7 @@
     <div class="card" style="margin: 50px auto; max-width: 500px; position: relative;">
         <h3><%= typeof isProcessing !== 'undefined' && isProcessing ? 'Assign Processing PICs (Max 4)' : 'Assign PICs (Max 4)' %></h3>
         <p class="text-secondary mb-3">
-            <%= typeof isProcessing !== 'undefined' && isProcessing ? 'Pilih kelompok pekerja (Shift I / II), kemudian pilih maksimal 4 pekerja untuk order ini.' : 'Pilih maksimal 4 pekerja untuk ditugaskan pada order ini.' %>
+            <%= typeof isProcessing !== 'undefined' && isProcessing ? 'Pilih kelompok pekerja (Shift I / II / III), kemudian pilih maksimal 4 pekerja untuk order ini.' : 'Pilih maksimal 4 pekerja untuk ditugaskan pada order ini.' %>
         </p>
 
         <% if (typeof isProcessing !== 'undefined' && isProcessing) { %>
@@ -1939,6 +1939,9 @@
                     </button>
                     <button type="button" id="btnGroupProc2" class="btn btn-sm" onclick="filterProcPics('Processing Employees II')" style="flex: 1; border: 2px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 600; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
                         Processing Employees II
+                    </button>
+                    <button type="button" id="btnGroupProc3" class="btn btn-sm" onclick="filterProcPics('Processing Employees III')" style="flex: 1; border: 2px solid #cbd5e1; background: #ffffff; color: #475569; font-weight: 600; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
+                        Processing Employees III
                     </button>
                 </div>
             </div>
@@ -1994,21 +1997,25 @@
         currentActiveProcDept = dept;
         const btn1 = document.getElementById('btnGroupProc1');
         const btn2 = document.getElementById('btnGroupProc2');
-        if (btn1 && btn2) {
+        const btn3 = document.getElementById('btnGroupProc3');
+        if (btn1 && btn2 && btn3) {
+            [btn1, btn2, btn3].forEach(btn => {
+                btn.style.background = '#ffffff';
+                btn.style.color = '#475569';
+                btn.style.borderColor = '#cbd5e1';
+            });
             if (dept === 'Processing Employees I') {
                 btn1.style.background = '#2563eb';
                 btn1.style.color = '#fff';
                 btn1.style.borderColor = '#2563eb';
-                btn2.style.background = '#ffffff';
-                btn2.style.color = '#475569';
-                btn2.style.borderColor = '#cbd5e1';
-            } else {
+            } else if (dept === 'Processing Employees II') {
                 btn2.style.background = '#2563eb';
                 btn2.style.color = '#fff';
                 btn2.style.borderColor = '#2563eb';
-                btn1.style.background = '#ffffff';
-                btn1.style.color = '#475569';
-                btn1.style.borderColor = '#cbd5e1';
+            } else if (dept === 'Processing Employees III') {
+                btn3.style.background = '#2563eb';
+                btn3.style.color = '#fff';
+                btn3.style.borderColor = '#2563eb';
             }
         }
 
