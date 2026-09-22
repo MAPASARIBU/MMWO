@@ -117,22 +117,22 @@
         .iso-header, .iso-footer {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 11px;
             color: #000;
         }
 
         .iso-header td, .iso-footer td {
             border: 1px solid #000;
-            padding: 5px 8px;
+            padding: 3px 6px;
         }
         
         .iso-header {
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border: 2px solid #000;
         }
 
         .iso-footer {
-            margin-top: 30px;
+            margin-top: 15px;
             text-align: center;
             border: 2px solid #000;
         }
@@ -140,14 +140,14 @@
         .main-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 16px;
+            font-size: 12px;
             color: #000;
             border: 1px solid #000;
         }
 
         .main-table th, .main-table td {
             border: 1px solid #000;
-            padding: 8px;
+            padding: 5px;
             text-align: left;
         }
 
@@ -205,65 +205,79 @@
     </script>
 
     <!-- ISO HEADER -->
-    <table class="iso-header">
-        <tr>
-            <td rowspan="4" style="width: 25%; text-align: center; vertical-align: middle;">
-                <strong style="font-size: 18px;"><%= user.current_mill_name || 'PLANTATION MILL' %></strong>
-            </td>
-            <td rowspan="4" style="width: 50%; text-align: center; vertical-align: middle; font-size: 20px; font-weight: bold; text-transform: uppercase;">
-                <%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan')) %>
-            </td>
-            <td style="width: 12%; font-weight: bold; font-size: 12px;">No. Dokumen</td>
-            <td style="width: 13%; font-size: 12px;">: FM-<%= typeof isProcessing !== 'undefined' && isProcessing ? 'PRC' : (typeof isCivil !== 'undefined' && isCivil ? 'CIV' : (typeof isOffice !== 'undefined' && isOffice ? 'OFC' : 'MTC')) %>-01</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold; font-size: 12px;">Revisi</td>
-            <td style="font-size: 12px;">: 00</td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold; font-size: 12px;">Tanggal</td>
-            <td style="font-size: 12px;">: <%= typeof formattedTanggal !== 'undefined' ? formattedTanggal : (query.day || new Date().toISOString().split('T')[0]) %></td>
-        </tr>
-        <tr>
-            <td style="font-weight: bold; font-size: 12px;">Halaman</td>
-            <td style="font-size: 12px;">: 1 dari 1</td>
-        </tr>
-    </table>
+<table class="iso-header">
+    <tr>
+        <td rowspan="4" style="width: 25%; text-align: center; vertical-align: middle;">
+            <strong style="font-size: 14px;"><%= user.current_mill_name || 'PLANTATION MILL' %></strong>
+        </td>
+        <td rowspan="4" style="width: 50%; text-align: center; vertical-align: middle; font-size: 16px; font-weight: bold; text-transform: uppercase;">
+            <%= typeof isProcessing !== 'undefined' && isProcessing ? 'Processing Weekly Plan' : (typeof isCivil !== 'undefined' && isCivil ? 'Civil Weekly Plan' : (typeof isOffice !== 'undefined' && isOffice ? 'Office Weekly Plan' : 'Maintenance Weekly Plan')) %>
+        </td>
+        <td style="width: 12%; font-weight: bold; font-size: 10px;">No. Dokumen</td>
+        <td style="width: 13%; font-size: 10px;">: FM-<%= typeof isProcessing !== 'undefined' && isProcessing ? 'PRC' : (typeof isCivil !== 'undefined' && isCivil ? 'CIV' : (typeof isOffice !== 'undefined' && isOffice ? 'OFC' : 'MTC')) %>-01</td>
+    </tr>
+    <tr>
+        <td style="font-weight: bold; font-size: 10px;">Revisi</td>
+        <td style="font-size: 10px;">: 00</td>
+    </tr>
+    <tr>
+        <td style="font-weight: bold; font-size: 10px;">Tanggal</td>
+        <td style="font-size: 10px;">: <%= typeof formattedTanggal !== 'undefined' ? formattedTanggal : (query.day || new Date().toISOString().split('T')[0]) %></td>
+    </tr>
+    <tr>
+        <td style="font-weight: bold; font-size: 10px;">Halaman</td>
+        <td style="font-size: 10px;">: 1 dari 1</td>
+    </tr>
+</table>
 
     <div class="section">
         <table class="main-table">
             <thead>
                 <tr>
-                    <th style="width: 20%; text-align: center;">Station</th>
-                    <th style="width: 55%; text-align: center;">Description</th>
-                    <th style="width: 25%; text-align: center;">PIC</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (Object.keys(groupedPlans).length > 0) { %>
-                    <% for (const category in groupedPlans) { %>
-                        <tr style="background-color: #f8f9fa;">
-                            <td colspan="3" style="font-weight: bold; font-size: 16px; text-transform: uppercase;">
-                                KATEGORI: <%= category %>
+                <th style="width: 15%; text-align: center;">Station</th>
+                <th style="width: 45%; text-align: center;">Description</th>
+                <th style="width: 16%; text-align: center;">PIC</th>
+                <th style="width: 8%; text-align: center;">Jam<br>Mulai</th>
+                <th style="width: 8%; text-align: center;">Est.<br>Selesai</th>
+                <th style="width: 8%; text-align: center;">Istirahat</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (Object.keys(groupedPlans).length > 0) { %>
+                <% for (const category in groupedPlans) { %>
+                    <tr style="background-color: #f8f9fa;">
+                        <td colspan="6" style="font-weight: bold; font-size: 12px; text-transform: uppercase;">
+                            KATEGORI: <%= category %>
+                        </td>
+                    </tr>
+                    <% groupedPlans[category].forEach(plan => { %>
+                        <tr>
+                            <td><%= plan.wo.station ? plan.wo.station.name : '-' %></td>
+                            <td>
+                                <%= plan.wo.description %>
+                            </td>
+                            <td>
+                                <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
+                                    <%= plan.wo.pics.map(p => p.name).join(', ') %>
+                                <% } else { %>
+                                    -
+                                <% } %>
+                            </td>
+                            <td style="text-align: center;">
+                                <%= plan.wo.target_start ? new Date(plan.wo.target_start).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '-' %>
+                            </td>
+                            <td style="text-align: center;">
+                                <%= plan.wo.target_finish ? new Date(plan.wo.target_finish).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '-' %>
+                            </td>
+                            <td style="text-align: center;">
+                                <%= plan.wo.rest_hours_val ? plan.wo.rest_hours_val : '-' %>
                             </td>
                         </tr>
-                        <% groupedPlans[category].forEach(plan => { %>
-                            <tr>
-                                <td><%= plan.wo.station ? plan.wo.station.name : '-' %></td>
-                                <td><%= plan.wo.description %></td>
-                                <td>
-                                    <% if (plan.wo.pics && plan.wo.pics.length > 0) { %>
-                                        <%= plan.wo.pics.map(p => p.name).join(', ') %>
-                                    <% } else { %>
-                                        -
-                                    <% } %>
-                                </td>
-                            </tr>
                         <% }); %>
                     <% } %>
                 <% } else { %>
                     <tr>
-                        <td colspan="3" style="text-align: center; padding: 20px;">No planned work found matching the criteria.</td>
+                        <td colspan="6" style="text-align: center; padding: 20px;">No planned work found matching the criteria.</td>
                     </tr>
                 <% } %>
             </tbody>
@@ -273,20 +287,20 @@
     <!-- ISO FOOTER -->
     <table class="iso-footer">
         <tr>
-            <td style="width: 33.33%; font-weight: bold; padding: 8px;">Dibuat Oleh,</td>
-            <td style="width: 33.33%; font-weight: bold; padding: 8px;">Diperiksa Oleh,</td>
-            <td style="width: 33.33%; font-weight: bold; padding: 8px;">Disetujui Oleh,</td>
+            <td style="width: 33.33%; font-weight: bold; padding: 4px;">Dibuat Oleh,</td>
+            <td style="width: 33.33%; font-weight: bold; padding: 4px;">Diperiksa Oleh,</td>
+            <td style="width: 33.33%; font-weight: bold; padding: 4px;">Disetujui Oleh,</td>
         </tr>
         <tr>
-            <td style="height: 80px; vertical-align: bottom; padding: 8px;">
+            <td style="height: 60px; vertical-align: bottom; padding: 4px;">
                 <u><%= user.name %></u><br>
                 <%= user.role %>
             </td>
-            <td style="height: 80px; vertical-align: bottom; padding: 8px;">
+            <td style="height: 60px; vertical-align: bottom; padding: 4px;">
                 <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u><br>
                 Askep / Mill Manager
             </td>
-            <td style="height: 80px; vertical-align: bottom; padding: 8px;">
+            <td style="height: 60px; vertical-align: bottom; padding: 4px;">
                 <u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</u><br>
                 Senior Mill Manager
             </td>

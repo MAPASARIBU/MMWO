@@ -298,7 +298,7 @@
                                             <span>Analytics</span>
                                         </a>
         <% } %>
-                                        <% if (typeof user !== 'undefined' && user && (user.role === 'ADMIN' || user.role === 'PROC' || user.role === 'OPERATOR')) { %>
+                                        <% if (typeof user !== 'undefined' && user && hasAccess('INPUT HM')) { %>
                                         <a href="/input-hm"
                                             class="mobile-nav-item <%= typeof path !== 'undefined' && path.startsWith('/input-hm') ? 'active' : '' %>">
                                             <i class="fas fa-clock"></i>

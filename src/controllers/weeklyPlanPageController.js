@@ -1364,6 +1364,9 @@ const sortProcessingWos = (woList) => {
                         id: true,
                         category: true,
                         description: true,
+                        target_start: true,
+                        target_finish: true,
+                        rest_hours_val: true,
                         station: { select: { id: true, name: true } },
                         equipment: { select: { id: true, name: true } },
                         pics: { select: { id: true, name: true } }
@@ -1449,7 +1452,7 @@ const sortProcessingWos = (woList) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).send('Error loading weekly plan print view');
+        res.status(500).send('Error loading weekly plan print view: ' + error.stack);
     }
 };
 

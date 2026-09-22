@@ -113,6 +113,7 @@ model WorkOrder {
   monthly_plan_status String? // e.g. null, 'MONTHLY', 'NO', 'MONTHLY_DONE'
   monthly_materials   MonthlyPlanMaterial[]
   downtime_hours      Float?
+  rest_hours_val      Float?
   rca_category        String?
   rca_notes           String?
   materials           WorkOrderMaterial[]

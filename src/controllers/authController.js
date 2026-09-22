@@ -48,22 +48,26 @@ const loginPage = async (req, res) => {
 
 const login = async (req, res) => {
     const { millId, username, sandi } = req.body; const password = sandi;
+    console.time("login_total");
 
     try {
+        console.time("login_mills");
         // Validate Mill Selection
         if (!millId) {
             const mills = await getMillsWithRetry();
+            console.timeEnd("login_mills");
             return res.render('login', { error: 'Please select a Mill', mills });
         }
 
         const selectedMillId = parseInt(millId);
         
-        // Optimize: Run independent queries in parallel to save time
-        const [selectedMill, user, mills] = await Promise.all([
-            prisma.mill.findUnique({ where: { id: selectedMillId } }),
-            prisma.user.findUnique({ where: { username } }),
-            getMillsWithRetry()
-        ]);
+        console.timeEnd("login_mills");
+        console.time("login_db");
+        // Optimize: Use cached mills instead of querying again
+        const mills = await getMillsWithRetry();
+        const selectedMill = mills.find(m => m.id === selectedMillId);
+        const user = await prisma.user.findUnique({ where: { username } });
+        console.timeEnd("login_db");
 
         if (!selectedMill) {
             return res.render('login', { error: 'Invalid Mill selected', mills });
@@ -94,7 +98,9 @@ const login = async (req, res) => {
             return res.render('login', { error: `Access Denied: You are attempting to login to ${selectedMill.name} but your account is assigned to another mill.`, mills });
         }
 
+        console.time("login_bcrypt");
         const isValid = await bcrypt.compare(password, user.password_hash);
+        console.timeEnd("login_bcrypt");
 
         if (!isValid) {
             return res.render('login', { error: 'Invalid username or password', mills });
@@ -112,6 +118,10 @@ const login = async (req, res) => {
             current_mill_name: selectedMill.name
         };
 
+        // Trigger session save explicitly if needed, but not required with MemoryStore usually.
+        // req.session.save();
+
+        console.timeEnd("login_total");
         res.redirect('/dashboard');
     } catch (error) {
         console.error(error);
@@ -121,10 +131,16 @@ const login = async (req, res) => {
 };
 
 const logout = (req, res) => {
+    req.session.user = null; // Clear user data immediately
+    res.clearCookie('connect.sid'); // Clear the session cookie
+    
+    // Destroy session non-blocking
     req.session.destroy((err) => {
-        if (err) console.error(err);
-        res.redirect('/auth/login');
+        if (err) console.error("Error destroying session:", err);
     });
+    
+    // Fast redirect
+    res.redirect('/auth/login');
 };
 
 const changePasswordPage = async (req, res) => {

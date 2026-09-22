@@ -250,6 +250,9 @@
                             <th style="width: 150px; padding: 8px 8px;">Unit Mesin</th>
                             <th style="padding: 8px 8px; min-width: 220px;">Deskripsi Kerusakan</th>
                             <th style="width: 100px; padding: 8px 8px;">Kategori</th>
+                            <th style="width: 100px; padding: 8px 8px;">Jam Mulai</th>
+                            <th style="width: 80px; padding: 8px 8px;">Istirahat</th>
+                            <th style="width: 100px; padding: 8px 8px;">Est. Selesai</th>
                             <th style="width: 170px; padding: 8px 8px;">PIC Pelaksana</th>
                             <th style="width: 60px; text-align: center; padding: 8px 6px;">Batal</th>
                         </tr>
@@ -384,7 +387,7 @@
 
                             const jobCount = (groupedPlans[date] || []).length;
                         %>
-                        <tr id="record-row-<%= date %>" data-date="<%= date %>" style="cursor: pointer; transition: background-color 0.15s;" onclick="openDailyPlanPreviewModal('<%= printBasePath %>?day=<%= date %>', '<%= formattedDate %>', '<%= deptName %>')" title="Klik untuk preview dan cetak dokumen">
+                        <tr id="record-row-<%= date %>" data-date="<%= date %>" style="cursor: pointer; transition: background-color 0.15s;" onclick="openDailyPlanPreviewModal('<%= printBasePath %>?day=<%= date %>&_t=' + new Date().getTime(), '<%= formattedDate %>', '<%= deptName %>')" title="Klik untuk preview dan cetak dokumen">
                             <td style="text-align: center; font-weight: 700; color: #475569;"><%= index + 1 %></td>
                             <td style="text-align: center;">
                                 <span class="badge" style="background: #e0e7ff; color: #3730a3; font-weight: 700; font-size: 0.78rem; padding: 4px 8px; border-radius: 4px;"><%= monthStr %></span>
@@ -467,6 +470,9 @@
                         <th style="width: 140px; color: white; background-color: #1e293b;">Stasiun</th>
                         <th style="width: 150px; color: white; background-color: #1e293b;">Unit Mesin</th>
                         <th style="color: white; background-color: #1e293b; min-width: 200px;">Keterangan Pekerjaan</th>
+                        <th style="width: 70px; color: white; background-color: #1e293b; text-align: center;">Jam Mulai</th>
+                        <th style="width: 70px; color: white; background-color: #1e293b; text-align: center;">Istirahat</th>
+                        <th style="width: 75px; color: white; background-color: #1e293b; text-align: center;">Est. Selesai</th>
                         <th style="width: 140px; color: white; background-color: #1e293b;">PIC</th>
                         <th style="width: 210px; text-align: center; color: white; background-color: #1e293b;"><%= usesStartFinishLifecycle ? 'Progress Pekerjaan' : 'Pilihan Selesai' %></th>
                         <th style="width: 90px; text-align: center; color: white; background-color: #1e293b;">Status</th>
@@ -544,6 +550,15 @@
                                 </td>
                                 <td style="white-space: normal; max-width: 300px;">
                                     <%= wo.description || '-' %>
+                                </td>
+                                <td style="text-align: center;">
+                                    <%= wo.target_start ? new Date(wo.target_start).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '-' %>
+                                </td>
+                                <td style="text-align: center;">
+                                    <%= wo.rest_hours_val ? wo.rest_hours_val : '-' %>
+                                </td>
+                                <td style="text-align: center;">
+                                    <%= wo.target_finish ? new Date(wo.target_finish).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '-' %>
                                 </td>
                                 <td>
                                     <% if (wo.pics && wo.pics.length > 0) { %>
@@ -2360,6 +2375,25 @@
 
         let html = '';
         let no = 1;
+
+        // Add datalists for Jam Mulai / Selesai (kelipatan setengah jam) and Jam Istirahat
+        html += `<datalist id="jamOptions">`;
+        for (let i = 1; i <= 24; i++) {
+            const h = String(i % 24).padStart(2, '0');
+            html += `<option value="${h}:00"></option>`;
+            if (i !== 24) html += `<option value="${h}:30"></option>`;
+        }
+        // Force 24:00 as an option for exactly midnight if they want
+        html += `<option value="24:00"></option>`;
+        html += `</datalist>`;
+
+        html += `<datalist id="istirahatOptions">
+            <option value="0"></option>
+            <option value="1"></option>
+            <option value="1.5"></option>
+            <option value="2"></option>
+        </datalist>`;
+
         draftWosMap.forEach((item, woId) => {
             const picsHtml = (item.pics && item.pics.length > 0)
                 ? `<span style="font-size: 0.8rem; font-weight: 600; color: #1e3a8a;">${item.pics.map(p => p.name).join(', ')}</span>`
@@ -2376,6 +2410,15 @@
                     <td style="padding: 6px 8px; white-space: normal; color: #0f172a;">${item.description}</td>
                     <td style="padding: 6px 8px;">
                         <span class="badge" style="background: #e2e8f0; color: #334155; font-size: 0.72rem; padding: 3px 6px;">${item.category}</span>
+                    </td>
+                    <td style="padding: 6px 8px;">
+                        <input type="text" list="jamOptions" placeholder="00:00" class="form-control form-control-sm draft-start-time" data-id="${woId}" style="width: 75px; font-size: 0.75rem; padding: 2px 4px;" value="${item.target_start_time || ''}">
+                    </td>
+                    <td style="padding: 6px 8px;">
+                        <input type="text" list="istirahatOptions" placeholder="Jam" class="form-control form-control-sm draft-rest-time" data-id="${woId}" style="width: 70px; font-size: 0.75rem; padding: 2px 4px;" value="${item.rest_hours_val !== undefined ? item.rest_hours_val : ''}">
+                    </td>
+                    <td style="padding: 6px 8px;">
+                        <input type="text" list="jamOptions" placeholder="00:00" class="form-control form-control-sm draft-finish-time" data-id="${woId}" style="width: 75px; font-size: 0.75rem; padding: 2px 4px;" value="${item.target_finish_time || ''}">
                     </td>
                     <td style="padding: 6px 8px;" id="draft-pic-cell-${woId}">
                         <div class="pic-names-text">${picsHtml}</div>
@@ -2416,6 +2459,19 @@
         }
 
         const woIds = Array.from(draftWosMap.keys());
+        
+        // Collect times
+        const timesData = woIds.map(id => {
+            const startEl = document.querySelector(`.draft-start-time[data-id="${id}"]`);
+            const restEl = document.querySelector(`.draft-rest-time[data-id="${id}"]`);
+            const finishEl = document.querySelector(`.draft-finish-time[data-id="${id}"]`);
+            return {
+                id,
+                start: startEl ? startEl.value : null,
+                rest: restEl ? parseInt(restEl.value) : 0,
+                finish: finishEl ? finishEl.value : null
+            };
+        });
 
         try {
             const res = await fetch('/api/weekly-plan/bulk', {
@@ -2426,7 +2482,8 @@
                 },
                 body: JSON.stringify({
                     wo_ids: woIds,
-                    planned_day: planDate
+                    planned_day: planDate,
+                    times_data: timesData
                 })
             });
 

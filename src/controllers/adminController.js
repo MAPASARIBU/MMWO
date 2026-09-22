@@ -43,8 +43,8 @@ const getUsersPage = async (req, res) => {
             path: '/admin/users'
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).send('Error loading users page');
+        console.error("GET USERS PAGE ERROR:", error);
+        res.status(500).send('Error loading users page: ' + error.message);
     }
 };
 

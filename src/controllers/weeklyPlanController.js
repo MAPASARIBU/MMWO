@@ -28,7 +28,7 @@ const upsertPlan = async (req, res) => {
 
 const bulkPlan = async (req, res) => {
     try {
-        let { wo_ids, planned_week, planned_day } = req.body;
+        let { wo_ids, planned_week, planned_day, times_data } = req.body;
         const planner_id = req.session && req.session.user ? req.session.user.id : 1;
 
         let rawIds = wo_ids || req.body['wo_ids[]'] || req.body.woIds;
@@ -55,6 +55,45 @@ const bulkPlan = async (req, res) => {
             planned_week = `${year}-W${String(weekNo).padStart(2, '0')}`;
         }
 
+        // Handle times updates
+        const updatePromises = [];
+        if (times_data && Array.isArray(times_data) && planned_day) {
+            for (const td of times_data) {
+                if (!td || !td.id) continue;
+                const updateData = {};
+                let baseDate = new Date(planned_day);
+                if (td.start) {
+                    const [h, m] = td.start.split(':');
+                    let startDate = new Date(baseDate);
+                    startDate.setHours(parseInt(h), parseInt(m), 0, 0);
+                    updateData.target_start = startDate;
+                }
+                if (td.finish) {
+                    const [h, m] = td.finish.split(':');
+                    let finishDate = new Date(baseDate);
+                    finishDate.setHours(parseInt(h), parseInt(m), 0, 0);
+                    updateData.target_finish = finishDate;
+                }
+                if (td.rest !== undefined) {
+                    updateData.rest_hours_val = parseFloat(td.rest) || 0;
+                }
+                
+                if(updateData.target_start && isNaN(updateData.target_start.getTime())) delete updateData.target_start; 
+                if(updateData.target_finish && isNaN(updateData.target_finish.getTime())) delete updateData.target_finish; 
+                
+                if (Object.keys(updateData).length > 0) {
+                    updatePromises.push(`
+                        UPDATE work_orders 
+                        SET 
+                            target_start = ${updateData.target_start ? "'" + updateData.target_start.toISOString() + "'" : 'target_start'},
+                            target_finish = ${updateData.target_finish ? "'" + updateData.target_finish.toISOString() + "'" : 'target_finish'},
+                            rest_hours_val = ${updateData.rest_hours_val !== undefined ? updateData.rest_hours_val : 'rest_hours_val'}
+                        WHERE id = ${td.id}
+                    `);
+                }
+            }
+        }
+
         // Execute bulk upsert as an atomic delete + create transaction
         await prisma.$transaction([
             prisma.weeklyPlan.deleteMany({
@@ -69,6 +108,13 @@ const bulkPlan = async (req, res) => {
                 }))
             })
         ]);
+        
+        // Execute the raw updates outside transaction sequentially to avoid schema cache issues and deadlocks
+        if (updatePromises.length > 0) {
+            for (const sql of updatePromises) {
+                await prisma.$executeRawUnsafe(sql);
+            }
+        }
 
         if (req.xhr || req.headers.accept?.includes('application/json') || req.is('json') || req.headers['content-type']?.includes('application/json')) {
             return res.json({
@@ -90,7 +136,7 @@ const bulkPlan = async (req, res) => {
         }
     } catch (error) {
         console.error("bulkPlan Error:", error);
-        res.status(500).send("Error saving weekly plan: " + error.message);
+        res.status(500).json({ error: "Error saving weekly plan: " + error.message });
     }
 };
 

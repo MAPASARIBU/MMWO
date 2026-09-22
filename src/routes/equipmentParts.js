@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const equipmentPartsController = require('../controllers/equipmentPartsController');
 const periodicPMController = require('../controllers/periodicPMController');
-const { ensureAuthenticated, ensureRole } = require('../middleware/authMiddleware');
+const { ensureAuthenticated, ensureRole, ensurePermission } = require('../middleware/authMiddleware');
 
 // Part routes
 router.get('/:equipmentId/parts', ensureAuthenticated, equipmentPartsController.getParts);
@@ -13,7 +13,7 @@ router.delete('/:equipmentId/parts/:partId', ensureRole(['ADMIN', 'MTC', 'PROC',
 
 // HM Record routes
 router.get('/:equipmentId/hm', ensureAuthenticated, equipmentPartsController.getHMRecords);
-router.post('/:equipmentId/hm', ensureRole(['ADMIN', 'PROC', 'OPERATOR']), equipmentPartsController.recordHM);
+router.post('/:equipmentId/hm', ensurePermission('INPUT HM', 'input'), equipmentPartsController.recordHM);
 
 // Periodic PM routes
 router.get('/:equipmentId/periodic-pms', ensureAuthenticated, periodicPMController.getPeriodicPMs);
