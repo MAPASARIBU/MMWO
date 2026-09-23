@@ -34,7 +34,18 @@ const getUsersPage = async (req, res) => {
             u.role = (u.role || '').toUpperCase();
             return u;
         });
-        const mills = activeMillId ? await prisma.mill.findMany({ where: { id: activeMillId } }) : await prisma.mill.findMany();
+        
+        let allowedMillsCondition = {};
+        const userRole = (req.session.user.role || '').toUpperCase();
+        if (userRole === 'ADMIN') {
+            allowedMillsCondition = {};
+        } else if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(userRole)) {
+            allowedMillsCondition = { id: { in: req.session.user.accessible_mills || [] } };
+        } else {
+            allowedMillsCondition = { id: activeMillId };
+        }
+        const mills = await prisma.mill.findMany({ where: allowedMillsCondition, orderBy: { name: 'asc' } });
+
 
         res.render('layout', {
             title: 'User Management',
@@ -113,7 +124,18 @@ const getEmployeesPage = async (req, res) => {
             include: { mill: true },
             orderBy: [{ mill_id: 'asc' }, { name: 'asc' }]
         });
-        const mills = activeMillId ? await prisma.mill.findMany({ where: { id: activeMillId }, orderBy: { name: 'asc' } }) : await prisma.mill.findMany({ orderBy: { name: 'asc' } });
+        
+        let allowedMillsConditionEmp = {};
+        const userRoleStr = (user.role || '').toUpperCase();
+        if (userRoleStr === 'ADMIN') {
+            allowedMillsConditionEmp = {};
+        } else if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(userRoleStr)) {
+            allowedMillsConditionEmp = { id: { in: user.accessible_mills || [] } };
+        } else {
+            allowedMillsConditionEmp = { id: activeMillId };
+        }
+        const mills = await prisma.mill.findMany({ where: allowedMillsConditionEmp, orderBy: { name: 'asc' } });
+
         const stations = await prisma.station.findMany({
             where: stationWhere,
             orderBy: { name: 'asc' }

@@ -89,7 +89,7 @@
     }
 
     // Separate Corporate / Multi-Mill users vs Mill Specific users
-    const corporateUsers = users.filter(u => ['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(u.role) || u.role === 'ADMIN' || !u.mill_id);
+    const corporateUsers = users.filter(u => ['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(u.role) || u.role === 'ADMIN' || !u.mill_id);
     const activeCount = users.filter(u => u.is_active).length;
     const inactiveCount = users.length - activeCount;
 %>
@@ -145,7 +145,7 @@
             🏛️ Corporate / All Mills (<%= corporateUsers.length %>)
         </button>
         <% mills.forEach(m => { 
-            const mCount = users.filter(u => u.mill_id === m.id && !['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(u.role) && u.role !== 'ADMIN').length;
+            const mCount = users.filter(u => u.mill_id === m.id && !['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(u.role) && u.role !== 'ADMIN').length;
         %>
             <button type="button" class="btn-mill-tab" data-mill="MILL_<%= m.id %>" onclick="filterByMillTab('MILL_<%= m.id %>', this)">
                 🏭 <%= m.name %> (<%= mCount %>)
@@ -262,7 +262,7 @@
 
 <!-- 2. GROUPS: EACH MILL'S USERS -->
 <% mills.forEach(mill => { 
-    const millUsers = users.filter(u => u.mill_id === mill.id && !['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(u.role) && u.role !== 'ADMIN');
+    const millUsers = users.filter(u => u.mill_id === mill.id && !['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(u.role) && u.role !== 'ADMIN');
 %>
 <div class="card mill-group-card mb-4" id="group-MILL_<%= mill.id %>" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
     <div style="background: #f8fafc; color: #1e293b; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0;">
@@ -668,7 +668,7 @@
 
     function toggleMillSelect() {
         const role = document.getElementById('roleSelect').value;
-        if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(role)) {
+        if (['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(role)) {
             document.getElementById('singleMillDiv').style.display = 'none';
             document.getElementById('millIdSelect').disabled = true;
             document.getElementById('multiMillDiv').style.display = 'block';
@@ -687,7 +687,7 @@
         formData.delete('accessible_mills');
         
         const data = Object.fromEntries(formData.entries());
-        if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(data.role)) {
+        if (['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(data.role)) {
             data.accessible_mills = accessibleMills;
             data.mill_id = null;
         }
@@ -712,7 +712,7 @@
 
     function toggleEditMillSelect() {
         const role = document.getElementById('editUserRole').value;
-        if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(role)) {
+        if (['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(role)) {
             document.getElementById('editSingleMillDiv').style.display = 'none';
             document.getElementById('editMillIdSelect').disabled = true;
             document.getElementById('editMultiMillDiv').style.display = 'block';
@@ -759,7 +759,7 @@
         formData.delete('id');
         
         const data = Object.fromEntries(formData.entries());
-        if (['DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(data.role)) {
+        if (['ADMIN', 'DIRECTOR', 'SENIOR MILL MANAGER', 'ENGINEERING'].includes(data.role)) {
             data.accessible_mills = accessibleMills;
             data.mill_id = null;
         }
